@@ -1,3 +1,12 @@
+module Action 
+    (
+        Verb(..),
+        Object,
+        Action,
+        processInput
+    )
+where 
+
 import Data.List
 import Data.Char
 
@@ -5,10 +14,6 @@ data Verb = Transitive { form :: String , preposition :: [String] }
             | Phrasal { form :: String, phrasal :: String , preposition :: [String] }
                 deriving (Show, Eq)
 
-verbExample = Transitive "speak" ["with", "to"]
-verbExample' = Transitive "ask" ["about"]
-verbExample'' = Phrasal "look" "for" []
-verbs = [verbExample, verbExample', verbExample'']
 
 -- Will most likely have to add other kind of objects.
 -- And a map for potential actions on each objects.
@@ -34,5 +39,6 @@ findVerb (v:vs) s
 contains [] _ = True
 contains xs ys = intersect xs ys /= []
 
-processPredicate s = findVerb verbs prepare
-    where prepare = words . map (toLower) $ s 
+processInput :: String -> [Verb] -> Maybe Verb
+processInput str vs = findVerb vs prepare
+    where prepare = words . map (toLower) $ str
