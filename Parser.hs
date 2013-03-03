@@ -12,7 +12,7 @@ processInput :: String -> [Verb] -> PlayerAction
 processInput str vs = buildAction verb objects 
     where 
         verb = findVerb vs statement 
-        objects = findObjects statement verb
+        objects = findObjects (tail statement) verb
         statement = words . map (toLower) $ str
         
         buildAction :: Maybe Verb -> [String] -> PlayerAction
@@ -49,15 +49,20 @@ analyseObjects sentence fstWds sndWds = matcher sentence posFst posSnd
     where 
         matcher :: [String] -> Maybe Int -> Maybe Int -> [String]
         matcher _ Nothing Nothing = []
-        matcher s Nothing (Just x) = (take x s) ++ (drop x s)
-        matcher s (Just 0) Nothing = tail s
-        matcher s (Just 0) (Just x) = (take x . tail $ s) ++ (drop x s)
+        matcher s Nothing (Just x) = [addSpaces . take x $ s] ++ [addSpaces . drop x $ s]
+        matcher s (Just 0) Nothing = [addSpaces . tail $ s]
+        matcher s (Just x) Nothing = [addSpaces . take x $ s]
+        matcher s (Just 0) (Just x) = [addSpaces . take x . tail $ s] ++ [addSpaces . drop x $ s]
+        matcher s (Just x) (Just y) = [addSpaces . init . take x $ s] ++ [addSpaces . drop y $ s]
+        matcher [] _ _ = []
         
         posFst = findPositionOf fstWds sentence
         posSnd = findPositionOf sndWds sentence
         
         findPositionOf :: [String] -> [String] -> Maybe Int
         findPositionOf prepos sentence = findIndex (`elem` prepos) sentence 
+
+        addSpaces = intercalate " "
 
 findObjects :: [String] -> Maybe Verb -> [String]
 findObjects _ Nothing = []
