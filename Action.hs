@@ -1,44 +1,33 @@
 module Action 
     (
+        Object(..),
+        Action(..),
+        PlayerAction(..),
         Verb(..),
-        Object,
-        Action,
-        processInput
+        getVerbAction
     )
 where 
 
-import Data.List
-import Data.Char
-
-data Verb = Transitive { form :: String , preposition :: [String] }
-            | Phrasal { form :: String, phrasal :: String , preposition :: [String] }
+-- Transitive verbs are simple : the verb itself, then eventually some preposition, and its objects.
+-- Phrasal are a bit twisty : the form + the phrasal will change the meaning of this.
+data Verb = Transitive { actionType :: Action, form :: String , preposition :: [String], complement :: [String] }
+            | Phrasal { actionType :: Action, form :: String, phrasal :: String , preposition :: [String], complements :: [String] }
                 deriving (Show, Eq)
 
+getVerbAction :: Verb -> Action
+getVerbAction (Transitive a _ _ _) = a
+getVerbAction (Phrasal a _ _ _ _) = a
 
 -- Will most likely have to add other kind of objects.
 -- And a map for potential actions on each objects.
 data Object = Object { name :: String }
+    deriving(Show,Eq)
 
-data Action =   Simple Verb
-                | Interaction Verb Object
-                | Complex Verb Object 
+data PlayerAction =   SimpleAction Action
+                | Interaction Action Object
+                | Complex Action Object Object 
+    deriving(Show,Eq)
 
-verbInSentence :: Verb -> [String] -> Bool
-verbInSentence (Transitive form prepositions) s = form `elem` s
-                                                && prepositions `contains` s
-verbInSentence (Phrasal form phrasal prepositions) s = form `elem` s 
-                                                    && phrasal `elem` s 
-                                                    && prepositions `contains` s
+data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | Zilch
+    deriving (Eq, Show)
 
-findVerb :: [Verb] -> [String] -> Maybe Verb
-findVerb [] s = Nothing
-findVerb (v:vs) s
-    | verbInSentence v s = Just v
-    | otherwise = findVerb vs s
-
-contains [] _ = True
-contains xs ys = intersect xs ys /= []
-
-processInput :: String -> [Verb] -> Maybe Verb
-processInput str vs = findVerb vs prepare
-    where prepare = words . map (toLower) $ str
