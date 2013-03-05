@@ -4,10 +4,12 @@ import Test.QuickCheck
 import Action
 import Parser
 
-verbExample = Transitive Talk "speak" ["with", "to"] ["about"]
-verbExample' = Transitive Talk "ask" ["about"] []
-verbExample'' = Phrasal Search "look" "for" [] ["in", "with"]
-verbs = [verbExample, verbExample', verbExample'']
+speak = Transitive Talk "speak" ["with", "to"] ["about"]
+ask = Transitive Talk "ask" ["about"] []
+lookFor = Phrasal Search "look" "for" [] ["in", "with"]
+quit = Transitive QuitGame "quit" [] []
+verbs = [speak, ask, lookFor, quit]
+
 
 
 main :: IO()
