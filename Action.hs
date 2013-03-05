@@ -29,5 +29,5 @@ data PlayerAction =   SimpleAction Action
     deriving(Show,Eq)
 
 data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | Zilch
-    deriving (Eq, Show)
+    deriving (Eq, Show, Ord)
 
