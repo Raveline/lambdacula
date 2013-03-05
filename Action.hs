@@ -28,6 +28,6 @@ data PlayerAction =   SimpleAction Action
                 | Complex Action Object Object 
     deriving(Show,Eq)
 
-data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | Zilch
+data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | QuitGame | Zilch
     deriving (Eq, Show, Ord)
 
