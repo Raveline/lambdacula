@@ -21,3 +21,6 @@ main = hspec $ do
 
             it "Finds the phrasal verb \"Look for\" in a sentence" $ do
                 processInput "Look for an answer to this riddle" verbs `shouldBe` Interaction Search (Object "an answer to this riddle")
+
+            it "Finds a complex action with two objets" $ do
+                processInput "Speak with the count about the meaning of life" verbs `shouldBe` Complex Talk (Object "the count") (Object "the meaning of life")
