@@ -52,9 +52,8 @@ analyseObjects sentence fstWds sndWds = matcher sentence posFst posSnd
         matcher s Nothing (Just x) = [addSpaces . take x $ s] ++ [addSpaces . drop x $ s]
         matcher s (Just 0) Nothing = [addSpaces . tail $ s]
         matcher s (Just x) Nothing = [addSpaces . take x $ s]
-        matcher s (Just 0) (Just x) = [addSpaces . take x . tail $ s] ++ [addSpaces . drop x $ s]
-        matcher s (Just x) (Just y) = [addSpaces . init . take x $ s] ++ [addSpaces . drop y $ s]
-        matcher [] _ _ = []
+        matcher s (Just 0) (Just x) = [addSpaces . take (x-1) . tail $ s] ++ [addSpaces . drop (x+1) $ s]
+        matcher s (Just x) (Just y) = [addSpaces . init . take (x-1) $ s] ++ [addSpaces . drop (y+1) $ s]
         
         posFst = findPositionOf fstWds sentence
         posSnd = findPositionOf sndWds sentence
