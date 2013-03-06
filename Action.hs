@@ -1,6 +1,5 @@
 module Action 
     (
-        Object(..),
         Action(..),
         PlayerAction(..),
         Verb(..),
@@ -18,14 +17,9 @@ getVerbAction :: Verb -> Action
 getVerbAction (Transitive a _ _ _) = a
 getVerbAction (Phrasal a _ _ _ _) = a
 
--- Will most likely have to add other kind of objects.
--- And a map for potential actions on each objects.
-data Object = Object { name :: String }
-    deriving(Show,Eq)
-
 data PlayerAction =   SimpleAction Action
-                | Interaction Action Object
-                | Complex Action Object Object 
+                | Interaction Action String
+                | Complex Action String String 
     deriving(Show,Eq)
 
 data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | QuitGame | Zilch
