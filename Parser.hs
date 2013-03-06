@@ -21,8 +21,8 @@ processInput str vs = buildAction verb objects
         buildAction :: Maybe Verb -> [String] -> PlayerAction
         buildAction Nothing _ = SimpleAction Zilch
         buildAction (Just v) [] = SimpleAction (getVerbAction v) 
-        buildAction (Just v) [o] = Interaction (getVerbAction v) (Object o)
-        buildAction (Just v) (o:o':[]) = Complex (getVerbAction v) (Object o) (Object o')
+        buildAction (Just v) [o] = Interaction (getVerbAction v) o
+        buildAction (Just v) (o:o':[]) = Complex (getVerbAction v) o o'
 
 -- Given a list of verbs, try and find there is one in a given sentence
 findVerb :: [Verb] -> [String] -> Maybe Verb
@@ -73,7 +73,7 @@ findObjects sentence (Just (Transitive _ form prep comp)) =
 findObjects sentence (Just (Phrasal _ form phrasal prep comp)) =
     analyseObjects sentence (phrasal:prep) comp
 
-transformIntoAction :: Maybe Verb -> Maybe Object -> Maybe Object -> PlayerAction
+transformIntoAction :: Maybe Verb -> Maybe String -> Maybe String -> PlayerAction
 transformIntoAction Nothing _ _ = SimpleAction Zilch
 transformIntoAction (Just v) Nothing _ = SimpleAction $ getVerbAction v
 transformIntoAction (Just v) (Just o) Nothing = Interaction (getVerbAction v) o
