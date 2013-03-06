@@ -8,6 +8,9 @@ import Data.List
 import Data.Char
 import Action
 
+
+articles = ["the", "a", "an"]
+
 processInput :: String -> [Verb] -> PlayerAction
 processInput str vs = buildAction verb objects 
     where 
@@ -49,11 +52,11 @@ analyseObjects sentence fstWds sndWds = matcher sentence posFst posSnd
     where 
         matcher :: [String] -> Maybe Int -> Maybe Int -> [String]
         matcher _ Nothing Nothing = []
-        matcher s Nothing (Just x) = [addSpaces . take x $ s] ++ [addSpaces . drop x $ s]
-        matcher s (Just 0) Nothing = [addSpaces . tail $ s]
-        matcher s (Just x) Nothing = [addSpaces . take x $ s]
-        matcher s (Just 0) (Just x) = [addSpaces . take (x-1) . tail $ s] ++ [addSpaces . drop (x+1) $ s]
-        matcher s (Just x) (Just y) = [addSpaces . init . take (x-1) $ s] ++ [addSpaces . drop (y+1) $ s]
+        matcher s Nothing (Just x) = [concatAndNoArticles . take x $ s] ++ [concatAndNoArticles . drop x $ s]
+        matcher s (Just 0) Nothing = [concatAndNoArticles . tail $ s]
+        matcher s (Just x) Nothing = [concatAndNoArticles . take x $ s]
+        matcher s (Just 0) (Just x) = [concatAndNoArticles . take (x-1) . tail $ s] ++ [concatAndNoArticles . drop (x+1) $ s]
+        matcher s (Just x) (Just y) = [concatAndNoArticles . init . take (x-1) $ s] ++ [concatAndNoArticles . drop (y+1) $ s]
         
         posFst = findPositionOf fstWds sentence
         posSnd = findPositionOf sndWds sentence
@@ -61,7 +64,7 @@ analyseObjects sentence fstWds sndWds = matcher sentence posFst posSnd
         findPositionOf :: [String] -> [String] -> Maybe Int
         findPositionOf prepos sentence = findIndex (`elem` prepos) sentence 
 
-        addSpaces = intercalate " "
+        concatAndNoArticles = unwords . (flip (\\) articles)
 
 findObjects :: [String] -> Maybe Verb -> [String]
 findObjects _ Nothing = []
