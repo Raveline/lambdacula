@@ -2,7 +2,9 @@ module World
 (
     Room(..),
     RoomObject(..),
-    Character(..)
+    Character(..),
+    Player(..),
+    World(..)
 )
 where
 
@@ -11,6 +13,11 @@ import Action
 
 type Conversations = Map.Map String String
 type Interactions = Map.Map Action String
+
+data World = World { player :: Player, currentRoom :: Room }
+
+data Player = Player { inventory :: [String] }
+    deriving (Show)
 
 data Room =    Room { roomName :: String
                  ,description :: String
