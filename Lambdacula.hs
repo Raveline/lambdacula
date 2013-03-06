@@ -9,13 +9,13 @@ isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
 
-proceed :: PlayerAction -> Player -> IO ()
+proceed :: PlayerAction -> World -> IO ()
 proceed (SimpleAction Zilch) p = do
                                 putStrLn "Huh ?"
                                 promptLoop p
 proceed _ p = promptLoop p
 
-promptLoop :: Player -> IO ()
+promptLoop :: World -> IO ()
 promptLoop player = do
     putStr "> "
     input <- getLine
@@ -25,12 +25,18 @@ promptLoop player = do
         else (proceed action player)
     return ()
 
+displayRoom :: Room -> IO ()
+displayRoom (Room name desc _ _ _) = do
+                                putStrLn $ replicate (length name) '*' 
+                                putStrLn (map toUpper name)
+                                putStrLn $ replicate (length name) '*' 
+                                putStrLn desc
 
-main = promptLoop (Player room [])
+main = do
+        displayRoom $ currentRoom aWorld
+        promptLoop aWorld
 
--- temporary way of storing the world
-data Player = Player { currentRoom :: Room, inventory :: [String] }
-    deriving (Show)
+aWorld = World (Player []) room
 
 -- here are some constants to test this code.
 speak = Transitive Talk "speak" ["with", "to"] ["about"]
