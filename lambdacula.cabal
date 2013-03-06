@@ -1,0 +1,13 @@
+Name :			    lambdacula
+Version :		    0.0
+Description :       Zork-like text adventure game
+License:            GPL
+License-file:       LICENSE 
+Author:             Raveline
+Maintainer:         Raveline
+Build-Type:         Simple
+Cabal-Version:      >= 1.2
+
+Executable Lambdacula
+    Main-is:        Lambdacula.hs
+    build-depends:  base, containers 
