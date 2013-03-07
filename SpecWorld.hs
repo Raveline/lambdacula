@@ -7,7 +7,8 @@ import qualified Data.Map as Map
 
 testString = "You don't find any opening on the cube."
 testFailure = "You can't do that to the test cube !"
-testCube = RoomObject "the test cube" ["Test cube", "cube"] (Map.fromList[(Examine, "A simple test cube. Look, how pretty !"),
+testLook = "A simple test cube. Look, how pretty !"
+testCube = RoomObject "the test cube" ["Test cube", "cube"] (Map.fromList[(Examine, testLook),
                                             (Talk, "You can't talk to a cube, don't be silly"),
                                             (Move, "You push the cube. Happy now ?"),
                                             (Open, testString)]) 
@@ -16,7 +17,10 @@ main :: IO()
 main = hspec $ do
     describe "processInput" $ do
             it "Finds the action Move on theverb Speak to in a sentence" $ do
-                getTextForAction Open testCube `shouldBe` testString
+                getTextForAction testCube Open `shouldBe` testString
+
+            it "Finds the action Examine on the verb Examine in a sentence." $ do
+                getTextForAction testCube Examine `shouldBe` testLook
 
             it "Finds no action and print a default error" $ do
-                getTextForAction Zilch testCube `shouldBe` testFailure
+                getTextForAction testCube Zilch `shouldBe` testFailure
