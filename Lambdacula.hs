@@ -9,30 +9,30 @@ isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
 
-proceed :: PlayerAction -> World -> IO ()
-proceed (SimpleAction Zilch) w = do
-                                putStrLn "Huh ?"
-                                promptLoop w
-proceed (Interaction t o) w = 
-                        do
-                            x <- return $ findObject o (currentRoom w)
-                            case x of
-                                Nothing -> putStrLn $ "There is no " ++ o ++ " here !"
-                                Just realObject -> putStrLn (actionOn t realObject)
-                            promptLoop w
-proceed _ p = promptLoop p
+proceed :: World -> PlayerAction -> (String, World) 
+proceed w (SimpleAction Zilch) = ("Huh ?", w)
+proceed w (Interaction t o) = case objectUsed of  
+                                Nothing -> ("There is no " ++ o ++ " here !", w)
+                                Just realObject -> ((actionOn t realObject), w)
+                                where
+                                    objectUsed = findObject o . currentRoom $ w 
+proceed w _ = ("Whaaaaaaat ?", w) 
 
 actionOn :: Action -> RoomObject -> String
 actionOn act obj = getTextForAction act obj
 
 promptLoop :: World -> IO ()
-promptLoop player = do
+promptLoop world = do
     putStr "> "
     input <- getLine
     action <- return $ processInput input verbs 
     if (isQuit action) 
         then putStrLn "K Thx Bye"
-        else (proceed action player)
+        else
+            do
+                let reaction = proceed world action
+                putStrLn $ fst reaction
+                promptLoop $ snd reaction 
     return ()
 
 displayRoom :: Room -> IO ()
