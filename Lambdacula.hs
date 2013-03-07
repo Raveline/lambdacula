@@ -1,4 +1,3 @@
-import Data.List
 import Data.Char
 import qualified Data.Map as Map
 import Action
@@ -6,12 +5,36 @@ import Parser
 import World
 import System.IO
 
+main = do
+        displayRoom $ currentRoom aWorld
+        promptLoop aWorld
+
+-- Display a prompt, get some input, call some proceeding function
+-- to do stuff with it.
+promptLoop :: World -> IO ()
+promptLoop world = do
+    putStr "> "
+    hFlush stdout 
+    input <- getLine
+    let action = processInput input verbs 
+    if (isQuit action) 
+        then putStrLn "K Thx Bye"
+        else
+            do
+                let reaction = proceed world action
+                putStrLn $ fst reaction
+                promptLoop $ snd reaction 
+    return ()
+
+-- Check if this is a quit action.
 isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
 
+-- Given the world and an action, do some stuff... and analyze the world.
 proceed :: World -> PlayerAction -> (String, World)
 proceed w (SimpleAction Zilch) = ("Huh ?", w)
+proceed w (SimpleAction Examine) = ("", w)
 proceed w (Interaction t o) = case realObject of
                                 Nothing ->  ("There is no " ++ o ++ " here !", w)
                                 Just obj -> (promptOnAction obj t, w) 
@@ -22,36 +45,13 @@ proceed w _ = ("Whaaaat ?", w)
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
 
-promptLoop :: World -> IO ()
-promptLoop world = do
-    putStr "> "
-    hFlush stdout 
-    input <- getLine
-    action <- return $ processInput input verbs 
-    if (isQuit action) 
-        then putStrLn "K Thx Bye"
-        else
-            do
-                let reaction = proceed world action
-                putStrLn $ fst reaction
-                promptLoop $ snd reaction 
-    return ()
-
+-- Display a room description to the player.
 displayRoom :: Room -> IO ()
 displayRoom (Room name desc _ _ _) = do
                                 putStrLn $ replicate (length name) '*' 
                                 putStrLn (map toUpper name)
                                 putStrLn $ replicate (length name) '*' 
                                 putStrLn desc
-
-findObject :: String -> Room -> Maybe RoomObject
-findObject s room = find (isObject s) (objects room)
-    where   isObject :: String -> RoomObject -> Bool
-            isObject s o = s `elem` (objectAliases o)
-
-main = do
-        displayRoom $ currentRoom aWorld
-        promptLoop aWorld
 
 aWorld = World (Player []) room
 
