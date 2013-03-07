@@ -5,12 +5,14 @@ import Action
 import Parser
 
 speak = Transitive Talk "speak" ["with", "to"] ["about"]
+talk = Transitive Talk "talk" ["with", "to"] ["about"]
 ask = Transitive Talk "ask" ["about"] []
 lookFor = Phrasal Search "look" "for" [] ["in", "with"]
+examine = Transitive Examine "examine" [] ["with"]
+look = Transitive Examine "look" [] ["with"] 
+analyze = Transitive Examine "analyze" [] []
 quit = Transitive QuitGame "quit" [] []
-verbs = [speak, ask, lookFor, quit]
-
-
+verbs = [speak, talk, ask, lookFor, examine, look, analyze, quit]
 
 main :: IO()
 main = hspec $ do
@@ -23,6 +25,9 @@ main = hspec $ do
 
             it "Finds the phrasal verb \"Look for\" in a sentence" $ do
                 processInput "Look for an answer to this riddle" verbs `shouldBe` Interaction Search "answer to this riddle"
+
+            it "Decode \"Examine the cube\" as an Interaction Examine cube" $ do
+                processInput "Examine the cube" verbs `shouldBe` Interaction Examine "cube"
 
             it "Finds a complex action with two objets" $ do
                 processInput "Speak with the count about the meaning of life" verbs `shouldBe` Complex Talk "count" "meaning of life"
