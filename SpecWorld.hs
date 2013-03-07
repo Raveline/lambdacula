@@ -13,6 +13,9 @@ testCube = RoomObject "the test cube" ["Test cube", "cube"] (Map.fromList[(Exami
                                             (Move, "You push the cube. Happy now ?"),
                                             (Open, testString)]) 
 
+
+room = Room "Name" "Description" [testCube] [] [] 
+
 main :: IO()
 main = hspec $ do
     describe "processInput" $ do
@@ -24,3 +27,9 @@ main = hspec $ do
 
             it "Finds no action and print a default error" $ do
                 getTextForAction testCube Zilch `shouldBe` testFailure
+
+            it "Doesn't find an object that is not here" $ do
+               findObject "non-existing thing" room `shouldBe` Nothing
+
+            it "Finds a cube in the room" $ do
+                findObject "cube" room `shouldBe` (Just testCube) 
