@@ -10,20 +10,17 @@ isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
 
-proceed :: PlayerAction -> World -> IO ()
-proceed (SimpleAction Zilch) w = do
-                                putStrLn "Huh ?"
-                                promptLoop w
-proceed (Interaction t o) w = 
-                        do
-                            let x = findObject o (currentRoom w)
-                            putStrLn $ promptOnAction o x t
-                            promptLoop w
-proceed _ p = promptLoop p
+proceed :: World -> PlayerAction -> (String, World)
+proceed w (SimpleAction Zilch) = ("Huh ?", w)
+proceed w (Interaction t o) = case realObject of
+                                Nothing ->  ("There is no " ++ o ++ " here !", w)
+                                Just obj -> (promptOnAction obj t, w) 
+                    where 
+                        realObject = findObject o (currentRoom w)
+proceed w _ = ("Whaaaat ?", w)
 
-promptOnAction :: String -> Maybe RoomObject -> Action -> String
-promptOnAction o (Nothing) _ = "There is no " ++ o ++ " here !"
-promptOnAction _ (Just realObject) act = getTextForAction realObject act 
+promptOnAction :: RoomObject -> Action -> String
+promptOnAction = getTextForAction
 
 promptLoop :: World -> IO ()
 promptLoop world = do
