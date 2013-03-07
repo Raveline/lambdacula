@@ -4,6 +4,7 @@ import qualified Data.Map as Map
 import Action
 import Parser
 import World
+import System.IO
 
 isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
@@ -15,19 +16,19 @@ proceed (SimpleAction Zilch) w = do
                                 promptLoop w
 proceed (Interaction t o) w = 
                         do
-                            x <- return $ findObject o (currentRoom w)
-                            case x of
-                                Nothing -> putStrLn $ "There is no " ++ o ++ " here !"
-                                Just realObject -> putStrLn (actionOn t realObject)
+                            let x = findObject o (currentRoom w)
+                            putStrLn $ promptOnAction o x t
                             promptLoop w
 proceed _ p = promptLoop p
 
-actionOn :: Action -> RoomObject -> String
-actionOn act obj = getTextForAction act obj
+promptOnAction :: String -> Maybe RoomObject -> Action -> String
+promptOnAction o (Nothing) _ = "There is no " ++ o ++ " here !"
+promptOnAction _ (Just realObject) act = getTextForAction realObject act 
 
 promptLoop :: World -> IO ()
 promptLoop player = do
     putStr "> "
+    hFlush stdout 
     input <- getLine
     action <- return $ processInput input verbs 
     if (isQuit action) 
@@ -59,16 +60,15 @@ talk = Transitive Talk "talk" ["with", "to"] ["about"]
 ask = Transitive Talk "ask" ["about"] []
 lookFor = Phrasal Search "look" "for" [] ["in", "with"]
 examine = Transitive Examine "examine" [] ["with"]
-look = Transitive Examine "look" [] ["with"]
+look = Transitive Examine "look" [] ["with"] 
 analyze = Transitive Examine "analyze" [] []
 quit = Transitive QuitGame "quit" [] []
 verbs = [speak, talk, ask, lookFor, examine, look, analyze, quit]
 
-
-testCube = RoomObject "the test cube" ["Test cube", "cube"] (Map.fromList[(Examine, "A simple test cube. Look, how pretty !"),
+testCube = RoomObject "the test cube" ["test cube", "cube"] (Map.fromList[(Examine, "A simple test cube. Look, how pretty !"),
                                             (Talk, "You can't talk to a cube, don't be silly"),
                                             (Move, "You push the cube. Happy now ?")]) 
 
 
-room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" [testCube] [] [] 
+room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?\nThere is a nice **test cube** in the center of the non-space." [testCube] [] [] 
 
