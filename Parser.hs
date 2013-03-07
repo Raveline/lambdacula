@@ -51,7 +51,8 @@ analyseObjects :: [String] -> [String] -> [String] -> [String]
 analyseObjects sentence fstWds sndWds = matcher sentence posFst posSnd
     where 
         matcher :: [String] -> Maybe Int -> Maybe Int -> [String]
-        matcher _ Nothing Nothing = []
+        matcher [] _ _ = []
+        matcher s Nothing Nothing = [concatAndNoArticles s]
         matcher s Nothing (Just x) = [concatAndNoArticles . take x $ s] ++ [concatAndNoArticles . drop x $ s]
         matcher s (Just 0) Nothing = [concatAndNoArticles . tail $ s]
         matcher s (Just x) Nothing = [concatAndNoArticles . take x $ s]
