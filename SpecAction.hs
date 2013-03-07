@@ -31,3 +31,6 @@ main = hspec $ do
 
             it "Finds a complex action with two objets" $ do
                 processInput "Speak with the count about the meaning of life" verbs `shouldBe` Complex Talk "count" "meaning of life"
+
+            it "Finds the SimpleAction Examine" $ do
+                processInput "Look" verbs `shouldBe` SimpleAction Examine
