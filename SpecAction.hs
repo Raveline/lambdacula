@@ -10,9 +10,10 @@ ask = Transitive Talk "ask" ["about"] []
 lookFor = Phrasal Search "look" "for" [] ["in", "with"]
 examine = Transitive Examine "examine" [] ["with"]
 look = Transitive Examine "look" [] ["with"] 
+lookAt = Phrasal Examine "look" "at" [] ["with"]
 analyze = Transitive Examine "analyze" [] []
 quit = Transitive QuitGame "quit" [] []
-verbs = [speak, talk, ask, lookFor, examine, look, analyze, quit]
+verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, quit]
 
 main :: IO()
 main = hspec $ do
@@ -34,3 +35,6 @@ main = hspec $ do
 
             it "Finds the SimpleAction Examine" $ do
                 processInput "Look" verbs `shouldBe` SimpleAction Examine
+
+            it "Shows that Look can be a phrasal (look at) as well as a transitive verb." $ do
+                processInput "Look at the painting" verbs `shouldBe` Interaction Examine "painting"
