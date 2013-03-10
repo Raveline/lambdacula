@@ -1,4 +1,5 @@
 import Data.Char
+import Control.Monad.State
 import qualified Data.Map as Map
 import Action
 import Parser
@@ -6,12 +7,12 @@ import World
 import System.IO
 
 main = do
-        displayRoom $ currentRoom aWorld
+        printStrs . displayRoom $ currentRoom aWorld
         promptLoop aWorld
 
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
-promptLoop :: World -> IO ()
+promptLoop :: World -> IO()
 promptLoop world = do
     putStr "> "
     hFlush stdout 
@@ -21,8 +22,8 @@ promptLoop world = do
         then putStrLn "K Thx Bye"
         else
             do
-                let reaction = proceed world action
-                putStrLn $ fst reaction
+                let reaction = runState (proceed action) world 
+                printStrs $ fst reaction
                 promptLoop $ snd reaction 
     return ()
 
@@ -32,26 +33,25 @@ isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
 
 -- Given the world and an action, do some stuff... and analyze the world.
-proceed :: World -> PlayerAction -> (String, World)
-proceed w (SimpleAction Zilch) = ("Huh ?", w)
-proceed w (SimpleAction Examine) = ("", w)
-proceed w (Interaction t o) = case realObject of
-                                Nothing ->  ("There is no " ++ o ++ " here !", w)
-                                Just obj -> (promptOnAction obj t, w) 
-                    where 
-                        realObject = findObject o (currentRoom w)
-proceed w _ = ("Whaaaat ?", w)
+proceed :: PlayerAction -> State World [String]
+proceed (SimpleAction Zilch) = state $ \w -> (["Huh ?"], w)
+proceed (SimpleAction Examine) = state $ \w -> (displayRoom $ currentRoom w, w)
+proceed (Interaction t o) = state $ \w -> case findObject o (currentRoom w) of
+                                Nothing -> (["There is no " ++ o ++ " here !"], w)
+                                Just obj -> ([promptOnAction obj t], w) 
+proceed _ = state $ \w -> (["Whaaaat ?"], w)
+
+printStrs = do
+            mapM putStrLn
 
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
 
 -- Display a room description to the player.
-displayRoom :: Room -> IO ()
-displayRoom (Room name desc _ _ _) = do
-                                putStrLn $ replicate (length name) '*' 
-                                putStrLn (map toUpper name)
-                                putStrLn $ replicate (length name) '*' 
-                                putStrLn desc
+displayRoom :: Room -> [String] 
+displayRoom (Room name desc _ _ _) = 
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc]
+    where stars = replicate (length name) '*' 
 
 aWorld = World (Player []) room
 
@@ -61,10 +61,11 @@ talk = Transitive Talk "talk" ["with", "to"] ["about"]
 ask = Transitive Talk "ask" ["about"] []
 lookFor = Phrasal Search "look" "for" [] ["in", "with"]
 examine = Transitive Examine "examine" [] ["with"]
+lookAt = Phrasal Examine "look" "at" [] ["with"]
 look = Transitive Examine "look" [] ["with"] 
 analyze = Transitive Examine "analyze" [] []
 quit = Transitive QuitGame "quit" [] []
-verbs = [speak, talk, ask, lookFor, examine, look, analyze, quit]
+verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, quit]
 
 testCube = RoomObject "the test cube" ["test cube", "cube"] (Map.fromList[(Examine, "A simple test cube. Look, how pretty !"),
                                             (Talk, "You can't talk to a cube, don't be silly"),
