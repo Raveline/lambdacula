@@ -1,10 +1,12 @@
 import Data.Char
 import Control.Monad.State
+import Control.Applicative
 import qualified Data.Map as Map
+import System.IO
 import Action
 import Parser
 import World
-import System.IO
+import GameData
 
 main = do
         printStrs . displayRoom $ currentRoom aWorld
@@ -34,12 +36,14 @@ isQuit _ = False
 
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> State World [String]
-proceed (SimpleAction Zilch) = state $ \w -> (["Huh ?"], w)
+proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = state $ \w -> (displayRoom $ currentRoom w, w)
-proceed (Interaction t o) = state $ \w -> case findObject o (currentRoom w) of
-                                Nothing -> (["There is no " ++ o ++ " here !"], w)
-                                Just obj -> ([promptOnAction obj t], w) 
-proceed _ = state $ \w -> (["Whaaaat ?"], w)
+proceed (Interaction act obj) = do 
+                                w <- get
+                                case findObject obj (currentRoom w) of
+                                    Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
+                                    Just obj -> actOn obj act
+proceed _ = singleAnswer "Whaaaat ?"
 
 printStrs = do
             mapM putStrLn
@@ -53,24 +57,6 @@ displayRoom (Room name desc _ _ _) =
                                 [stars] ++ [map toUpper name] ++ [stars] ++ [desc]
     where stars = replicate (length name) '*' 
 
-aWorld = World (Player []) room
+aWorld = World (Player []) room (mapFromRooms [room, room'])
 
--- here are some constants to test this code.
-speak = Transitive Talk "speak" ["with", "to"] ["about"]
-talk = Transitive Talk "talk" ["with", "to"] ["about"]
-ask = Transitive Talk "ask" ["about"] []
-lookFor = Phrasal Search "look" "for" [] ["in", "with"]
-examine = Transitive Examine "examine" [] ["with"]
-lookAt = Phrasal Examine "look" "at" [] ["with"]
-look = Transitive Examine "look" [] ["with"] 
-analyze = Transitive Examine "analyze" [] []
-quit = Transitive QuitGame "quit" [] []
-verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, quit]
-
-testCube = RoomObject "the test cube" ["test cube", "cube"] (Map.fromList[(Examine, "A simple test cube. Look, how pretty !"),
-                                            (Talk, "You can't talk to a cube, don't be silly"),
-                                            (Move, "You push the cube. Happy now ?")]) 
-
-
-room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?\nThere is a nice **test cube** in the center of the non-space." [testCube] [] [] 
 
