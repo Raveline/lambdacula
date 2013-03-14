@@ -40,9 +40,9 @@ proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = state $ \w -> (displayRoom $ currentRoom w, w)
 proceed (Interaction act obj) = do 
                                 w <- get
-                                case findObject obj (currentRoom w) of
+                                case findObjectInteraction obj (currentRoom w) of
                                     Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
-                                    Just obj -> actOn obj act
+                                    Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
 printStrs = do
@@ -58,5 +58,3 @@ displayRoom (Room name desc _ _ _) =
     where stars = replicate (length name) '*' 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
-
-
