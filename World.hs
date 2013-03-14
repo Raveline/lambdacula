@@ -50,25 +50,24 @@ data Room =    Room { roomName :: String
 -- Was refactored to change the return type. 
 -- This is way too long and ugly.
 -- There MUST be a better way to do this !
-findObjectInteraction :: String -> Room -> Maybe (Action -> State World [String])
-findObjectInteraction s room
-    | isNotOnlyMatch matchObjects matchCharacters matchExits = Nothing -- To replace by an "AMBIGUOUS MESSAGE"
-    | matchObjects /= [] = returnMatch matchObjects
-    | matchCharacters /= [] = returnMatch matchCharacters
-    | matchExits /= [] = returnMatch matchExits
-    | otherwise = Nothing
-    where
-        matchObjects = findAMatch s (objects room)
-        matchCharacters = findAMatch s (characters room)
-        matchExits = findAMatch s (exits room) 
-        findAMatch s = filter (match s)
-        isNotOnlyMatch :: [a] -> [b] -> [c] -> Bool
-        isNotOnlyMatch a b c = length a + length b + length c > 1
-        returnMatch [x] = Just (actOn x)
 
 data RoomObject = RoomObject {   objectName :: String
                                 , objectAliases :: [String], 
                                 objectReactions :: (Action -> State World [String])} 
+
+findObjectInteraction :: String -> Room -> Maybe (Action -> State World [String])
+findObjectInteraction s room = case newWorlds of
+                                [x] -> Just x
+                                _ -> Nothing
+                where 
+                    newWorlds = actionedObjects ++ actionedCharacters ++ actionedExits
+                    actionedObjects = actOnAll . findAMatch $ objects room
+                    actionedCharacters = actOnAll . findAMatch $ characters room
+                    actionedExits = actOnAll . findAMatch $ exits room
+                    findAMatch :: (Actionable a) => [a] -> [a]
+                    findAMatch = filter (match s) 
+                    actOnAll :: (Actionable a) => [a] -> [(Action -> State World [String])]
+                    actOnAll = fmap actOn
 
 instance Show RoomObject where
     show = show . objectName
@@ -91,7 +90,7 @@ data Exit = Exit { exitName :: String
                 , exitOpened :: Bool } 
 
 instance Show Exit where
-    show = show . exitName
+    show e = (exitName e)++ " : "++ (exitDescription e)
 
 instance Eq Exit where
     (==) e1 e2 = (exitName e1) == (exitName e2)
