@@ -9,8 +9,17 @@ where
 
 -- Transitive verbs are simple : the verb itself, then eventually some preposition, and its objects.
 -- Phrasal are a bit twisty : the form + the phrasal will change the meaning of this.
-data Verb = Transitive { actionType :: Action, form :: String , preposition :: [String], complement :: [String] }
-            | Phrasal { actionType :: Action, form :: String, phrasal :: String , preposition :: [String], complements :: [String] }
+data Verb = Transitive {    actionType :: Action
+                            , form :: String
+                            , preposition :: [String]
+                            , complement :: [String] 
+                        }
+            | Phrasal {     actionType :: Action
+                            , form :: String
+                            , phrasal :: String 
+                            , preposition :: [String]
+                            , complements :: [String] 
+            }
                 deriving (Show, Eq)
 
 getVerbAction :: Verb -> Action
