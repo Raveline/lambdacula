@@ -1,3 +1,7 @@
+module Lambdacula (
+    proceed
+)
+where
 import Data.Char
 import Control.Monad.State
 import Control.Applicative
@@ -53,8 +57,10 @@ promptOnAction = getTextForAction
 
 -- Display a room description to the player.
 displayRoom :: Room -> [String] 
-displayRoom (Room name desc _ _ _) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc]
-    where stars = replicate (length name) '*' 
+displayRoom (Room name desc _ _ exits) = 
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
+    where 
+        stars = replicate (length name) '*' 
+        displayExits = ["Exits : "] ++ ["\t" ++ x ++ "\n"|x <- map(show) exits] 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
