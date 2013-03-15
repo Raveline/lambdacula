@@ -111,7 +111,7 @@ instance Actionable Character where
     match s npc = s `elem` ([name npc] ++ aliases npc)
 
 mapFromRooms :: [Room] -> Map.Map String Room
-mapFromRooms rs = Map.fromList $ map (\r -> (roomName r, r)) rs
+mapFromRooms rs = Map.fromList $ map ((,) <$> roomName <*> id) rs
 
 getRoomByName :: World -> String -> Room
 getRoomByName w s = case Map.lookup s $ worldRooms w of
@@ -125,4 +125,4 @@ basicMove r Move = singleAnswer "HERE PUT A MOVE"
 basicMove _ _ = singleAnswer "What on earth are you trying to do ?"
 
 singleAnswer :: String -> State World [String]
-singleAnswer s = state $ (,) [s]
+singleAnswer = return . (:[])
