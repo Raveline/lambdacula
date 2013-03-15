@@ -31,6 +31,6 @@ data PlayerAction =   SimpleAction Action
                 | Complex Action String String 
     deriving(Show,Eq)
 
-data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | QuitGame | Zilch
+data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | QuitGame | Eat | Zilch
     deriving (Eq, Show, Ord)
 
