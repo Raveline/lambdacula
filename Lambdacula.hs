@@ -18,7 +18,7 @@ main = do
 
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
-promptLoop :: World -> IO()
+promptLoop :: World -> IO ()
 promptLoop world = do
     input <- getAction
     let action = processInput input verbs
@@ -32,7 +32,7 @@ runAction world s = do
   where reaction = runState s world 
 
 -- Ask for an action.
-getAction :: IO (String)
+getAction :: IO String
 getAction = do
   putStr "> "
   hFlush stdout
@@ -43,14 +43,10 @@ quitOrContinue :: PlayerAction -> Either String (State World [String])
 quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
 quitOrContinue a = Right $ proceed a
 
-isQuit :: PlayerAction -> Bool
-isQuit (SimpleAction QuitGame) = True
-isQuit _ = False
-
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> State World [String]
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
-proceed (SimpleAction Examine) = state $ \w -> (displayRoom $ currentRoom w, w)
+proceed (SimpleAction Examine) = state $ (,) <$> displayRoom . currentRoom <*> id
 proceed (Interaction act obj) = do 
                                 w <- get
                                 case findObjectInteraction obj (currentRoom w) of
@@ -58,8 +54,7 @@ proceed (Interaction act obj) = do
                                     Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
-printStrs = do
-            mapM putStrLn
+printStrs = mapM putStrLn
 
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
@@ -69,7 +64,7 @@ displayRoom :: Room -> [String]
 displayRoom (Room name desc _ _ exits) = 
                                 [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
     where 
-        stars = replicate (length name) '*' 
-        displayExits = ["Exits : "] ++ ["\t" ++ x ++ "\n"|x <- map(show) exits] 
+        stars = map (const '*') name 
+        displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
