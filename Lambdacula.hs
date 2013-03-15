@@ -18,7 +18,7 @@ main = do
 
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
-promptLoop :: World -> IO()
+promptLoop :: World -> IO ()
 promptLoop world = do
     input <- getAction
     let action = processInput input verbs
@@ -32,7 +32,7 @@ runAction world s = do
   where reaction = runState s world 
 
 -- Ask for an action.
-getAction :: IO (String)
+getAction :: IO String
 getAction = do
   putStr "> "
   hFlush stdout
@@ -54,8 +54,7 @@ proceed (Interaction act obj) = do
                                     Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
-printStrs = do
-            mapM putStrLn
+printStrs = mapM putStrLn
 
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
@@ -66,6 +65,6 @@ displayRoom (Room name desc _ _ exits) =
                                 [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
     where 
         stars = map (const '*') name 
-        displayExits = ["Exits : "] ++ ["\t" ++ x ++ "\n"|x <- map(show) exits] 
+        displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
