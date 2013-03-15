@@ -24,6 +24,8 @@ useTestCube :: Action -> State World [String]
 useTestCube Examine = singleAnswer "A simple test cube. Look, how pretty !"
 useTestCube Talk = singleAnswer "You can't talk to a cube, don't be silly."
 useTestCube Move = singleAnswer "You push the cube. Happy now ?"
+useTestCube Open = singleAnswer "You don't find any opening on the cube"
+useTestCube _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
 
 
 verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, quit]
