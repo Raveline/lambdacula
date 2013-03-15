@@ -1,5 +1,5 @@
-module Lambdacula (
-    proceed
+module Lambdacula
+( proceed
 )
 where
 import Data.Char
@@ -20,20 +20,29 @@ main = do
 -- to do stuff with it.
 promptLoop :: World -> IO()
 promptLoop world = do
-    putStr "> "
-    hFlush stdout 
-    input <- getLine
-    let action = processInput input verbs 
-    if (isQuit action) 
-        then putStrLn "K Thx Bye"
-        else
-            do
-                let reaction = runState (proceed action) world 
-                printStrs $ fst reaction
-                promptLoop $ snd reaction 
-    return ()
+    input <- getAction
+    let action = processInput input verbs
+    either putStrLn (runAction world) $ quitOrContinue action
 
--- Check if this is a quit action.
+-- Execute an action
+runAction :: World -> State World [String] -> IO ()
+runAction world s = do
+  printStrs $ fst reaction
+  promptLoop $ snd reaction 
+  where reaction = runState s world 
+
+-- Ask for an action.
+getAction :: IO (String)
+getAction = do
+  putStr "> "
+  hFlush stdout
+  getLine
+
+-- Check if the proposed action is to quit or to do something.
+quitOrContinue :: PlayerAction -> Either String (State World [String])
+quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
+quitOrContinue a = Right $ proceed a
+
 isQuit :: PlayerAction -> Bool
 isQuit (SimpleAction QuitGame) = True
 isQuit _ = False
