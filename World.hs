@@ -19,7 +19,9 @@ where
 import qualified Data.Map as Map
 import Action
 import Data.List
+import Data.Maybe
 import Control.Monad.State
+import Control.Applicative
 
 type Conversations = Map.Map String String
 type Interactions = Map.Map Action String
@@ -53,7 +55,7 @@ data Room =    Room { roomName :: String
 
 data RoomObject = RoomObject {   objectName :: String
                                 , objectAliases :: [String], 
-                                objectReactions :: (Action -> State World [String])} 
+                                objectReactions :: Action -> State World [String]} 
 
 findObjectInteraction :: String -> Room -> Maybe (Action -> State World [String])
 findObjectInteraction s room = case newWorlds of
@@ -66,19 +68,18 @@ findObjectInteraction s room = case newWorlds of
                     actionedExits = actOnAll . findAMatch $ exits room
                     findAMatch :: (Actionable a) => [a] -> [a]
                     findAMatch = filter (match s) 
-                    actOnAll :: (Actionable a) => [a] -> [(Action -> State World [String])]
+                    actOnAll :: (Actionable a) => [a] -> [Action -> State World [String]]
                     actOnAll = fmap actOn
 
 instance Show RoomObject where
     show = show . objectName
 
 instance Eq RoomObject where
-    (==) r1 r2 = (objectName r1) == (objectName r2)
+    (==) r1 r2 = objectName r1 == objectName r2
 
 instance Actionable RoomObject where
-    actOn obj action = (reaction action)
-        where reaction = objectReactions obj
-    match s obj = s `elem` ([objectName obj] ++ objectAliases obj)
+    actOn = objectReactions
+    match s = (s `elem`) . ((:) <$> objectName <*> objectAliases)
 
 getTextForAction :: RoomObject -> Action -> String 
 getTextForAction obj act = "Test" 
@@ -86,19 +87,18 @@ getTextForAction obj act = "Test"
 data Exit = Exit { exitName :: String
                 , exitAliases :: [String] 
                 , exitDescription :: String
-                , exitActions :: (Action -> State World [String])
+                , exitActions :: Action -> State World [String]
                 , exitOpened :: Bool } 
 
 instance Show Exit where
-    show e = (exitName e)++ " : "++ (exitDescription e)
+    show e = exitName e ++ " : " ++ exitDescription e
 
 instance Eq Exit where
-    (==) e1 e2 = (exitName e1) == (exitName e2)
+    (==) e1 e2 = exitName e1 == exitName e2
 
 instance Actionable Exit where
-    actOn exit action = (reaction action)
-        where reaction = exitActions exit
-    match s ex  = s `elem` ([exitName ex] ++ exitAliases ex)
+    actOn = exitActions
+    match s = (s `elem`) . ((:) <$> exitName <*> exitAliases)
 
 data Character = Character {    name :: String, 
                                 aliases :: [String], 
@@ -108,16 +108,14 @@ data Character = Character {    name :: String,
 
 instance Actionable Character where
     actOn char action = error "Not implemented"
-    match s npc = s `elem` ([name npc] ++ aliases npc)
+    match s = (s `elem`) . ((:) <$> name <*> aliases)
 
 mapFromRooms :: [Room] -> Map.Map String Room
-mapFromRooms rs = Map.fromList $ map (\r -> (roomName r, r)) rs
+mapFromRooms rs = Map.fromList $ map ((,) <$> roomName <*> id) rs
 
 getRoomByName :: World -> String -> Room
-getRoomByName w s = case Map.lookup s $ worldRooms w of
-                        Nothing -> error "Error in the room names"
-                        Just r -> r
-
+getRoomByName w s =
+  fromMaybe (error "Error in the room names") $ Map.lookup s $ worldRooms w
 
 
 basicMove :: Room -> Action -> State World [String]
@@ -125,4 +123,4 @@ basicMove r Move = singleAnswer "HERE PUT A MOVE"
 basicMove _ _ = singleAnswer "What on earth are you trying to do ?"
 
 singleAnswer :: String -> State World [String]
-singleAnswer s = state $ (,) [s]
+singleAnswer = return . (:[])
