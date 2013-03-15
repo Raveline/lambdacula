@@ -43,14 +43,10 @@ quitOrContinue :: PlayerAction -> Either String (State World [String])
 quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
 quitOrContinue a = Right $ proceed a
 
-isQuit :: PlayerAction -> Bool
-isQuit (SimpleAction QuitGame) = True
-isQuit _ = False
-
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> State World [String]
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
-proceed (SimpleAction Examine) = state $ \w -> (displayRoom $ currentRoom w, w)
+proceed (SimpleAction Examine) = state $ (,) <$> displayRoom . currentRoom <*> id
 proceed (Interaction act obj) = do 
                                 w <- get
                                 case findObjectInteraction obj (currentRoom w) of
