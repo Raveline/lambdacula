@@ -10,4 +10,4 @@ Cabal-Version:      >= 1.2
 
 Executable Lambdacula
     Main-is:        Lambdacula.hs
-    build-depends:  base, containers 
+    build-depends:  base, containers, mtl
