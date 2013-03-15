@@ -1,35 +1,32 @@
 -- These are hspec tests.
 import Test.Hspec
 import Test.QuickCheck
+import Control.Monad.State
 import Action
 import World
+import Lambdacula 
+import GameData
 import qualified Data.Map as Map
 
-testString = "You don't find any opening on the cube."
-testFailure = "You can't do that to the test cube !"
+testString = "You don't find any opening on the cube"
+testFailure = "You can't do that to the test cube"
 testLook = "A simple test cube. Look, how pretty !"
-testCube = RoomObject "the test cube" ["Test cube", "cube"] (Map.fromList[(Examine, testLook),
-                                            (Talk, "You can't talk to a cube, don't be silly"),
-                                            (Move, "You push the cube. Happy now ?"),
-                                            (Open, testString)]) 
+testNoSuchObject = "There is no gizmo here !"
 
-
-room = Room "Name" "Description" [testCube] [] [] 
+world = World (Player []) room (mapFromRooms [room, room'])
+testProceed x = head . fst $ runState (proceed x) world
 
 main :: IO()
 main = hspec $ do
     describe "processInput" $ do
             it "Finds the action Move on theverb Speak to in a sentence" $ do
-                getTextForAction testCube Open `shouldBe` testString
+                testProceed (Interaction Open "cube") `shouldBe` testString
 
             it "Finds the action Examine on the verb Examine in a sentence." $ do
-                getTextForAction testCube Examine `shouldBe` testLook
+                testProceed (Interaction Examine "cube") `shouldBe` testLook
 
             it "Finds no action and print a default error" $ do
-                getTextForAction testCube Zilch `shouldBe` testFailure
+                testProceed (Interaction Zilch "cube") `shouldBe` testFailure
 
-            it "Doesn't find an object that is not here" $ do
-               findObject "non-existing thing" room `shouldBe` Nothing
-
-            it "Finds a cube in the room" $ do
-                findObject "cube" room `shouldBe` (Just testCube) 
+            it "Doesn't find an object and says so" $ do
+                testProceed (Interaction Open "gizmo") `shouldBe` testNoSuchObject
