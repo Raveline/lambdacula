@@ -65,7 +65,7 @@ displayRoom :: Room -> [String]
 displayRoom (Room name desc _ _ exits) = 
                                 [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
     where 
-        stars = replicate (length name) '*' 
+        stars = map (const '*') name 
         displayExits = ["Exits : "] ++ ["\t" ++ x ++ "\n"|x <- map(show) exits] 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
