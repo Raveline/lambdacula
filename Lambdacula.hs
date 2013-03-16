@@ -2,7 +2,6 @@ module Lambdacula
 ( proceed
 )
 where
-import Data.Char
 import Control.Monad.State
 import Control.Applicative
 import qualified Data.Map as Map
@@ -59,12 +58,5 @@ printStrs = mapM putStrLn
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
 
--- Display a room description to the player.
-displayRoom :: Room -> [String] 
-displayRoom (Room name desc _ _ exits) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
-    where 
-        stars = map (const '*') name 
-        displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
