@@ -2,10 +2,10 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Monad.State
-import Action
-import World
-import Lambdacula 
-import GameData
+import Lambdacula.Action
+import Lambdacula.World
+import Lambdacula.GameData
+import Main
 import qualified Data.Map as Map
 
 testString = "You don't find any opening on the cube"
