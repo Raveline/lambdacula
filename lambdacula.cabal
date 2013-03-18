@@ -11,8 +11,4 @@ Cabal-Version:      >= 1.8
 Executable Lambdacula
     Main-is:        Main.hs
     hs-source-dirs: src
-<<<<<<< HEAD
     build-depends:  base, containers, mtl, split
-=======
-    build-depends:  base, containers, mtl
->>>>>>> 7b1cad5cda9a4be32f51f30545fed4cd4c921df3
