@@ -40,12 +40,12 @@ getAction = do
   getLine
 
 -- Check if the proposed action is to quit or to do something.
-quitOrContinue :: PlayerAction -> Either String (State World [String])
+quitOrContinue :: PlayerAction -> Either String WorldAction
 quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
 quitOrContinue a = Right $ proceed a
 
 -- Given the world and an action, do some stuff... and analyze the world.
-proceed :: PlayerAction -> State World [String]
+proceed :: PlayerAction -> WorldAction 
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = state $ (,) <$> displayRoom . currentRoom <*> id
 proceed (Interaction act obj) = do 
@@ -56,9 +56,5 @@ proceed (Interaction act obj) = do
 proceed _ = singleAnswer "Whaaaat ?"
 
 printStrs = mapM putStrLn . format80
-
-promptOnAction :: RoomObject -> Action -> String
-promptOnAction = getTextForAction
-
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
