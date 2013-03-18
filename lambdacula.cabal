@@ -6,8 +6,9 @@ License-file:       LICENSE
 Author:             Raveline
 Maintainer:         Raveline
 Build-Type:         Simple
-Cabal-Version:      >= 1.2
+Cabal-Version:      >= 1.8
 
 Executable Lambdacula
-    Main-is:        Lambdacula.hs
-    build-depends:  base, containers, mtl
+    Main-is:        Main.hs
+    hs-source-dirs: src
+    build-depends:  base, containers, mtl, split
