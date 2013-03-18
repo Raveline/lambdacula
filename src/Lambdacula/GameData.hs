@@ -4,6 +4,7 @@ import Control.Monad.State
 import qualified Data.Map as Map
 import Lambdacula.Action
 import Lambdacula.World
+import Lambdacula.Display
 
 -- VERBS
 speak = Transitive Talk "speak" ["with", "to"] ["about"]
@@ -29,6 +30,12 @@ useTestCube Open = singleAnswer "You don't find any opening on the cube"
 useTestCube Eat = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
 useTestCube _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
 
+basicMove :: Room -> Action -> State World [String]
+basicMove r Move = do
+                    w <- get
+                    put $ World (player w) r (worldRooms w) 
+                    return $ displayRoom r
+basicMove _ _ = singleAnswer "What on earth are you trying to do ?"
 
 verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit]
 

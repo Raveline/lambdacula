@@ -11,6 +11,7 @@ import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.GameData
 import Lambdacula.World
+import Lambdacula.Display
 
 main = do
         printStrs . displayRoom $ currentRoom aWorld
@@ -39,12 +40,12 @@ getAction = do
   getLine
 
 -- Check if the proposed action is to quit or to do something.
-quitOrContinue :: PlayerAction -> Either String (State World [String])
+quitOrContinue :: PlayerAction -> Either String WorldAction
 quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
 quitOrContinue a = Right $ proceed a
 
 -- Given the world and an action, do some stuff... and analyze the world.
-proceed :: PlayerAction -> State World [String]
+proceed :: PlayerAction -> WorldAction 
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = state $ (,) <$> displayRoom . currentRoom <*> id
 proceed (Interaction act obj) = do 
@@ -54,10 +55,6 @@ proceed (Interaction act obj) = do
                                     Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
-printStrs = mapM putStrLn
-
-promptOnAction :: RoomObject -> Action -> String
-promptOnAction = getTextForAction
-
+printStrs = mapM putStrLn . format80
 
 aWorld = World (Player []) room (mapFromRooms [room, room'])
