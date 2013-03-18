@@ -11,9 +11,7 @@ module Lambdacula.World
     Player(..),
     World(..),
     Actionable(..),
-    basicMove,
-    singleAnswer,
-    displayRoom
+    singleAnswer
 )
 where
 
@@ -119,20 +117,5 @@ getRoomByName :: World -> String -> Room
 getRoomByName w s =
   fromMaybe (error "Error in the room names") $ Map.lookup s $ worldRooms w
 
-basicMove :: Room -> Action -> State World [String]
-basicMove r Move = do
-                    w <- get
-                    put $ World (player w) r (worldRooms w) 
-                    return $ displayRoom r
-basicMove _ _ = singleAnswer "What on earth are you trying to do ?"
-
 singleAnswer :: String -> State World [String]
 singleAnswer = return . (:[])
-
--- Display a room description to the player.
-displayRoom :: Room -> [String] 
-displayRoom (Room name desc _ _ exits) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
-    where 
-        stars = map (const '*') name 
-        displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
