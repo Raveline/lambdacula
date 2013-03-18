@@ -11,6 +11,7 @@ import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.GameData
 import Lambdacula.World
+import Lambdacula.Display
 
 main = do
         printStrs . displayRoom $ currentRoom aWorld
@@ -54,7 +55,7 @@ proceed (Interaction act obj) = do
                                     Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
-printStrs = mapM putStrLn
+printStrs = mapM putStrLn . format80
 
 promptOnAction :: RoomObject -> Action -> String
 promptOnAction = getTextForAction
