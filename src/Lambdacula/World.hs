@@ -2,7 +2,6 @@ module Lambdacula.World
 (
     Room(..),
     RoomObject(..),
-    getTextForAction,
     findObjectInteraction,
     mapFromRooms,
     getRoomByName,
@@ -11,7 +10,8 @@ module Lambdacula.World
     Player(..),
     World(..),
     Actionable(..),
-    singleAnswer
+    singleAnswer,
+    WorldAction
 )
 where
 
@@ -30,12 +30,14 @@ type WorldAction = State World [String]
 class Actionable f where 
     -- Process an action on this object, return the world 
     -- and a string to tell what happened
-    actOn :: f -> Action -> State World [String] 
+    actOn :: f -> Action -> WorldAction 
     -- Check if a string match this object (usually by looking
     -- at aliases).
     match :: String -> f -> Bool
 
-data World = World { player :: Player, currentRoom :: Room, worldRooms :: Map.Map String Room }
+data World = World { player :: Player, 
+                    currentRoom :: Room, 
+                    worldRooms :: Map.Map String Room }
 
 data Player = Player { inventory :: [String] }
     deriving (Show)
@@ -48,28 +50,11 @@ data Room =    Room { roomName :: String
                 }
     deriving (Show, Eq)
 
--- Check if a string is one of an alias of one of the object in a room
--- Was refactored to change the return type. 
--- This is way too long and ugly.
--- There MUST be a better way to do this !
+data RoomObject = RoomObject { 
+                     objectName :: String
+                    ,objectAliases :: [String]
+                    ,objectReactions :: Action -> WorldAction }
 
-data RoomObject = RoomObject {   objectName :: String
-                                , objectAliases :: [String], 
-                                objectReactions :: Action -> State World [String]} 
-
-findObjectInteraction :: String -> Room -> Maybe (Action -> State World [String])
-findObjectInteraction s room = case newWorlds of
-                                [x] -> Just x
-                                _ -> Nothing
-                where 
-                    newWorlds = actionedObjects ++ actionedCharacters ++ actionedExits
-                    actionedObjects = actOnAll . findAMatch $ objects room
-                    actionedCharacters = actOnAll . findAMatch $ characters room
-                    actionedExits = actOnAll . findAMatch $ exits room
-                    findAMatch :: (Actionable a) => [a] -> [a]
-                    findAMatch = filter (match s) 
-                    actOnAll :: (Actionable a) => [a] -> [Action -> State World [String]]
-                    actOnAll = fmap actOn
 
 instance Show RoomObject where
     show = show . objectName
@@ -81,13 +66,10 @@ instance Actionable RoomObject where
     actOn = objectReactions
     match s = (s `elem`) . ((:) <$> objectName <*> objectAliases)
 
-getTextForAction :: RoomObject -> Action -> String 
-getTextForAction obj act = "Test" 
-
 data Exit = Exit { exitName :: String
                 , exitAliases :: [String] 
                 , exitDescription :: String
-                , exitActions :: Action -> State World [String]
+                , exitActions :: Action -> WorldAction 
                 , exitOpened :: Bool } 
 
 instance Show Exit where
@@ -110,12 +92,34 @@ instance Actionable Character where
     actOn char action = error "Not implemented"
     match s = (s `elem`) . ((:) <$> name <*> aliases)
 
+data ObjectStatus = Open | Closed | Nada
+
+-- Given a string and a room, try to find a RoomObject,
+-- an Exit or a Character matching the string. Send back
+-- a potential reaction function.
+findObjectInteraction :: String -> Room -> Maybe (Action -> WorldAction) 
+findObjectInteraction s room = case newWorlds of
+                                [x] -> Just x
+                                _ -> Nothing
+            where 
+                newWorlds = actionedObjects ++ actionedCharacters ++ actionedExits
+                actionedObjects = actOnAll . findAMatch $ objects room
+                actionedCharacters = actOnAll . findAMatch $ characters room
+                actionedExits = actOnAll . findAMatch $ exits room
+                findAMatch :: (Actionable a) => [a] -> [a]
+                findAMatch = filter (match s) 
+                actOnAll :: (Actionable a) => [a] -> [Action -> WorldAction] 
+                actOnAll = fmap actOn
+
+-- Depr.
 mapFromRooms :: [Room] -> Map.Map String Room
 mapFromRooms rs = Map.fromList $ map ((,) <$> roomName <*> id) rs
 
+-- Depr.
 getRoomByName :: World -> String -> Room
 getRoomByName w s =
   fromMaybe (error "Error in the room names") $ Map.lookup s $ worldRooms w
 
-singleAnswer :: String -> State World [String]
+-- Given a string, will return the World "as it is" and the string.
+singleAnswer :: String -> WorldAction 
 singleAnswer = return . (:[])
