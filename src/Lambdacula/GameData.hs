@@ -17,36 +17,64 @@ lookFor = Phrasal Search "look" "for" [] ["in", "with"]
 examine = Transitive Examine "examine" [] ["with"]
 lookAt = Phrasal Examine "look" "at" [] ["with"]
 look = Transitive Examine "look" [] ["with"] 
+open = Transitive Open "open" [] []
 analyze = Transitive Examine "analyze" [] []
 go = Transitive Move "go" [] []
 eat = Transitive Eat "eat" [] []
 quit = Transitive QuitGame "quit" [] []
 
+verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open]
 -- OBJECTS
-testCube = RoomObject "the test cube" ["test cube", "cube"] useTestCube
+simpleObject name aliases reaction = RoomObject name aliases reaction [] Nada
 
-useTestCube :: Action -> WorldAction 
-useTestCube Examine = singleAnswer "A simple test cube. Look, how pretty !"
-useTestCube Talk = singleAnswer "You can't talk to a cube, don't be silly."
-useTestCube Move = singleAnswer "You push the cube. Happy now ?"
-useTestCube Open = singleAnswer "You don't find any opening on the cube"
-useTestCube Eat = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
-useTestCube _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
 
-basicMove :: Room -> Action -> State World [String]
-basicMove r Move = do
+testCube = RoomObject "the test cube" ["test cube", "cube"] useTestCube [basicObject] Closed
+basicObject = simpleObject "a thingy" ["thingy"] noReaction 
+
+useTestCube :: RoomObject -> Action -> WorldAction 
+useTestCube _ Examine = singleAnswer "A simple test cube. Look, how pretty !"
+useTestCube _ Talk = singleAnswer "You can't talk to a cube, don't be silly."
+useTestCube _ Move = singleAnswer "You push the cube. Happy now ?"
+useTestCube cube Open = openContainer cube "You open the cube !"
+useTestCube _ Eat = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
+useTestCube _ _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
+
+-- Given a room object, and a success string, open the container if possible
+-- and display its content
+openContainer :: RoomObject -> String -> WorldAction
+openContainer (RoomObject _ _ _ _ Opened) _ = singleAnswer "It's already opened !"
+openContainer ro sust = do
                     w <- get
-                    put $ World (_player w) r (_worldRooms w) 
-                    return $ displayRoom r
-basicMove _ _ = singleAnswer "What on earth are you trying to do ?"
+                    let
+                        ro' = ro {_objectStatus = Opened }
+                        newWorld = updateCurrentRoom w (updateRoomObjects (view currentRoom w) ro ro')
+                    put newWorld
+                    return (sust:"It contains : ":displayContainerContent ro)
 
-verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit]
+
+noReaction :: RoomObject -> Action -> WorldAction
+noReaction _ _ = singleAnswer "This object is just for tests."
+
+basicMove :: Room -> Exit -> Action -> State World [String]
+basicMove r _ Move = do
+                    w <- get
+                    put $ w { _currentRoom = r } 
+                    return $ displayRoom r
+basicMove _ _ _ = singleAnswer "What on earth are you trying to do ?"
+
 
 fromOneToTwo = Exit "north" [] "a weird discontinuity in space and time" (basicMove room') True 
 fromTwoToOne = Exit "south" [] "a passage that defies the law of physics" (basicMove room) True 
 
 room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?\nThere is a nice **test cube** in the center of the non-space." [testCube] [] [fromOneToTwo] 
 room' = Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." [] [] [fromTwoToOne]
+
+arrival = Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." [] [] [Exit "south" [] "the gate of the castle" (basicMove southernYard) True]
+
+southernYard = Room "The southern gate" "This is the inner yard of the castle. Obviously, count Lambdacula must have financial trouble, or his skills in household management are more than lacking. The place is a wreck, let's face it. There is an awful stench everywhere, rats are running through the place, the windows are dusty and frankly, UNESCO World Heritage Centre would be appalled by this place. There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." [] [] [Exit "north" [] "the gate of the castle" (basicMove arrival) True] 
+
+easternPath = Room "A muddy path" "You're walking a long a path that goes down the mountain of Lambda, where the castle of Lambdacula was built. You'd like to go along the path more and leave this dreadful place to go back to civilization but a strange feeling prevent you from... oh, who am I kidding ? You can't escape, you coward, you've got to face the count and murder him, because this is the goal of this sick, twisted, vampirophobic videogame. If you've got an issue with that, just type \"quit\" and be gone.\nWhere was I ? So, yes, the path could let you go away. The only interesting place here is a shack. It's most likely where the gamekeepr of Count Lambdacula used to live. Well, there is the slight possibility that the gamekeeper is immortal and still lives there, so you never know, that's the issue with undeads." [] [] [Exit "west" [] "an upward path to the castle" (basicMove arrival) True]
+
 
 buildWorld :: [Room] -> WorldSituation
 buildWorld [] = state $ \w -> ((), w)
