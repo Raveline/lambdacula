@@ -1,38 +1,48 @@
 module Lambdacula.World
 (
     Room(..),
+    objects,
     RoomObject(..),
+    objectStatus,
     findObjectInteraction,
     Character(..),
     Exit(..),
+    exitName,
+    exitDescription,
+    exitActions,
     Player(..),
     World(..),
     Actionable(..),
+    ObjectStatus(..),
     singleAnswer,
     WorldAction,
     worldRooms,
-    currentRoom
+    currentRoom,
+    updateCurrentRoom,
+    updateRoomObjects,
+    updateObjectStatus,
+    displayContainerContent
 )
 where
 
 import qualified Data.Map as Map
-import Lambdacula.Action as Act
+import Lambdacula.Action
 import Data.Char
 import Data.List
 import Data.Maybe
 import Control.Monad.State
 import Control.Applicative
-import Control.Lens
+import Control.Lens hiding (Action)
 
 
 type Conversations = Map.Map String String
-type Interactions = Map.Map Act.Action String
+type Interactions = Map.Map Action String
 type WorldAction = State World [String]
 
 class Actionable f where 
     -- Process an action on this object, return the world 
     -- and a string to tell what happened
-    actOn :: f -> Act.Action -> WorldAction 
+    actOn :: f -> Action -> WorldAction 
     -- Check if a string match this object (usually by looking
     -- at aliases).
     match :: String -> f -> Bool
@@ -45,49 +55,78 @@ data Room =    Room { _roomName :: String
                 }
   deriving (Show, Eq)
 
+objects :: Simple Lens Room [RoomObject]
+objects = lens _objects (\r objs ->  Room (_roomName r) (_description r) objs (_characters r) (_exits r))
+
 data World = World { _player :: Player, 
                     _currentRoom :: Room, 
                     _worldRooms :: [Room] }
 
 worldRooms :: Simple Lens World [Room]
-worldRooms = lens (\w -> _worldRooms w) (\w rs -> World (_player w) (_currentRoom w) rs)
+worldRooms = lens _worldRooms (\w rs -> World (_player w) (_currentRoom w) rs)
 currentRoom :: Simple Lens World Room
-currentRoom = lens (\w -> _currentRoom w) (\w cr -> World (_player w) cr (_worldRooms w))
+currentRoom = lens _currentRoom (\w cr -> World (_player w) cr (_worldRooms w))
 
 
 data Player = Player { inventory :: [String] }
     deriving (Show)
 
-data RoomObject = RoomObject { 
-                     objectName :: String
-                    ,objectAliases :: [String]
-                    ,objectReactions :: Act.Action -> WorldAction }
+data RoomObject =    RoomObject { 
+                     _objectName :: String
+                    ,_objectAliases :: [String]
+                    ,_objectReactions :: RoomObject -> Action -> WorldAction
+                    ,_objectInside :: [RoomObject]
+                    ,_objectStatus :: ObjectStatus
+                    }
+objectStatus :: Simple Lens RoomObject ObjectStatus
+objectStatus = lens _objectStatus (\ro s -> ro {_objectStatus = s})
+
+objectName :: Simple Lens RoomObject String
+objectName = lens _objectName (\ro s -> RoomObject s (_objectAliases ro) (_objectReactions ro) (_objectInside ro) (_objectStatus ro))
+
+objectAliases :: Simple Lens RoomObject [String]
+objectAliases = lens _objectAliases (\ro als -> RoomObject (_objectName ro) als (_objectReactions ro) (_objectInside ro) (_objectStatus ro))
+
+objectReactions :: Simple Lens RoomObject (RoomObject -> Action -> WorldAction)
+objectReactions = lens _objectReactions (\ro rea -> RoomObject (_objectName ro) (_objectAliases ro) rea (_objectInside ro) (_objectStatus ro))
 
 instance Show RoomObject where
-    show = show . objectName
+    show = show . view objectName
 
 instance Eq RoomObject where
-    (==) r1 r2 = objectName r1 == objectName r2
+    (==) r1 r2 = view objectName r1 == view objectName r2
 
 instance Actionable RoomObject where
-    actOn = objectReactions
-    match s = (s `elem`) . ((:) <$> objectName <*> objectAliases)
+    actOn r = view objectReactions r r
+    match s = (s `elem`) . ((:) <$> view objectName <*> view objectAliases)
 
-data Exit = Exit { exitName :: String
-                , exitAliases :: [String] 
-                , exitDescription :: String
-                , exitActions :: Act.Action -> WorldAction 
-                , exitOpened :: Bool } 
+data Exit = Exit { _exitName :: String
+                , _exitAliases :: [String] 
+                , _exitDescription :: String
+                , _exitActions :: Exit -> Action -> WorldAction 
+                , _exitOpened :: Bool } 
+
+exitActions :: Simple Lens Exit (Exit -> Action -> WorldAction)
+exitActions = lens _exitActions (\ex rea -> Exit (_exitName ex) (_exitAliases ex) (_exitDescription ex) rea (_exitOpened ex))
+
+exitName :: Simple Lens Exit String
+exitName = lens _exitName (\ex name -> Exit name (_exitAliases ex) (_exitDescription ex) (_exitActions ex) (_exitOpened ex))
+
+exitDescription :: Simple Lens Exit String
+exitDescription = lens _exitDescription (\ex desc -> Exit (_exitName ex) (_exitAliases ex) desc (_exitActions ex) (_exitOpened ex))
+
+exitAliases :: Simple Lens Exit [String]
+exitAliases = lens _exitAliases (\ex al -> Exit (_exitName ex) al (_exitDescription ex) (_exitActions ex) (_exitOpened ex))
 
 instance Show Exit where
-    show e = exitName e ++ " : " ++ exitDescription e
+    show e = _exitName e ++ " : " ++ _exitDescription e
 
 instance Eq Exit where
-    (==) e1 e2 = exitName e1 == exitName e2
+    (==) e1 e2 = e1^.exitName == e2^.exitName
 
 instance Actionable Exit where
-    actOn = exitActions
-    match s = (s `elem`) . ((:) <$> exitName <*> exitAliases)
+    actOn e = (view exitActions e) e 
+    match s = (s `elem`) . ((:) <$> _exitName <*> _exitAliases)
 
 data Character = Character {    name :: String, 
                                 aliases :: [String], 
@@ -99,14 +138,14 @@ instance Actionable Character where
     actOn char action = error "Not implemented"
     match s = (s `elem`) . ((:) <$> name <*> aliases)
 
-data ObjectStatus = Open | Closed | Nada
+data ObjectStatus = Opened | Closed | Nada
 
 
 
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
-findObjectInteraction :: String -> Room -> Maybe (Act.Action -> WorldAction) 
+findObjectInteraction :: String -> Room -> Maybe (Action -> WorldAction) 
 findObjectInteraction s room = case newWorlds of
                                 [x] -> Just x
                                 _ -> Nothing
@@ -117,9 +156,31 @@ findObjectInteraction s room = case newWorlds of
                 actionedExits = actOnAll . findAMatch $ _exits room
                 findAMatch :: (Actionable a) => [a] -> [a]
                 findAMatch = filter (match s) 
-                actOnAll :: (Actionable a) => [a] -> [Act.Action -> WorldAction] 
+                actOnAll :: (Actionable a) => [a] -> [Action -> WorldAction] 
                 actOnAll = fmap actOn
 
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldAction 
 singleAnswer = return . (:[])
+
+-- Will replace an object by its newer version in a room
+-- Kind of a setter, if you want.
+updateRoomObjects :: Room -> RoomObject -> RoomObject -> Room
+updateRoomObjects r old new = r & objects .~ rebuildList (_objects r) old new
+
+updateCurrentRoom :: World -> Room -> World
+updateCurrentRoom w r = World (_player w) r (rebuildList (view worldRooms w) (view currentRoom w) r)
+
+updateObjectStatus :: RoomObject -> ObjectStatus -> RoomObject
+updateObjectStatus ro st = set objectStatus st ro
+
+-- Given a list of items, replace any version of an item by a new one
+rebuildList :: (Eq a) => [a] -> a -> a -> [a]
+rebuildList [] _ _ = []
+rebuildList (x:xs) old new
+    | x == old = new:(rebuildList xs old new)
+    | otherwise = x:(rebuildList xs old new)  
+
+-- Display the objects contained by a container
+displayContainerContent :: RoomObject -> [String] 
+displayContainerContent (RoomObject _ _ _ contained _) = [_objectName x| x <- contained]
