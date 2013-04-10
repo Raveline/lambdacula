@@ -12,11 +12,11 @@ import Data.Char
 
 -- Display a room description to the player.
 displayRoom :: Room -> [String] 
-displayRoom (Room name desc _ _ exits) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ displayExits
+displayRoom (Room name desc objs) = 
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] -- ++ displayExits
     where 
         stars = map (const '*') name 
-        displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
+        -- displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
 
 -- Take a bunch of strings.
 -- Format them so that they won't take more than 80 characters.
