@@ -5,11 +5,6 @@ module Lambdacula.World
     RoomObject(..),
     objectStatus,
     findObjectInteraction,
-    Character(..),
-    Exit(..),
-    exitName,
-    exitDescription,
-    exitActions,
     Player(..),
     World(..),
     Actionable(..),
@@ -56,8 +51,6 @@ class Actionable f where
 data Room =    Room { _roomName :: String
                  ,_description :: String
                  ,_objects :: [RoomObject]
-                 ,_characters :: [Character]
-                 ,_exits :: [Exit]
                 }
   deriving (Show, Eq)
 
@@ -86,6 +79,8 @@ data Player = Player { _inventory :: [String] }
 inventory :: Simple Lens Player [String]
 inventory = lens _inventory (\p inv -> p {_inventory = inv})
 
+data ObjectStatus = Opened | Closed | Broken | Fixed | Nada
+
 -- A room object. A thing that stays in a room, waiting to be acted upon,
 -- or acting as a simple decoy.
 -- It has a main name for identification, and potential aliases for one same
@@ -94,6 +89,8 @@ inventory = lens _inventory (\p inv -> p {_inventory = inv})
 -- It can contains other objects.
 -- It finally can have a Status. Changing objects status is more or less the
 -- way to navigate through the game.
+-- Note that RoomObject is just a name. That can be an exit to another room,
+-- or a character, or anything else.
 data RoomObject =    RoomObject { 
                      _objectName :: String
                     ,_objectAliases :: [String]
@@ -126,53 +123,6 @@ instance Actionable RoomObject where
     actOn r = view objectReactions r r
     match s = (s `elem`) . ((:) <$> view objectName <*> view objectAliases)
 
--- An exit. Actually, currently, I'm really wondering if this particular
--- type is necessary. For an exit is a RoomObject, if you think about it.
--- I might want to make another constructor for RoomObject just for this.
-data Exit = Exit { _exitName :: String
-                , _exitAliases :: [String] 
-                , _exitDescription :: String
-                , _exitActions :: Exit -> Action -> WorldAction 
-                , _exitOpened :: Bool } 
-
-exitActions :: Simple Lens Exit (Exit -> Action -> WorldAction)
-exitActions = lens _exitActions (\ex rea -> Exit (_exitName ex) (_exitAliases ex) (_exitDescription ex) rea (_exitOpened ex))
-
-exitName :: Simple Lens Exit String
-exitName = lens _exitName (\ex name -> Exit name (_exitAliases ex) (_exitDescription ex) (_exitActions ex) (_exitOpened ex))
-
-exitDescription :: Simple Lens Exit String
-exitDescription = lens _exitDescription (\ex desc -> Exit (_exitName ex) (_exitAliases ex) desc (_exitActions ex) (_exitOpened ex))
-
-exitAliases :: Simple Lens Exit [String]
-exitAliases = lens _exitAliases (\ex al -> Exit (_exitName ex) al (_exitDescription ex) (_exitActions ex) (_exitOpened ex))
-
-instance Show Exit where
-    show e = _exitName e ++ " : " ++ _exitDescription e
-
-instance Eq Exit where
-    (==) e1 e2 = e1^.exitName == e2^.exitName
-
-instance Actionable Exit where
-    actOn e = (view exitActions e) e 
-    match s = (s `elem`) . ((:) <$> _exitName <*> _exitAliases)
-
--- A character. Someone that should be able to converse with a player. One day.
--- I've got the same issue with characters and exits : shouldn't they be
--- RoomObject, really ?
-data Character = Character {    name :: String, 
-                                aliases :: [String], 
-                                topics :: Conversations, 
-                                npcReactions :: Interactions } 
-                deriving (Show, Eq)
-
-instance Actionable Character where
-    actOn char action = error "Not implemented"
-    match s = (s `elem`) . ((:) <$> name <*> aliases)
-
-data ObjectStatus = Opened | Closed | Nada
-
-
 -- *****************
 -- UTILITY FUNCTIONS
 -- *****************
@@ -185,10 +135,8 @@ findObjectInteraction s room = case newWorlds of
                                 [x] -> Just x
                                 _ -> Nothing
             where 
-                newWorlds = actionedObjects ++ actionedCharacters ++ actionedExits
+                newWorlds = actionedObjects
                 actionedObjects = actOnAll . findAMatch $ _objects room
-                actionedCharacters = actOnAll . findAMatch $ _characters room
-                actionedExits = actOnAll . findAMatch $ _exits room
                 findAMatch :: (Actionable a) => [a] -> [a]
                 findAMatch = filter (match s) 
                 actOnAll :: (Actionable a) => [a] -> [Action -> WorldAction] 
