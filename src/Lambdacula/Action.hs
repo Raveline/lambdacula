@@ -31,6 +31,18 @@ data PlayerAction =   SimpleAction Action
                 | Complex Action String String 
     deriving(Show,Eq)
 
-data Action = Examine | Talk | Move | Open | Close | TurnOn | TurnOff | Take | Search | QuitGame | Eat | Zilch
+data Action = Examine   -- Look at something
+            | Talk      -- Communicate with something, ideally someone.
+            | Move      -- Move something.
+            | Open      -- Open something.
+            | Close     -- Close something.
+            | TurnOn    -- Starting anything that can be started.
+            | TurnOff   -- Stopping anaything that can be stopped.
+            | Take      -- Pick up stuff.
+            | Search    -- Look for something.
+            | QuitGame  -- Leave this wonderful game.
+            | Eat       -- Experiment with your mouth.
+            | Show      -- Special, more like an event. Display stuff on screen
+            | Zilch     -- Unknown action.
     deriving (Eq, Show, Ord)
 
