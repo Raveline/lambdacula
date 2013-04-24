@@ -9,14 +9,18 @@ import Lambdacula.World
 import Data.List.Split
 import Data.List
 import Data.Char
+import Control.Lens 
 
 -- Display a room description to the player.
 displayRoom :: Room -> [String] 
 displayRoom (Room name desc objs) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] -- ++ displayExits
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ ["Exits :"] ++ displayExits objs
     where 
         stars = map (const '*') name 
-        -- displayExits = "Exits : " : ["\t" ++ x ++ "\n"|x <- map show exits] 
+        displayExits :: [RoomObject] -> [String]
+        displayExits [] = []
+        displayExits ((Exit nms _ desc):ros) = ("\t" ++ (headName nms) ++ (_objectDescription desc)):(displayExits ros)
+        displayExits (_:ros) = displayExits ros
 
 -- Take a bunch of strings.
 -- Format them so that they won't take more than 80 characters.
@@ -33,4 +37,4 @@ format80 strings = splitOn "\n" . format80' 0 $ (splitOn " ". intercalate "\n" $
 
 -- Display the objects contained by a container
 displayContainerContent :: RoomObject -> [String] 
-displayContainerContent (RoomObject _ _ _ contained _) = [_objectName x| x <- contained]
+displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
