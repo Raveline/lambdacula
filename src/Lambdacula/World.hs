@@ -3,8 +3,13 @@ module Lambdacula.World
     Room(..),
     objects,
     RoomObject(..),
+    containedObjects,
+    mainName,
+    headName,
     objectStatus,
     findObjectInteraction,
+    ObjectNames,
+    RoomObjectDetails(..),
     Player(..),
     World(..),
     Actionable(..),
@@ -79,49 +84,60 @@ data Player = Player { _inventory :: [String] }
 inventory :: Simple Lens Player [String]
 inventory = lens _inventory (\p inv -> p {_inventory = inv})
 
+-- RoomObject's corner
+
+newtype ObjectNames = ObjectNames{ names :: [String] }
+
+type RoomObjectBehaviour = RoomObject -> Action -> WorldAction
+
 data ObjectStatus = Opened | Closed | Broken | Fixed | Nada
 
--- A room object. A thing that stays in a room, waiting to be acted upon,
--- or acting as a simple decoy.
--- It has a main name for identification, and potential aliases for one same
--- thing tends to have different names.
--- It stores the way its react to actions through a method.
--- It can contains other objects.
--- It finally can have a Status. Changing objects status is more or less the
--- way to navigate through the game.
--- Note that RoomObject is just a name. That can be an exit to another room,
--- or a character, or anything else.
-data RoomObject =    RoomObject { 
-                     _objectName :: String
-                    ,_objectAliases :: [String]
-                    ,_objectReactions :: RoomObject -> Action -> WorldAction
-                    ,_objectInside :: [RoomObject]
-                    ,_objectStatus :: ObjectStatus
-                    }
+-- Details of a room object : its current status and its
+-- eventual content
+data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
+                                            ,_objectDescription :: String
+                                            , _content :: [RoomObject] }
+
+data RoomObject = Exit { _ronames :: ObjectNames
+                        , _robehaviour :: RoomObjectBehaviour
+                        , _rodetails :: RoomObjectDetails }
+                | RoomObject { _ronames :: ObjectNames
+                            , _robehaviour :: RoomObjectBehaviour
+                            , _rodetails :: RoomObjectDetails}
+mainName :: RoomObject -> String
+mainName = headName . _ronames
+headName :: ObjectNames -> String
+headName = head . names
 
 -- RoomObject lenses
-objectStatus :: Simple Lens RoomObject ObjectStatus
-objectStatus = lens _objectStatus (\ro s -> ro {_objectStatus = s})
+objectDetails :: Simple Lens RoomObject RoomObjectDetails
+objectDetails = lens (_rodetails) (\ro d -> ro {_rodetails = d })
 
-objectName :: Simple Lens RoomObject String
-objectName = lens _objectName (\ro s -> ro {_objectName = s}) 
+objectStatus :: Simple Lens RoomObject ObjectStatus
+objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = ((_rodetails ro) {_status = s})})
 
 objectAliases :: Simple Lens RoomObject [String]
-objectAliases = lens _objectAliases (\ro als -> ro {_objectAliases = als})
+objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = (ObjectNames als)})
 
 objectReactions :: Simple Lens RoomObject (RoomObject -> Action -> WorldAction)
-objectReactions = lens _objectReactions (\ro rea -> ro {_objectReactions = rea}) 
+objectReactions = lens _robehaviour (\ro rea -> ro {_robehaviour = rea}) 
+
+objectDescription :: Simple Lens RoomObject String
+objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = ((_rodetails ro) {_objectDescription = od})})
+
+containedObjects :: Simple Lens RoomObject [RoomObject]
+containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = ((_rodetails ro) {_content = ct})})
 
 -- Room object instances
 instance Show RoomObject where
-    show = show . view objectName
+   show = show . mainName
 
 instance Eq RoomObject where
-    (==) r1 r2 = view objectName r1 == view objectName r2
+    (==) r1 r2 = mainName r1 == mainName r2
 
 instance Actionable RoomObject where
     actOn r = view objectReactions r r
-    match s = (s `elem`) . ((:) <$> view objectName <*> view objectAliases)
+    match s = (s `elem`) . ((:) <$> mainName <*> view objectAliases)
 
 -- *****************
 -- UTILITY FUNCTIONS
@@ -168,7 +184,7 @@ rebuildList (x:xs) old new
 -- Note that the item thusly taken must be "erased" from where it
 -- was taken by the caller. 
 pickItem :: World -> RoomObject -> Player 
-pickItem world ro = player' & inventory .~ (_objectName ro:(player'^.inventory))
+pickItem world ro = player' & inventory .~ (mainName ro:(player'^.inventory))
                 where player' = _player world
 
 removeFromRoom :: RoomObject -> WorldAction
