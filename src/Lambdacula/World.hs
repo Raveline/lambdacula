@@ -8,12 +8,14 @@ module Lambdacula.World
     headName,
     objectStatus,
     findObjectInteraction,
-    ObjectNames,
+    ObjectNames (..),
     RoomObjectDetails(..),
+    RoomObjectBehaviour,
     Player(..),
     World(..),
     Actionable(..),
     ObjectStatus(..),
+    objectDescription,
     singleAnswer,
     WorldAction,
     worldRooms,
@@ -21,7 +23,8 @@ module Lambdacula.World
     updateCurrentRoom,
     updateRoomObjects,
     updateObjectStatus,
-    pickItem
+    pickItem,
+    isOpened
 )
 where
 
@@ -91,6 +94,7 @@ newtype ObjectNames = ObjectNames{ names :: [String] }
 type RoomObjectBehaviour = RoomObject -> Action -> WorldAction
 
 data ObjectStatus = Opened | Closed | Broken | Fixed | Nada
+    deriving (Eq)
 
 -- Details of a room object : its current status and its
 -- eventual content
@@ -194,3 +198,8 @@ removeFromRoom ro = do
                         let newRoom = current & objects .~ filter (== ro) (current^.objects)
                         put (updateCurrentRoom w newRoom)
                         return []
+
+-- Object utilities
+
+isOpened :: RoomObject -> Bool
+isOpened ro = ro^.objectStatus == Opened
