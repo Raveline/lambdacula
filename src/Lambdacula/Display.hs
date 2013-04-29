@@ -19,7 +19,7 @@ displayRoom (Room name desc objs) =
         stars = map (const '*') name 
         displayExits :: [RoomObject] -> [String]
         displayExits [] = []
-        displayExits ((Exit nms _ desc):ros) = ("\t" ++ (headName nms) ++ (_objectDescription desc)):(displayExits ros)
+        displayExits ((Exit nms _ desc):ros) = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
         displayExits (_:ros) = displayExits ros
 
 -- Take a bunch of strings.
