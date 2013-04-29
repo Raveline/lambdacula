@@ -26,14 +26,17 @@ quit = Transitive QuitGame "quit" [] []
 
 verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open]
 -- OBJECTS
-simpleObject name aliases reaction = RoomObject name aliases reaction [] Nada
+simpleObject :: [String] -> RoomObjectBehaviour -> String -> RoomObject 
+simpleObject aliases reaction description = RoomObject naming reaction details
+    where
+        naming = ObjectNames aliases
+        details = RoomObjectDetails Nada description [] 
 
-
-testCube = RoomObject "the test cube" ["test cube", "cube"] useTestCube [basicObject] Closed
-basicObject = simpleObject "a thingy" ["thingy"] noReaction 
+testCube = RoomObject (ObjectNames ["the test cube","test cube", "cube"]) (useTestCube) (RoomObjectDetails Closed "A simple test cube. Look, how pretty !" [basicObject])
+basicObject = simpleObject ["a thingy", "thingy"] noReaction "Nothing worth looking at"
 
 useTestCube :: RoomObject -> Action -> WorldAction 
-useTestCube _ Examine = singleAnswer "A simple test cube. Look, how pretty !"
+useTestCube cube Examine = singleAnswer (cube^.objectDescription)
 useTestCube _ Talk = singleAnswer "You can't talk to a cube, don't be silly."
 useTestCube _ Move = singleAnswer "You push the cube. Happy now ?"
 useTestCube cube Open = openContainer cube "You open the cube !"
@@ -43,11 +46,13 @@ useTestCube _ _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE
 -- Given a room object, and a success string, open the container if possible
 -- and display its content
 openContainer :: RoomObject -> String -> WorldAction
-openContainer (RoomObject _ _ _ _ Opened) _ = singleAnswer "It's already opened !"
-openContainer ro sust = do
+openContainer ro sust
+    | isOpened ro = singleAnswer "It's already opened !"
+    | otherwise = do
                     w <- get
+                    
                     let
-                        ro' = ro {_objectStatus = Opened }
+                        ro' = ro & objectStatus .~ Opened
                         newWorld = updateCurrentRoom w (updateRoomObjects (view currentRoom w) ro ro')
                     put newWorld
                     return (sust:"It contains : ":displayContainerContent ro)
@@ -63,13 +68,8 @@ basicMove r _ Move = do
                     return $ displayRoom r
 basicMove _ _ _ = singleAnswer "What on earth are you trying to do ?"
 
-exitAction :: String -> (MoveAction) -> Room -> RoomObject -> Action -> State World [String]
-exitAction desc fun r ro act
-    | act == Show = singleAnswer desc
-    | otherwise = fun r ro act
-
 makeExit :: String -> [String] -> String -> MoveAction -> Room -> ObjectStatus -> RoomObject
-makeExit name aliases description action room status = RoomObject name aliases (exitAction description action room) [] status
+makeExit name aliases description action room status = Exit (ObjectNames (name:aliases)) (basicMove room) (RoomObjectDetails Nada description []) 
 
 fromOneToTwo = makeExit "north" [] "a weird discontinuity in space and time" basicMove room' Opened 
 fromTwoToOne = makeExit "south" [] "a passage that defies the law of physics" basicMove room Opened
