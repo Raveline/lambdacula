@@ -23,8 +23,9 @@ analyze = Transitive Examine "analyze" [] []
 go = Transitive Move "go" [] []
 eat = Transitive Eat "eat" [] []
 quit = Transitive QuitGame "quit" [] []
+vtake = Transitive Take "take" [] []
 
-verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open]
+verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open, vtake]
 -- OBJECTS
 simpleObject :: [String] -> RoomObjectBehaviour -> String -> RoomObject 
 simpleObject aliases reaction description = RoomObject naming reaction details
@@ -32,15 +33,16 @@ simpleObject aliases reaction description = RoomObject naming reaction details
         naming = ObjectNames aliases
         details = RoomObjectDetails Nada description [] 
 
-testCube = RoomObject (ObjectNames ["the test cube","test cube", "cube"]) (useTestCube) (RoomObjectDetails Closed "A simple test cube. Look, how pretty !" [basicObject])
+testCube = RoomObject (ObjectNames ["the test cube","test cube", "cube"]) (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [basicObject])
 basicObject = simpleObject ["a thingy", "thingy"] noReaction "Nothing worth looking at"
 
 useTestCube :: RoomObject -> Action -> WorldAction 
-useTestCube cube Examine = singleAnswer (cube^.objectDescription)
+useTestCube cube Examine = singleAnswer "A simple test cube. Look, how pretty !" 
 useTestCube _ Talk = singleAnswer "You can't talk to a cube, don't be silly."
 useTestCube _ Move = singleAnswer "You push the cube. Happy now ?"
 useTestCube cube Open = openContainer cube "You open the cube !"
 useTestCube _ Eat = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
+useTestCube cube Take = pickItem cube
 useTestCube _ _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
 
 -- Given a room object, and a success string, open the container if possible
@@ -74,7 +76,7 @@ makeExit name aliases description action room status = Exit (ObjectNames (name:a
 fromOneToTwo = makeExit "north" [] "a weird discontinuity in space and time" basicMove room' Opened 
 fromTwoToOne = makeExit "south" [] "a passage that defies the law of physics" basicMove room Opened
 
-room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?\nThere is a nice **test cube** in the center of the non-space." [testCube, fromOneToTwo] 
+room = Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" [testCube, fromOneToTwo] 
 room' = Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." [fromTwoToOne]
 
 arrival = Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." [makeExit "south" [] "the gate of the castle" basicMove southernYard Opened]
