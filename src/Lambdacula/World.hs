@@ -84,10 +84,8 @@ data Player = Player { _inventory :: [String] }
     deriving (Show)
 
 -- Player lenses
-inventory :: Simple Lens Player [String]
-inventory = lens _inventory (\p inv -> p {_inventory = inv})
-
--- RoomObject's corner
+inventory :: Simple Lens World [String]
+inventory = lens (_inventory . _player) (\w inv -> w {_player = (_player w) {_inventory = inv}})
 
 newtype ObjectNames = ObjectNames{ names :: [String] }
 
@@ -131,6 +129,7 @@ objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodet
 
 containedObjects :: Simple Lens RoomObject [RoomObject]
 containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = ((_rodetails ro) {_content = ct})})
+
 
 -- Room object instances
 instance Show RoomObject where
@@ -184,18 +183,23 @@ rebuildList (x:xs) old new
     | x == old = new:(rebuildList xs old new)
     | otherwise = x:(rebuildList xs old new)  
 
--- Add an item to the player inventory. 
--- Note that the item thusly taken must be "erased" from where it
--- was taken by the caller. 
-pickItem :: World -> RoomObject -> Player 
-pickItem world ro = player' & inventory .~ (mainName ro:(player'^.inventory))
-                where player' = _player world
 
+-- Called when a player wants to pick up an item.
+-- We have to add the name of this item to the player's inventory.
+-- And we have to remove this item from the room.
+pickItem :: RoomObject -> WorldAction
+pickItem ro = do
+                w <- get
+                inventory .= (mainName ro:(w^.inventory))
+                removeFromRoom ro
+                return ["You picked up " ++ (mainName ro)]
+
+-- Remove an item from the current room because it has been used
 removeFromRoom :: RoomObject -> WorldAction
 removeFromRoom ro = do
                         w <- get
                         current <- use currentRoom
-                        let newRoom = current & objects .~ filter (== ro) (current^.objects)
+                        let newRoom = current & objects .~ filter (/= ro) (current^.objects)
                         put (updateCurrentRoom w newRoom)
                         return []
 
