@@ -14,9 +14,17 @@ import Control.Lens
 -- Display a room description to the player.
 displayRoom :: Room -> [String] 
 displayRoom (Room name desc objs) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc] ++ ["Exits :"] ++ displayExits objs
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects objs)] ++ ["Exits :"] ++ displayExits objs
     where 
+        -- Display a line of stars
         stars = map (const '*') name 
+        -- Display a sentence describing each object in the continuity of the text
+        displayObjects :: [RoomObject] -> String
+        displayObjects = foldr ((++) . displayObjects') ""
+        displayObjects' :: RoomObject -> String
+        displayObjects' (RoomObject _ _ details) = " " ++ _objectDescription details
+        displayObjects' _ = ""
+        -- Display the exits on separate lines
         displayExits :: [RoomObject] -> [String]
         displayExits [] = []
         displayExits ((Exit nms _ desc):ros) = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
