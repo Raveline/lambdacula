@@ -3,6 +3,7 @@ module Lambdacula.World
     Room(..),
     objects,
     RoomObject(..),
+    inventory,
     containedObjects,
     mainName,
     headName,
