@@ -24,8 +24,9 @@ go = Transitive Move "go" [] []
 eat = Transitive Eat "eat" [] []
 quit = Transitive QuitGame "quit" [] []
 vtake = Transitive Take "take" [] []
+inventorize = Transitive Inventorize "inventory" [] []
 
-verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open, vtake]
+verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, go, eat, quit, open, vtake, inventorize]
 -- OBJECTS
 simpleObject :: [String] -> RoomObjectBehaviour -> String -> RoomObject 
 simpleObject aliases reaction description = RoomObject naming reaction details
