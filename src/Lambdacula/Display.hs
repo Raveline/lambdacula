@@ -1,7 +1,8 @@
 module Lambdacula.Display (
     displayRoom,
     format80,
-    displayContainerContent
+    displayContainerContent,
+    displayInventory
 )
 where
 
@@ -46,3 +47,8 @@ format80 strings = splitOn "\n" . format80' 0 $ (splitOn " ". intercalate "\n" $
 -- Display the objects contained by a container
 displayContainerContent :: RoomObject -> [String] 
 displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
+
+-- Display the player inventory
+displayInventory :: [String] -> [String]
+displayInventory [] = ["You have nothing, but clothes on your back. I won't comment on your taste, by the way."]
+displayInventory xs = "You're currently the proud owner of the following items : ":(map ((++) "- ") xs)
