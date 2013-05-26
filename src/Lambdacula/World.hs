@@ -1,13 +1,17 @@
 module Lambdacula.World
 (
+    VertexToNodeInfo,
+    KeyToVertex,
+    FullGraphInfo,
     Room(..),
-    objects,
     RoomObject(..),
     inventory,
     containedObjects,
+    currentObjects,
     mainName,
     headName,
     objectStatus,
+    isInRoom,
     findObjectInteraction,
     ObjectNames (..),
     RoomObjectDetails(..),
@@ -16,13 +20,12 @@ module Lambdacula.World
     World(..),
     Actionable(..),
     ObjectStatus(..),
+    roomByString,
     objectDescription,
     singleAnswer,
     WorldAction,
     worldRooms,
     currentRoom,
-    updateCurrentRoom,
-    updateRoomObjects,
     updateObjectStatus,
     pickItem,
     isOpened
@@ -34,6 +37,7 @@ import Lambdacula.Action
 import Data.Char
 import Data.List
 import Data.Maybe
+import Data.Graph
 import Control.Monad.State
 import Control.Applicative
 import Control.Lens hiding (Action)
@@ -42,6 +46,9 @@ import Control.Lens hiding (Action)
 type Conversations = Map.Map String String
 type Interactions = Map.Map Action String
 type WorldAction = State World [String]
+type VertexToNodeInfo = Vertex -> (Room, String, [String])
+type KeyToVertex = String -> Maybe Vertex
+type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
 
 -- *************
 -- HERE BE TYPES
@@ -59,25 +66,41 @@ class Actionable f where
 -- out of rooms. Which would be handy for creators of zork-like games.
 data Room =    Room { _roomName :: String
                  ,_description :: String
-                 ,_objects :: [RoomObject]
                 }
   deriving (Show, Eq)
-
--- Room lenses
-objects :: Simple Lens Room [RoomObject]
-objects = lens _objects (\r objs ->  r {_objects = objs})
 
 -- The world. A scary place. It figures the encounters between a hero,
 -- the Player, and one of many room (the rooms) in a CurrentRoom.
 data World = World { _player :: Player, 
                     _currentRoom :: Room, 
-                    _worldRooms :: [Room] }
+                    _worldRooms :: Graph,
+                    _worldObjects :: [RoomObject],
+                    _getARoom :: (String -> Maybe Vertex),
+                    _getANode :: (Vertex -> (Room, String, [String]))}
+
 
 -- World lenses
-worldRooms :: Simple Lens World [Room]
+worldRooms :: Simple Lens World Graph 
 worldRooms = lens _worldRooms (\w rs -> w {_worldRooms = rs})
 currentRoom :: Simple Lens World Room
 currentRoom = lens _currentRoom (\w cr -> w {_currentRoom = cr})
+worldObjects :: Simple Lens World [RoomObject]
+worldObjects = lens _worldObjects (\w wos -> w {_worldObjects = wos})
+
+-- Give the objects belonging to the current room
+currentObjects :: Getter World [RoomObject]
+currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom $ w)) (_worldObjects w))
+
+isInRoom :: String   -- The name of the current room
+            -> RoomObject  -- An object to consider
+            -> Bool     -- Is the object in this room ?
+isInRoom name ro = (_inRoom ro) == name
+            
+
+roomByString :: World -> String -> Room
+roomByString w s = case ((_getARoom w) s) of
+                    Just a -> ((_getANode w) a)^._1
+                    Nothing -> error "THIS IS NOT HAPPENING OH GOD"
 
 -- A player. A hero. Currently, only there has a quite capitalistic
 -- representation of an inventory.
@@ -101,10 +124,13 @@ data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
                                             ,_objectDescription :: String
                                             , _content :: [RoomObject] }
 
-data RoomObject = Exit { _ronames :: ObjectNames
-                        , _robehaviour :: RoomObjectBehaviour
-                        , _rodetails :: RoomObjectDetails }
+data RoomObject = Exit { _ronames :: ObjectNames            
+                        , _inRoom :: String                  
+                        , _robehaviour :: RoomObjectBehaviour 
+                        , _rodetails :: RoomObjectDetails 
+                        , _rodestination :: String }
                 | RoomObject { _ronames :: ObjectNames
+                            , _inRoom :: String
                             , _robehaviour :: RoomObjectBehaviour
                             , _rodetails :: RoomObjectDetails}
 mainName :: RoomObject -> String
@@ -150,13 +176,15 @@ instance Actionable RoomObject where
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
-findObjectInteraction :: String -> Room -> Maybe (Action -> WorldAction) 
-findObjectInteraction s room = case newWorlds of
+findObjectInteraction :: String                             -- A name
+                        -> [RoomObject]                     -- A list of objects
+                        -> Maybe (Action -> WorldAction)    -- A potential action
+findObjectInteraction s ros = case newWorlds of
                                 [x] -> Just x
                                 _ -> Nothing
             where 
                 newWorlds = actionedObjects
-                actionedObjects = actOnAll . findAMatch $ _objects room
+                actionedObjects = actOnAll . findAMatch $ ros
                 findAMatch :: (Actionable a) => [a] -> [a]
                 findAMatch = filter (match s) 
                 actOnAll :: (Actionable a) => [a] -> [Action -> WorldAction] 
@@ -165,15 +193,6 @@ findObjectInteraction s room = case newWorlds of
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldAction 
 singleAnswer = return . (:[])
-
--- Will replace an object by its newer version in a room
--- Kind of a setter, if you want.
-updateRoomObjects :: Room -> RoomObject -> RoomObject -> Room
-updateRoomObjects r old new = r & objects .~ rebuildList (_objects r) old new
-
-updateCurrentRoom :: World -> Room -> World
-updateCurrentRoom w r = World (_player w) r (rebuildList (view worldRooms w) (view currentRoom w) r)
-
 updateObjectStatus :: RoomObject -> ObjectStatus -> RoomObject
 updateObjectStatus ro st = set objectStatus st ro
 
@@ -192,19 +211,10 @@ pickItem :: RoomObject -> WorldAction
 pickItem ro = do
                 w <- get
                 inventory .= (mainName ro:(w^.inventory))
-                removeFromRoom ro
+                worldObjects .= filter(/= ro) (w & view worldObjects)
                 return ["You picked up " ++ (mainName ro)]
 
--- Remove an item from the current room because it has been used
-removeFromRoom :: RoomObject -> WorldAction
-removeFromRoom ro = do
-                        w <- get
-                        current <- use currentRoom
-                        let newRoom = current & objects .~ filter (/= ro) (current^.objects)
-                        put (updateCurrentRoom w newRoom)
-                        return []
-
 -- Object utilities
-
 isOpened :: RoomObject -> Bool
 isOpened ro = ro^.objectStatus == Opened
+
