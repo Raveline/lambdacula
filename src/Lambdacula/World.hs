@@ -9,6 +9,7 @@ module Lambdacula.World
     inventory,
     containedObjects,
     currentObjects,
+    currentRoomName,
     mainName,
     headName,
     objectStatus,
@@ -28,6 +29,8 @@ module Lambdacula.World
     worldRooms,
     currentRoom,
     changeStatus, 
+    changeRoom,
+    changeName,
     pickItem,
     isOpened
 )
@@ -88,6 +91,8 @@ currentRoom :: Simple Lens World Room
 currentRoom = lens _currentRoom (\w cr -> w {_currentRoom = cr})
 worldObjects :: Simple Lens World [RoomObject]
 worldObjects = lens _worldObjects (\w wos -> w {_worldObjects = wos})
+currentRoomName :: Getter World String
+currentRoomName = to (\w -> _roomName . _currentRoom $ w)
 
 -- Give the objects belonging to the current room
 currentObjects :: Getter World [RoomObject]
@@ -204,16 +209,35 @@ changeStatus ro st = do
                         wos <- use worldObjects
                         worldObjects .= rebuildList wos ro (ro & objectStatus.~ st)
                         return ()
+-- Change the room an object is stored in.
+changeRoom :: String
+            -> RoomObject        -- The room object to change
+            -> WorldSituation   -- Return a state World ()
+changeRoom name ro = do
+                        wos <- use worldObjects
+                        worldObjects .= rebuildList wos ro (ro { _inRoom = name })
+                        return ()
+
+changeName :: String
+            -> RoomObject
+            -> WorldSituation
+changeName name ro = do
+                        wos <- use worldObjects
+                        worldObjects .= rebuildList wos ro (ro { _ronames = (ObjectNames ["Test"])}) 
+                        return ()
 
 -- Given a list of items, replace any version of an item by a new one
 rebuildList :: (Eq a) => [a]    -- A list
                         -> a    -- The old element
                         -> a    -- The new element
                         -> [a]  -- A list with the element replaced
-rebuildList [] _ _ = []
-rebuildList (x:xs) old new
-    | x == old = new:(rebuildList xs old new)
-    | otherwise = x:(rebuildList xs old new)  
+rebuildList xs old new = case find (==old) xs of
+                            Just _  -> rebuildList' xs old new
+                            Nothing -> (new:xs)
+rebuildList' [] _ _ = []
+rebuildList' (x:xs) old new
+    | x == old = new:(rebuildList' xs old new)
+    | otherwise = x:(rebuildList' xs old new)
 
 
 -- Called when a player wants to pick up an item.
