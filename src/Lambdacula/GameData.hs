@@ -7,7 +7,6 @@ import Control.Lens hiding (Action)
 import Lambdacula.World
 import Lambdacula.Display
 
-type WorldSituation = State World ()
 type MoveAction = String -> RoomObject -> Action -> State World [String]
 
 -- VERBS
@@ -55,11 +54,16 @@ openContainer ro sust
     | isOpened ro = singleAnswer "It's already opened !"
     | otherwise = do
                     w <- get
-                    let
-                        ro' = ro & objectStatus .~ Opened
-                    -- TODO : add the room to those new objects.
+                    changeStatus ro Opened
+                    name <- use currentRoomName
+                    setContainerObjects (_content . _rodetails $ ro) name
                     return (sust:"It contains : ":displayContainerContent ro)
 
+setContainerObjects :: [RoomObject] -> String -> WorldSituation
+setContainerObjects (x:xs) s = do
+                                changeRoom s x
+                                setContainerObjects xs s
+setContainerObjects [] s = return ()
 
 noReaction :: RoomObject -> Action -> WorldAction
 noReaction _ _ = singleAnswer "This object is just for tests."
