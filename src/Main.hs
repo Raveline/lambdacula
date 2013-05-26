@@ -11,11 +11,12 @@ import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.GameData
 import Lambdacula.World
+import Lambdacula.WorldBuilder
 import Lambdacula.Display
 import Control.Lens
 
 main = do
-        printStrs . displayRoom $ view currentRoom aWorld
+        printStrs $ displayRoom (view currentRoom aWorld) (view currentObjects aWorld)
         promptLoop aWorld
 
 -- Display a prompt, get some input, call some proceeding function
@@ -48,15 +49,16 @@ quitOrContinue a = Right $ proceed a
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> WorldAction 
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
-proceed (SimpleAction Examine) = state $ (,) <$> displayRoom . (view currentRoom) <*> id
+proceed (SimpleAction Examine) = displayCurrentRoom 
+proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (view inventory) <*> id
 proceed (Interaction act obj) = do 
-                                r <- use currentRoom
-                                case findObjectInteraction obj r of
+                                ros <- use currentObjects
+                                case findObjectInteraction obj ros of
                                     Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
                                     Just func -> func act
 proceed _ = singleAnswer "Whaaaat ?"
 
 printStrs = mapM putStrLn . format80
 
--- aWorld = World (Player []) room [room, room']
-aWorld = snd $ runState (buildWorld [room, room']) (World (Player []) room []) 
+-- Load it from WorldBuilder
+aWorld = world
