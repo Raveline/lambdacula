@@ -1,7 +1,12 @@
+-----------------------------------------
+-- Display.hs
+-- Handle human-readable interactions.
+-----------------------------------------
 module Lambdacula.Display (
     displayRoom,
     format80,
     displayContainerContent,
+    displayCurrentRoom,
     displayInventory
 )
 where
@@ -11,11 +16,21 @@ import Data.List.Split
 import Data.List
 import Data.Char
 import Control.Lens 
+import Control.Monad.State
+
+-- Given a state, will display the current room
+displayCurrentRoom :: WorldAction
+displayCurrentRoom = do 
+                        room <- use currentRoom
+                        objs <- use currentObjects
+                        return $ displayRoom room objs
 
 -- Display a room description to the player.
-displayRoom :: Room -> [String] 
-displayRoom (Room name desc objs) = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects objs)] ++ ["Exits :"] ++ displayExits objs
+displayRoom :: Room         -- The room
+            -> [RoomObject] -- The objects in this room
+            -> [String]     -- The text to display
+displayRoom (Room name desc) ros = 
+                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects ros)] ++ ["Exits :"] ++ displayExits ros 
     where 
         -- Display a line of stars
         stars = map (const '*') name 
@@ -23,12 +38,12 @@ displayRoom (Room name desc objs) =
         displayObjects :: [RoomObject] -> String
         displayObjects = foldr ((++) . displayObjects') ""
         displayObjects' :: RoomObject -> String
-        displayObjects' (RoomObject _ _ details) = " " ++ _objectDescription details
+        displayObjects' (RoomObject _ _ _ details) = " " ++ _objectDescription details
         displayObjects' _ = ""
         -- Display the exits on separate lines
         displayExits :: [RoomObject] -> [String]
         displayExits [] = []
-        displayExits ((Exit nms _ desc):ros) = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
+        displayExits ((Exit nms _ _ desc _):ros) = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
         displayExits (_:ros) = displayExits ros
 
 -- Take a bunch of strings.
