@@ -1,5 +1,6 @@
 module Lambdacula.World
 (
+    WorldSituation,
     VertexToNodeInfo,
     KeyToVertex,
     FullGraphInfo,
@@ -26,7 +27,7 @@ module Lambdacula.World
     WorldAction,
     worldRooms,
     currentRoom,
-    updateObjectStatus,
+    changeStatus, 
     pickItem,
     isOpened
 )
@@ -46,6 +47,7 @@ import Control.Lens hiding (Action)
 type Conversations = Map.Map String String
 type Interactions = Map.Map Action String
 type WorldAction = State World [String]
+type WorldSituation = State World ()
 type VertexToNodeInfo = Vertex -> (Room, String, [String])
 type KeyToVertex = String -> Maybe Vertex
 type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
@@ -193,11 +195,21 @@ findObjectInteraction s ros = case newWorlds of
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldAction 
 singleAnswer = return . (:[])
-updateObjectStatus :: RoomObject -> ObjectStatus -> RoomObject
-updateObjectStatus ro st = set objectStatus st ro
+
+-- Change the status of an object
+changeStatus :: RoomObject          -- The room object to change
+                -> ObjectStatus     -- The new status
+                -> WorldSituation   -- Return a state World ()
+changeStatus ro st = do
+                        wos <- use worldObjects
+                        worldObjects .= rebuildList wos ro (ro & objectStatus.~ st)
+                        return ()
 
 -- Given a list of items, replace any version of an item by a new one
-rebuildList :: (Eq a) => [a] -> a -> a -> [a]
+rebuildList :: (Eq a) => [a]    -- A list
+                        -> a    -- The old element
+                        -> a    -- The new element
+                        -> [a]  -- A list with the element replaced
 rebuildList [] _ _ = []
 rebuildList (x:xs) old new
     | x == old = new:(rebuildList xs old new)
