@@ -14,7 +14,7 @@ import Lambdacula.Parser
 import Lambdacula.World
 import Lambdacula.Display
 
-import Control.Lens
+import Control.Lens hiding (Action)
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
 promptLoop :: World -> IO ()
@@ -42,12 +42,19 @@ proceed :: PlayerAction -> WorldAction
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = displayCurrentRoom 
 proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (view inventory) <*> id
-proceed (Interaction act obj) = do 
-                                ros <- use currentObjects
-                                case findObjectInteraction obj ros of
-                                    Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
-                                    Just func -> func act
+proceed (Interaction act obj) = getPotentialAction obj act Nothing
+proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)
 proceed _ = singleAnswer "Whaaaat ?"
+
+getPotentialAction :: String            -- The main object
+                    -> Action           -- The action
+                    -> Maybe String     -- Potential interaction
+                    -> WorldAction 
+getPotentialAction obj act comp = do
+                                    ros <- use currentObjects
+                                    case findObjectInteraction obj ros of
+                                        Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
+                                        Just func -> func act comp
 
 -- Check if the proposed action is to quit or to do something.
 quitOrContinue :: PlayerAction -> Either String WorldAction
