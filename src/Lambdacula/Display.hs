@@ -67,3 +67,5 @@ displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
 displayInventory :: [String] -> [String]
 displayInventory [] = ["You have nothing, but clothes on your back. I won't comment on your taste, by the way."]
 displayInventory xs = "You're currently the proud owner of the following items : ":(map ((++) "- ") xs)
+
+printStrs = mapM putStrLn . format80
