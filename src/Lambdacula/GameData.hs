@@ -36,17 +36,6 @@ simpleObject aliases room reaction description = RoomObject naming room reaction
         naming = ObjectNames aliases
         details = RoomObjectDetails Nada description [] 
 
-
-
-useTestCube :: RoomObject -> Action -> WorldAction 
-useTestCube cube Examine = singleAnswer "A simple test cube. Look, how pretty !" 
-useTestCube _ Talk = singleAnswer "You can't talk to a cube, don't be silly."
-useTestCube _ Move = singleAnswer "You push the cube. Happy now ?"
-useTestCube cube Open = openContainer cube "You open the cube !"
-useTestCube _ Eat = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
-useTestCube cube Take = pickItem cube
-useTestCube _ _ = singleAnswer "You can't do that to the test cube" -- TO CHANGE. Return empty string, and deal with this input in proceed. 
-
 -- Given a room object, and a success string, open the container if possible
 -- and display its content
 openContainer :: RoomObject -> String -> WorldAction
@@ -84,13 +73,7 @@ makeExit :: String          -- Main name
             -> RoomObject   -- An Exit
 makeExit name aliases inRoom description room status = Exit (ObjectNames (name:aliases)) inRoom (basicMove room) (RoomObjectDetails Nada description []) room 
 
-trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" 
-            , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is."] 
 basicObject = simpleObject ["a thingy", "thingy"] "NOWHERE" noReaction "Nothing worth looking at"
-trObjects = [makeExit "north" [] "The test room" "a weird discontinuity in space and time" "A second room" Opened
-            , makeExit "south" [] "A second room" "a passage that defies the law of physics" "The test room" Opened
-            , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [basicObject])]
-             
 
 ldRooms = [Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." 
         , Room "The southern gate" "This is the inner yard of the castle. Obviously, count Lambdacula must have financial trouble, or his skills in household management are more than lacking. The place is a wreck, let's face it. There is an awful stench everywhere, rats are running through the place, the windows are dusty and frankly, UNESCO World Heritage Centre would be appalled by this place. There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." 
