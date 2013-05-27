@@ -62,7 +62,7 @@ type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
 class Actionable f where 
     -- Process an action on this object, return the world 
     -- and a string to tell what happened
-    actOn :: f -> Action -> WorldAction 
+    actOn :: f -> Action -> Maybe String -> WorldAction 
     -- Check if a string match this object (usually by looking
     -- at aliases).
     match :: String -> f -> Bool
@@ -120,7 +120,7 @@ inventory = lens (_inventory . _player) (\w inv -> w {_player = (_player w) {_in
 
 newtype ObjectNames = ObjectNames{ names :: [String] }
 
-type RoomObjectBehaviour = RoomObject -> Action -> WorldAction
+type RoomObjectBehaviour = RoomObject -> Action -> Maybe String -> WorldAction
 
 data ObjectStatus = Opened | Closed | Broken | Fixed | Nada
     deriving (Eq)
@@ -133,7 +133,7 @@ data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
 
 data RoomObject = Exit { _ronames :: ObjectNames            
                         , _inRoom :: String                  
-                        , _robehaviour :: RoomObjectBehaviour 
+                        , _robehaviour :: RoomObjectBehaviour
                         , _rodetails :: RoomObjectDetails 
                         , _rodestination :: String }
                 | RoomObject { _ronames :: ObjectNames
@@ -155,7 +155,7 @@ objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = ((_rodetai
 objectAliases :: Simple Lens RoomObject [String]
 objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = (ObjectNames als)})
 
-objectReactions :: Simple Lens RoomObject (RoomObject -> Action -> WorldAction)
+objectReactions :: Simple Lens RoomObject RoomObjectBehaviour
 objectReactions = lens _robehaviour (\ro rea -> ro {_robehaviour = rea}) 
 
 objectDescription :: Simple Lens RoomObject String
@@ -163,7 +163,6 @@ objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodet
 
 containedObjects :: Simple Lens RoomObject [RoomObject]
 containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = ((_rodetails ro) {_content = ct})})
-
 
 -- Room object instances
 instance Show RoomObject where
@@ -185,7 +184,7 @@ instance Actionable RoomObject where
 -- a potential reaction function.
 findObjectInteraction :: String                             -- A name
                         -> [RoomObject]                     -- A list of objects
-                        -> Maybe (Action -> WorldAction)    -- A potential action
+                        -> Maybe (Action -> Maybe String -> WorldAction)    -- A potential action
 findObjectInteraction s ros = case newWorlds of
                                 [x] -> Just x
                                 _ -> Nothing
@@ -194,7 +193,7 @@ findObjectInteraction s ros = case newWorlds of
                 actionedObjects = actOnAll . findAMatch $ ros
                 findAMatch :: (Actionable a) => [a] -> [a]
                 findAMatch = filter (match s) 
-                actOnAll :: (Actionable a) => [a] -> [Action -> WorldAction] 
+                actOnAll :: (Actionable a) => [a] -> [Action -> Maybe String -> WorldAction] 
                 actOnAll = fmap actOn
 
 -- Given a string, will return the World "as it is" and the string.
