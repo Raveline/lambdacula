@@ -61,4 +61,4 @@ proceed _ = singleAnswer "Whaaaat ?"
 printStrs = mapM putStrLn . format80
 
 -- Load it from WorldBuilder
-aWorld = world
+aWorld = buildWorld ldRooms ldObjects 
