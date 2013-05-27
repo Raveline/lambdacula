@@ -54,9 +54,6 @@ setContainerObjects (x:xs) s = do
                                 setContainerObjects xs s
 setContainerObjects [] s = return ()
 
-noReaction :: RoomObject -> Action -> WorldAction
-noReaction _ _ = singleAnswer "This object is just for tests."
-
 basicMove :: MoveAction
 basicMove r _ Move = do
                     w <- get
@@ -73,7 +70,6 @@ makeExit :: String          -- Main name
             -> RoomObject   -- An Exit
 makeExit name aliases inRoom description room status = Exit (ObjectNames (name:aliases)) inRoom (basicMove room) (RoomObjectDetails Nada description []) room 
 
-basicObject = simpleObject ["a thingy", "thingy"] "NOWHERE" noReaction "Nothing worth looking at"
 
 ldRooms = [Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." 
         , Room "The southern gate" "This is the inner yard of the castle. Obviously, count Lambdacula must have financial trouble, or his skills in household management are more than lacking. The place is a wreck, let's face it. There is an awful stench everywhere, rats are running through the place, the windows are dusty and frankly, UNESCO World Heritage Centre would be appalled by this place. There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." 
