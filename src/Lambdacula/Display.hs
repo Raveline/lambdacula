@@ -7,7 +7,8 @@ module Lambdacula.Display (
     format80,
     displayContainerContent,
     displayCurrentRoom,
-    displayInventory
+    displayInventory,
+    printStrs
 )
 where
 
