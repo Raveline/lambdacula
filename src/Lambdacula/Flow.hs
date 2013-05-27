@@ -1,7 +1,7 @@
 module Lambdacula.Flow
 (
     promptLoop,
-    process
+    proceed
 )
 where
 import Control.Monad.State
