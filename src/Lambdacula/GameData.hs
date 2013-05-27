@@ -7,7 +7,7 @@ import Control.Lens hiding (Action)
 import Lambdacula.World
 import Lambdacula.Display
 
-type MoveAction = String -> RoomObject -> Action -> State World [String]
+type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World [String]
 
 -- VERBS
 verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
@@ -55,11 +55,11 @@ setContainerObjects (x:xs) s = do
 setContainerObjects [] s = return ()
 
 basicMove :: MoveAction
-basicMove r _ Move = do
+basicMove r _ Move _ = do
                     w <- get
                     currentRoom .= roomByString w r 
                     displayCurrentRoom 
-basicMove _ _ _ = singleAnswer "What on earth are you trying to do ?"
+basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
 
 makeExit :: String          -- Main name
             -> [String]     -- Aliases
