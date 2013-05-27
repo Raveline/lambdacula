@@ -1,11 +1,10 @@
 module Lambdacula.WorldBuilder
 (
-    world
+    buildWorld
 )
 where
 
 import Data.Graph
-
 import Lambdacula.GameData
 import Lambdacula.World
 import Control.Lens
@@ -27,7 +26,11 @@ roomsToGraph rms ros = graphFromEdges (map getRoomKeyAndEdges rms)
         exitKeys' ((Exit _ _  _ _ dest):ros) = dest:(exitKeys' ros)
         exitKeys' (_:ros) = exitKeys' ros
 
-world = World (Player []) (head trRooms) (view _1 rms) trObjects (view _3 rms) (view _2 rms)
+
+buildWorld :: [Room]        -- A list of rooms
+            -> [RoomObject] -- A list of objects
+            -> World        -- Returns a whole world !
+buildWorld rooms objects = World (Player []) (head rooms) (view _1 rms) objects (view _3 rms) (view _2 rms)
     where 
-            rms = roomsToGraph trRooms trObjects
+        rms = roomsToGraph rooms objects
 
