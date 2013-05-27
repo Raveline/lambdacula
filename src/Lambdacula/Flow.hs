@@ -3,7 +3,7 @@ module Flow
     promptLoop,
     process
 )
-
+where
 import Control.Monad.State
 import Control.Applicative
 import System.IO
