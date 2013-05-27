@@ -1,4 +1,4 @@
-module Flow
+module Lambdacula.Flow
 (
     promptLoop,
     process
@@ -7,12 +7,14 @@ where
 import Control.Monad.State
 import Control.Applicative
 import System.IO
+
+import Lambdacula.GameData
 import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.World
 import Lambdacula.Display
-import Control.Lens
 
+import Control.Lens
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
 promptLoop :: World -> IO ()
