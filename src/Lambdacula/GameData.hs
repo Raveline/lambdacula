@@ -23,6 +23,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Eat "eat" [] []
         ,Transitive QuitGame "quit" [] []
         ,Transitive Take "take" [] []
+        ,Phrasal Take "pick" "from" [] []
         ,Transitive Inventorize "inventory" [] []]
 
 -- OBJECTS
@@ -36,29 +37,13 @@ simpleObject aliases room reaction description = RoomObject naming room reaction
         naming = ObjectNames aliases
         details = RoomObjectDetails Nada description [] 
 
--- Given a room object, and a success string, open the container if possible
--- and display its content
-openContainer :: RoomObject -> String -> WorldAction
-openContainer ro sust
-    | isOpened ro = singleAnswer "It's already opened !"
-    | otherwise = do
-                    w <- get
-                    changeStatus ro Opened
-                    name <- use currentRoomName
-                    setContainerObjects (_content . _rodetails $ ro) name
-                    return (sust:"It contains : ":displayContainerContent ro)
-
-setContainerObjects :: [RoomObject] -> String -> WorldSituation
-setContainerObjects (x:xs) s = do
-                                changeRoom s x
-                                setContainerObjects xs s
-setContainerObjects [] s = return ()
-
 basicMove :: MoveAction
-basicMove r _ Move _ = do
+basicMove r passage Move _ 
+    | passage^.objectStatus == Opened = do
                     w <- get
                     currentRoom .= roomByString w r 
                     displayCurrentRoom 
+    | otherwise = singleAnswer "You can't, the path is closed !"
 basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
 
 makeExit :: String          -- Main name
