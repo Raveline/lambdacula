@@ -32,7 +32,8 @@ module Lambdacula.World
     changeRoom,
     changeName,
     pickItem,
-    openContainer
+    openContainer,
+    pickItemFromContainer 
 )
 where
 
