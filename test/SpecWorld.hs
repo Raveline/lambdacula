@@ -18,12 +18,14 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Monad.State
+import Control.Lens hiding (Action)
 import Lambdacula.Action
 import Lambdacula.World
 import Lambdacula.GameData
 import Lambdacula.WorldBuilder
 import Lambdacula.Flow
 import qualified Data.Map as Map
+import Data.List
 
 
 examineString = "A simple test cube. Look, how pretty !" 
@@ -34,6 +36,7 @@ cubeWithWeather = "The cube has nothing to say about the weather."
 -- Test method for a test cube
 useTestCube :: RoomObject -> Action -> Maybe String -> WorldAction 
 useTestCube cube Talk (Just "weather") = singleAnswer cubeWithWeather
+useTestCube cube Take (Just x) = pickItemFromContainer cube x
 useTestCube cube Examine _ = singleAnswer examineString
 useTestCube _ Talk _ = singleAnswer "You can't talk to a cube, don't be silly."
 useTestCube _ Move _ = singleAnswer "You push the cube. Happy now ?"
@@ -45,7 +48,7 @@ useTestCube _ _ _ = singleAnswer zilchString
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" 
             , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is."] 
 
-trObjects = [makeExit "north" [] "The test room" "a weird discontinuity in space and time" "A second room" Opened
+trObjects = [makeExit "north" [] "The test room" "a weird discontinuity in space and time" "A second room" Closed 
             , makeExit "south" [] "A second room" "a passage that defies the law of physics" "The test room" Opened
             , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [basicObject])]
 
@@ -56,6 +59,33 @@ basicObject = simpleObject ["a thingy", "thingy"] "NOWHERE" noReaction "Nothing 
 
 world = buildWorld trRooms trObjects
 testProceed x = head . fst $ runState (proceed x) world
+
+checkWorld :: [PlayerAction] -> (World -> Bool) -> Bool
+checkWorld x t = t . snd $ runState (multiProceed x) world
+    where 
+        multiProceed :: [PlayerAction] -> WorldAction
+        multiProceed [] = return []
+        multiProceed [action] = proceed action
+        multiProceed (action:actions) = do
+                                            proceed action
+                                            multiProceed actions
+
+playerInventoryIsEmpty :: World -> Bool
+playerInventoryIsEmpty w = (length . _inventory . _player $ w) == 0
+
+checkStatus :: String               -- Name of the object
+                -> ObjectStatus     -- Status this object should have
+                -> World            -- The world
+                -> Bool             -- Does the status match ?
+checkStatus s st w = case find ((==) s . mainName) (_worldObjects w) of
+                    Just x -> x^.objectStatus == st 
+                    Nothing -> error "Test poorly written !" 
+
+checkCurrentRoom :: String -> World -> Bool
+checkCurrentRoom s w = (_roomName . _currentRoom $ w) == s
+
+properActions = [(Interaction Open "cube"),
+                (Complex Take "cube" "key")]
 
 main :: IO()
 main = hspec $ do
@@ -71,3 +101,13 @@ main = hspec $ do
 
             it "Handle an interaction" $ do
                 testProceed (Complex Talk "cube" "weather") `shouldBe` cubeWithWeather
+
+    describe "scenario" $ do
+            it "Tries to take the key out of the cube but fails, because it is closed" $ do
+                checkWorld ([Complex Take "cube" "key"]) playerInventoryIsEmpty `shouldBe` True 
+
+            it "Tries to go to the new room but fails because the door is closed" $ do
+                checkWorld ([Interaction Move "north"]) (checkCurrentRoom "The test room") `shouldBe` True
+
+            it "Opens the cube" $ do
+                checkWorld ([Interaction Open "cube"]) (checkStatus "the test cube" Opened) `shouldBe` True
