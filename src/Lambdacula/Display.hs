@@ -5,7 +5,6 @@
 module Lambdacula.Display (
     displayRoom,
     format80,
-    displayContainerContent,
     displayCurrentRoom,
     displayInventory,
     printStrs
@@ -59,10 +58,6 @@ format80 strings = splitOn "\n" . format80' 0 $ (splitOn " ". intercalate "\n" $
             | length s + n >= 80 = "\n" ++ s ++ " " ++ (format80' (length s + 1) ss)
             | otherwise = s ++ " " ++ (format80' (n + length s + 1) ss)
 
-
--- Display the objects contained by a container
-displayContainerContent :: RoomObject -> [String] 
-displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
 
 -- Display the player inventory
 displayInventory :: [String] -> [String]
