@@ -32,7 +32,7 @@ module Lambdacula.World
     changeRoom,
     changeName,
     pickItem,
-    isOpened
+    openContainer
 )
 where
 
@@ -249,7 +249,49 @@ pickItem ro = do
                 worldObjects .= filter(/= ro) (w & view worldObjects)
                 return ["You picked up " ++ (mainName ro)]
 
+---------------------
+-- Container related
+---------------------
+
 -- Object utilities
 isOpened :: RoomObject -> Bool
 isOpened ro = ro^.objectStatus == Opened
 
+-- Given a room object, and a success string, open the container if possible
+-- and display its content
+openContainer :: RoomObject -> String -> WorldAction
+openContainer ro sust
+    | isOpened ro = singleAnswer "It's already opened !"
+    | otherwise = do
+                    w <- get
+                    changeStatus ro Opened
+                    name <- use currentRoomName
+                    lookInsideContainer ro
+
+lookInsideContainer :: RoomObject -> WorldAction
+lookInsideContainer ro
+    | isOpened ro = singleAnswer $ (headName . _ronames $ ro) ++ " is closed, you can't look inside."
+    | otherwise = do 
+                    return ("It contains : ":displayContainerContent ro)
+    where
+        displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
+
+pickItemFromContainer :: RoomObject         -- The container 
+                        -> String           -- The object to pick
+                        -> WorldAction
+pickItemFromContainer ro s
+    | s `elem` (map mainName $ _content . _rodetails $ ro) = do
+                                                let newRo = ro & containedObjects .~ (removeObjectFromList (ro^.containedObjects) s)
+                                                w <- get
+                                                worldObjects .= rebuildList (w^.worldObjects) ro newRo
+                                                singleAnswer $ "You picked up " ++ s
+    | otherwise = singleAnswer $ "There is no " ++  s ++ " in " ++ (mainName ro) ++ "."
+
+-- Given a simple string, look for potential aliases in the list
+removeObjectFromList :: [RoomObject] -> String -> [RoomObject]
+removeObjectFromList ros s = case (findObjectToRemove s ros) of
+                                Just x -> filter (/= x) ros
+                                Nothing -> ros
+    where
+        findObjectToRemove :: String -> [RoomObject] -> Maybe RoomObject
+        findObjectToRemove s = find (elem s . view objectAliases)
