@@ -7,7 +7,8 @@ module Lambdacula.Display (
     format80,
     displayCurrentRoom,
     displayInventory,
-    printStrs
+    printStrs,
+    singleAnswer
 )
 where
 
@@ -65,3 +66,9 @@ displayInventory [] = ["You have nothing, but clothes on your back. I won't comm
 displayInventory xs = "You're currently the proud owner of the following items : ":(map ((++) "- ") xs)
 
 printStrs = mapM putStrLn . format80
+
+
+-- Used when State does not need to be changed.
+-- Given a string, will return the World "as it is" and the string.
+singleAnswer :: String -> WorldAction 
+singleAnswer = return . (:[])
