@@ -44,6 +44,7 @@ data Action = Examine       -- Look at something
             | QuitGame      -- Leave this wonderful game.
             | Eat           -- Experiment with your mouth.
             | Show          -- Special, more like an event. Display stuff on screen
+            | Use           -- Basic interaction (press something, combine objects, etc.)
             | Zilch         -- Unknown action.
     deriving (Eq, Show, Ord)
 
