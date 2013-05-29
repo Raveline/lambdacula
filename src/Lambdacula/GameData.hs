@@ -6,6 +6,7 @@ import Lambdacula.Action
 import Control.Lens hiding (Action)
 import Lambdacula.World
 import Lambdacula.Display
+import Lambdacula.ModelShortcuts
 
 type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World [String]
 
@@ -23,6 +24,9 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Eat "eat" [] []
         ,Transitive QuitGame "quit" [] []
         ,Transitive Take "take" [] []
+        ,Transitive Use "use" [] ["on"]
+        ,Transitive Use "open" [] ["with"]
+        ,Transitive Use "unlock" [] ["with", "using"]
         ,Phrasal Take "pick" "from" [] []
         ,Transitive Inventorize "inventory" [] []]
 
