@@ -9,6 +9,7 @@ module Lambdacula.ModelShortcuts
 where
 
 import Lambdacula.World
+import Lambdacula.Display
 
 import Control.Lens
 import Control.Monad.State
@@ -40,11 +41,6 @@ removeObjectFromList ros s = case (findObjectToRemove s ros) of
     where
         findObjectToRemove :: String -> [RoomObject] -> Maybe RoomObject
         findObjectToRemove s = find (elem s . view objectAliases)
-
--- Used when State does not need to be changed.
--- Given a string, will return the World "as it is" and the string.
-singleAnswer :: String -> WorldAction 
-singleAnswer = return . (:[])
 
 ---------------------
 -- Changing states
@@ -109,6 +105,21 @@ pickItemFromContainer ro s
                                                 singleAnswer $ "You picked up " ++ s
     | otherwise = singleAnswer $ "There is no " ++  s ++ " in " ++ (mainName ro) ++ "."
 
+openDoor :: String -> RoomObject -> WorldAction
+openDoor kName door 
+    | not $ isOpened door = do
+                            w <- get
+                            if possessKey kName w
+                                then
+                                    do
+                                        changeStatus door Opened
+                                        return ["You open the door"]
+                                else
+                                    return ["You don't have this object !"]
+    | otherwise = singleAnswer "The door is already opened !"
+    where 
+        possessKey :: String -> World -> Bool 
+        possessKey s w = s `elem` (w^.inventory)  
 
 -------------------------
 -- Inventory management
