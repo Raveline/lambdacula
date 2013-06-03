@@ -4,6 +4,7 @@ module Lambdacula.ModelShortcuts
     pickItemFromContainer,
     changeStatus, 
     changeRoom,
+    openDoor,
     pickItem
 ) 
 where
@@ -11,7 +12,7 @@ where
 import Lambdacula.World
 import Lambdacula.Display
 
-import Control.Lens
+import Control.Lens hiding (contains)
 import Control.Monad.State
 import Data.List
 
@@ -98,12 +99,19 @@ pickItemFromContainer :: RoomObject         -- The container
                         -> String           -- The object to pick
                         -> WorldAction
 pickItemFromContainer ro s
-    | s `elem` (map mainName $ _content . _rodetails $ ro) = do
-                                                let newRo = ro & containedObjects .~ (removeObjectFromList (ro^.containedObjects) s)
-                                                w <- get
-                                                worldObjects .= rebuildList (w^.worldObjects) ro newRo
-                                                singleAnswer $ "You picked up " ++ s
+    | ro `contains` s && isOpened ro = do
+                            let newRo = ro & containedObjects .~ (removeObjectFromList (ro^.containedObjects) s)
+                            w <- get
+                            inventory .= (s:(w^.inventory))
+                            worldObjects .= rebuildList (w^.worldObjects) ro newRo
+                            singleAnswer $ "You picked up " ++ s
+    | not (isOpened ro) = singleAnswer $ mainName ro ++ " is not opened !"
     | otherwise = singleAnswer $ "There is no " ++  s ++ " in " ++ (mainName ro) ++ "."
+
+contains :: RoomObject  -- Container
+            -> String   -- Object name
+            -> Bool
+contains ro s = s `elem` (map mainName $ _content . _rodetails $ ro)
 
 openDoor :: String -> RoomObject -> WorldAction
 openDoor kName door 
