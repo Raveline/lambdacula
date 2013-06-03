@@ -14,9 +14,9 @@ type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World 
 verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Talk "talk" ["with", "to"] ["about"]
         ,Transitive Talk "ask" ["about"] []
-        ,Phrasal Search "look" "for" [] ["in", "with"]
+        ,Phrasal Search "look" "for" [] ["in", "with"] True
         ,Transitive Examine "examine" [] ["with"]
-        ,Phrasal Examine "look" "at" [] ["with"]
+        ,Phrasal Examine "look" "at" [] ["with"] False
         ,Transitive Examine "look" [] ["with"] 
         ,Transitive Open "open" [] []
         ,Transitive Examine "analyze" [] []
@@ -27,7 +27,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Use "use" [] ["on"]
         ,Transitive Use "open" [] ["with"]
         ,Transitive Use "unlock" [] ["with", "using"]
-        ,Phrasal Take "pick" "from" [] []
+        ,Phrasal Take "pick" "up" [] ["from"] True
         ,Transitive Inventorize "inventory" [] []]
 
 -- OBJECTS
