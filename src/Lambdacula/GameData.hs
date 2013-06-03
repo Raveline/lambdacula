@@ -27,7 +27,8 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Use "use" [] ["on"]
         ,Transitive Use "open" [] ["with"]
         ,Transitive Use "unlock" [] ["with", "using"]
-        ,Phrasal Take "pick" "up" [] ["from"] True
+        ,Phrasal Take "pick" "up" [] ["from", "in", "on"] True
+        ,Transitive Take "take" [] ["from", "of", "out"] True 
         ,Transitive Inventorize "inventory" [] []]
 
 -- OBJECTS
