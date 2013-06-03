@@ -1,24 +1,30 @@
 module Lambdacula.ModelShortcuts
 (
+    MoveAction,
     openContainer,
     pickItemFromContainer,
     changeStatus, 
     changeRoom,
     openDoor,
-    pickItem
+    pickItem,
+    basicMove
 ) 
 where
 
 import Lambdacula.World
 import Lambdacula.Display
+import Lambdacula.Action
 
-import Control.Lens hiding (contains)
+import Control.Lens hiding (contains, Action)
 import Control.Monad.State
 import Data.List
 
---------------------
+
+type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World [String]
+
+-----------------------
 -- Abstract utilities
---------------------
+-----------------------
 
 -- Given a list of items, replace any version of an item by a new one
 rebuildList :: (Eq a) => [a]    -- A list
@@ -143,3 +149,15 @@ pickItem ro = do
                 worldObjects .= filter(/= ro) (w & view worldObjects)
                 return ["You picked up " ++ (mainName ro)]
 
+------------
+-- Doors
+------------
+
+basicMove :: MoveAction
+basicMove r passage Move _ 
+    | passage^.objectStatus == Opened = do
+                    w <- get
+                    currentRoom .= roomByString w r 
+                    displayCurrentRoom 
+    | otherwise = singleAnswer "You can't, the path is closed !"
+basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
