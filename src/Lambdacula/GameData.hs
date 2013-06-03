@@ -8,7 +8,6 @@ import Lambdacula.World
 import Lambdacula.Display
 import Lambdacula.ModelShortcuts
 
-type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World [String]
 
 -- VERBS
 verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
@@ -28,7 +27,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
         ,Transitive Use "open" [] ["with"]
         ,Transitive Use "unlock" [] ["with", "using"]
         ,Phrasal Take "pick" "up" [] ["from", "in", "on"] True
-        ,Transitive Take "take" [] ["from", "of", "out"] True 
+        ,Transitive Take "take" [] ["from", "of", "out"]
         ,Transitive Inventorize "inventory" [] []]
 
 -- OBJECTS
@@ -42,14 +41,6 @@ simpleObject aliases room reaction description = RoomObject naming room reaction
         naming = ObjectNames aliases
         details = RoomObjectDetails Nada description [] 
 
-basicMove :: MoveAction
-basicMove r passage Move _ 
-    | passage^.objectStatus == Opened = do
-                    w <- get
-                    currentRoom .= roomByString w r 
-                    displayCurrentRoom 
-    | otherwise = singleAnswer "You can't, the path is closed !"
-basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
 
 makeExit :: String          -- Main name
             -> [String]     -- Aliases
