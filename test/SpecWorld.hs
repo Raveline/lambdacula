@@ -50,23 +50,19 @@ useTestCube _ _ _ = singleAnswer zilchString
 -- Test method for the door
 useTestDoor :: MoveAction
 useTestDoor dest door Move nthg = basicMove dest door Move nthg
-useTestDoor _ door Use (Just "key")
-    | door^.objectStatus == Closed = do
-                                    changeStatus door Opened
-                                    return ["You open the door"]
-    | otherwise = singleAnswer $ "The door is already opened !"
+useTestDoor _ door Use (Just "key") = openDoor "key" door
 
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" 
             , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is."] 
 
 trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (useTestDoor "The test room") (RoomObjectDetails Closed "A hermetically locked door" []) "A second room" 
             , makeExit "south" [] "A second room" "A door" "The test room" Opened
-            , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [basicObject])]
+            , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
 
 noReaction :: RoomObject -> Action -> Maybe String -> WorldAction
 noReaction _ _ _ = singleAnswer "This object is just for tests."
 
-basicObject = simpleObject ["a thingy", "thingy"] "NOWHERE" noReaction "Nothing worth looking at"
+keyObject = simpleObject ["key", "a key"] "NOWHERE" noReaction "Nothing worth looking at"
 
 world = buildWorld trRooms trObjects
 testProceed x = head . fst $ runState (proceed x) world
@@ -84,6 +80,9 @@ checkWorld x t = t . snd $ runState (multiProceed x) world
 playerInventoryIsEmpty :: World -> Bool
 playerInventoryIsEmpty w = (length . _inventory . _player $ w) == 0
 
+playerInventoryContains :: String -> World -> Bool
+playerInventoryContains s w = s `elem` w^.inventory 
+
 checkStatus :: String               -- Name of the object
                 -> ObjectStatus     -- Status this object should have
                 -> World            -- The world
@@ -97,7 +96,8 @@ checkCurrentRoom s w = (_roomName . _currentRoom $ w) == s
 
 properActions = [(Interaction Open "cube")
                 ,(Complex Take "cube" "key")
-                ,(Complex Use "door" "key")]
+                ,(Complex Use "door" "key")
+                ,(Interaction Move "door")]
 
 main :: IO()
 main = hspec $ do
@@ -125,7 +125,16 @@ main = hspec $ do
                 checkWorld ([Interaction Open "cube"]) (checkStatus "the test cube" Opened) `shouldBe` True
 
             it "Tries to open the door while not having the key" $ do
-                checkWorld ([(properActions !! 1), (properActions !! 3)]) (checkStatus "A test door" Closed) `shouldBe` True
+                checkWorld ([(properActions !! 0), (properActions !! 2)]) (checkStatus "A test door" Closed) `shouldBe` True
+
+            it "Tries to pick up the key without opening the cube first and fails" $ do
+                checkWorld ([properActions !! 1]) playerInventoryIsEmpty `shouldBe` True
+
+            it "Open the cube, takes the key" $ do
+                checkWorld (take 2 properActions) (playerInventoryContains "key") `shouldBe` True
 
             it "Open the cube, take the key and open the door" $ do
                 checkWorld (take 3 properActions) (checkStatus "A test door" Opened) `shouldBe` True
+
+            it "Do every action to open the door and cross it" $ do
+                checkWorld (take 4 properActions) (checkCurrentRoom "The test room") `shouldBe` True
