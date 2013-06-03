@@ -2,8 +2,7 @@ module Lambdacula.Action
     (
         Action(..),
         PlayerAction(..),
-        Verb(..),
-        getVerbAction
+        Verb(..)
     )
 where 
 
@@ -19,12 +18,9 @@ data Verb = Transitive {    actionType :: Action
                             , phrasal :: String 
                             , preposition :: [String]
                             , complements :: [String] 
+                            , reversed :: Bool
             }
                 deriving (Show, Eq)
-
-getVerbAction :: Verb -> Action
-getVerbAction (Transitive a _ _ _) = a
-getVerbAction (Phrasal a _ _ _ _) = a
 
 data PlayerAction =   SimpleAction Action
                 | Interaction Action String
