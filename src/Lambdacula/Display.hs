@@ -42,9 +42,12 @@ displayRoom (Room name desc) ros =
         displayObjects' (RoomObject _ _ _ details) = " " ++ _objectDescription details
         displayObjects' _ = ""
         -- Display the exits on separate lines
+        -- BEWARE. Exits who are hidden should not be displayed.
         displayExits :: [RoomObject] -> [String]
         displayExits [] = []
-        displayExits ((Exit nms _ _ desc _):ros) = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
+        displayExits ((Exit nms _ _ desc _):ros)
+            | _status desc /= Hidden = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
+            | otherwise = displayExits ros
         displayExits (_:ros) = displayExits ros
 
 -- Take a bunch of strings.
