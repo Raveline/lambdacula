@@ -115,7 +115,7 @@ newtype ObjectNames = ObjectNames{ names :: [String] }
 
 type RoomObjectBehaviour = RoomObject -> Action -> Maybe String -> WorldAction
 
-data ObjectStatus = Opened | Closed | Broken | Fixed | Nada
+data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Nada
     deriving (Eq)
 
 -- Details of a room object : its current status and its
