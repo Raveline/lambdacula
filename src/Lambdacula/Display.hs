@@ -8,17 +8,19 @@ module Lambdacula.Display (
     displayCurrentRoom,
     displayInventory,
     printStrs,
-    singleAnswer
+    singleAnswer,
+    present
 )
 where
 
-import Lambdacula.World
 import Data.List.Split
 import Data.List
 import Data.Char
 import Control.Lens 
 import Control.Monad.State
+import Control.Applicative
 
+import Lambdacula.World
 -- Given a state, will display the current room
 displayCurrentRoom :: WorldAction
 displayCurrentRoom = do 
@@ -30,8 +32,9 @@ displayCurrentRoom = do
 displayRoom :: Room         -- The room
             -> [RoomObject] -- The objects in this room
             -> [String]     -- The text to display
-displayRoom (Room name desc) ros = 
-                                [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects ros)] ++ ["Exits :"] ++ displayExits ros 
+displayRoom (Room name desc status) ros
+    | status /= Dark = [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects ros)] ++ ["Exits :"] ++ displayExits ros 
+    | otherwise = displayDarkRoom
     where 
         -- Display a line of stars
         stars = map (const '*') name 
@@ -49,7 +52,8 @@ displayRoom (Room name desc) ros =
             | _status desc /= Hidden = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
             | otherwise = displayExits ros
         displayExits (_:ros) = displayExits ros
-
+displayDarkRoom :: [String]
+displayDarkRoom = ["It is pitch black. You are likely to be eaten by... no I'm kidding. You're just going to get hurt. Type \"flee\" to get back to safety."]
 -- Take a bunch of strings.
 -- Format them so that they won't take more than 80 characters.
 format80 :: [String] -> [String]
@@ -75,3 +79,17 @@ printStrs = mapM putStrLn . format80
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldAction 
 singleAnswer = return . (:[])
+
+articles = ["A", "The"]
+-- Display nicely a name with a cap first letter
+-- Take off the article in front if needed.
+present :: RoomObject -> String
+present = capFirstLetter . (removeArticles . words) . mainName
+    where
+        capFirstLetter :: String -> String
+        capFirstLetter [] = []
+        capFirstLetter (x:xs) = toUpper x : xs
+        removeArticles :: [String] -> String
+        removeArticles [] = []
+        removeArticles [x] = x
+        removeArticles (art:wd) = unwords wd
