@@ -76,7 +76,7 @@ ldObjects = [makeExit "South" [] "In front of the castle" "the gate of the castl
             ,makeDoor ["A door", "door"] "The gamekeeper shack" "a way out to the path below Lambdacula's Castle" "A muddy path" Nothing Closed 
             ,simpleObject ["the book", "book", "Lady Chatterley", "Lady's Chatterley's Lover"] "The gamekeeper shack" ladyChatAction "On the night table, an old copy of Lady Chatterley's Lover."
             ,simpleObject ["the rug", "rug", "oriental touch"] "The gamekeeper shack" rugAction "Decorum is not really the place forte, though there is a nice rug on the floor."
-            ,makeDoor ["A hatch", "the hatch", "hatch"] "The gamekeeper shack" "To a strange cellar" "A dark cellar" Nothing Hidden]
+            ,makeDoor ["A hatch", "the hatch", "hatch"] "The gamekeeper shack" "Downwards to the unknown" "A dark corridor" Nothing Hidden]
 
 
 
@@ -97,6 +97,6 @@ ladyChatAction _ _ _ = singleAnswer $ "I don't know what you're trying to do wit
 rugAction :: RoomObjectBehaviour
 rugAction rug Examine _ = singleAnswer $ "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."
 rugAction rug Lift _ = do
-                        setExternalStatus "The gamekeeper shack" "a hatch" Closed
+                        setExternalStatus "The gamekeeper shack" "A hatch" Closed
                         return ["There is a hatch behind the rug !"]
 rugAction rug _ _ = singleAnswer $ "You DO realize this is a rug, right ?"
