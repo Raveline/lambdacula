@@ -64,8 +64,9 @@ class Actionable f where
 -- out of rooms. Which would be handy for creators of zork-like games.
 data Room =    Room { _roomName :: String
                  ,_description :: String
+                 ,_roomstatus :: ObjectStatus
                 }
-  deriving (Show, Eq)
+  deriving (Eq)
 
 -- The world. A scary place. It figures the encounters between a hero,
 -- the Player, and one of many room (the rooms) in a CurrentRoom.
@@ -115,7 +116,7 @@ newtype ObjectNames = ObjectNames{ names :: [String] }
 
 type RoomObjectBehaviour = RoomObject -> Action -> Maybe String -> WorldAction
 
-data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Nada
+data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Nada
     deriving (Eq)
 
 -- Details of a room object : its current status and its
@@ -162,11 +163,11 @@ instance Show RoomObject where
    show = show . mainName
 
 instance Eq RoomObject where
-    (==) r1 r2 = mainName r1 == mainName r2
+    (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
 
 instance Actionable RoomObject where
     actOn r = view objectReactions r r
-    match s = (s `elem`) . ((:) <$> mainName <*> view objectAliases)
+    match s = (s `elem`) . map(map toLower) . view objectAliases
 
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
