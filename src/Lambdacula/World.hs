@@ -101,7 +101,7 @@ isInRoom name ro = (_inRoom ro) == name
 roomByString :: World -> String -> Room
 roomByString w s = case ((_getARoom w) s) of
                     Just a -> ((_getANode w) a)^._1
-                    Nothing -> error "THIS IS NOT HAPPENING OH GOD"
+                    Nothing -> error $ "Room" ++ s ++ " does not exist ! Fatal error and all that jazz."
 
 -- A player. A hero. Currently, only there has a quite capitalistic
 -- representation of an inventory.
