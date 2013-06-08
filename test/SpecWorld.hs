@@ -32,7 +32,7 @@ import Data.List
 
 examineString = "A simple test cube. Look, how pretty !" 
 zilchString = "You can't do that to the test cube" 
-noSuchObjectString = "There is no gizmo here !"
+noSuchObjectString = "I did not understand what you want to do with gizmo, sorry."
 cubeWithWeather = "The cube has nothing to say about the weather."
 
 -- Test method for a test cube
@@ -52,11 +52,11 @@ useTestDoor :: MoveAction
 useTestDoor dest door Move nthg = basicMove dest door Move nthg
 useTestDoor _ door Use (Just "key") = openDoor "key" door
 
-trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" 
-            , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is."] 
+trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" Nada
+            , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
 trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (useTestDoor "The test room") (RoomObjectDetails Closed "A hermetically locked door" []) "A second room" 
-            , makeExit "south" [] "A second room" "A door" "The test room" Opened
+            , makeExit "south" [] "A second room" "A door" "The test room"
             , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
 
 noReaction :: RoomObject -> Action -> Maybe String -> WorldAction
