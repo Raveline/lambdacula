@@ -35,6 +35,7 @@ data Action = Examine       -- Look at something
             | Close         -- Close something.
             | TurnOn        -- Starting anything that can be started.
             | TurnOff       -- Stopping anaything that can be stopped.
+            | Lift          -- Lift something
             | Take          -- Pick up stuff.
             | Search        -- Look for something.
             | QuitGame      -- Leave this wonderful game.
