@@ -7,7 +7,9 @@ module Lambdacula.ModelShortcuts
     changeRoom,
     openDoor,
     pickItem,
-    basicMove
+    basicMove,
+    moveDoor,
+    setExternalStatus
 ) 
 where
 
@@ -161,3 +163,61 @@ basicMove r passage Move _
                     displayCurrentRoom 
     | otherwise = singleAnswer "You can't, the path is closed !"
 basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
+
+
+-- Handle any move action related to a door.
+-- Used to build door objects.
+moveDoor :: Maybe String        -- If locked, the key name.
+            -> MoveAction       -- A classical move.
+-- Player is trying to go through the door
+moveDoor key dest door Move _   = goThroughDoor key dest door 
+-- Player is trying to use a key on the door.
+moveDoor (Just key) dest door Use (Just keyName)
+    | door^.objectStatus == Opened = singleAnswer "It's already unlocked."
+    | key == keyName = do
+                        changeStatus door Opened
+                        -- TODO : remove the key
+                        return ["You unlock the door."]
+    | otherwise = singleAnswer "The key doesn't fit !"
+-- We're going to assume this is a move
+moveDoor key dest door Use _ = goThroughDoor key dest door
+-- Player is trying to open the door.
+moveDoor (Just key) dest door Open Nothing = singleAnswer "This door is locked."
+moveDoor _ dest door Open Nothing = do
+                        changeStatus door Opened
+                        return ["You open the door."]
+                        
+goThroughDoor :: Maybe String   -- Maybe a key
+              -> String         -- Destination
+              -> RoomObject     -- The door
+              -> State World [String]
+goThroughDoor key dest door 
+    | door^.objectStatus == Closed = singleAnswer $ lockedOrClosed key door
+    | otherwise = basicMove dest door Move Nothing 
+    where
+            lockedOrClosed :: Maybe String -> RoomObject -> String
+            lockedOrClosed Nothing ro = present ro ++ " door is closed !"
+            lockedOrClosed _ ro = present ro ++ " door is locked !" 
+
+--------------------------
+-- Indirect interactions
+--------------------------
+
+-- Will change the status of an object, given its name,
+-- in a given room.
+setExternalStatus :: String             -- Room name
+                    -> String           -- Object name
+                    -> ObjectStatus     -- New status
+                    -> WorldSituation
+setExternalStatus roName obName stat = do
+                                    w <- get
+                                    case findObject w of
+                                        Just o -> changeStatus o stat 
+                                        Nothing -> return ()
+        where
+            matcher :: String -> String -> RoomObject -> Bool
+            matcher room name ro = (_inRoom ro) == room && (name `elem` (ro^.objectAliases))
+            findObject w = find (matcher roName obName) (w^.worldObjects)
+
+
+    
