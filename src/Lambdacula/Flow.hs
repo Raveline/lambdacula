@@ -53,7 +53,7 @@ getPotentialAction :: String            -- The main object
 getPotentialAction obj act comp = do
                                     ros <- use currentObjects
                                     case findObjectInteraction obj ros of
-                                        Nothing -> singleAnswer $ "There is no " ++ obj ++ " here !"
+                                        Nothing -> singleAnswer $ "I did not understand what you want to do with " ++ obj ++ ", sorry."
                                         Just func -> func act comp
 
 -- Check if the proposed action is to quit or to do something.
