@@ -77,6 +77,7 @@ data Room =    Room { _roomName :: String
 -- The world. A scary place. It figures the encounters between a hero,
 -- the Player, and one of many room (the rooms) in a CurrentRoom.
 data World = World { _currentRoom :: Room, 
+                    _previousRoom :: Room,
                     _worldRooms :: Graph,
                     _worldObjects :: [RoomObject],
                     _getARoom :: (String -> Maybe Vertex),
