@@ -6,7 +6,6 @@ module Lambdacula.World
     FullGraphInfo,
     Room(..),
     RoomObject(..),
-    inventory,
     containedObjects,
     currentObjects,
     currentRoomName,
@@ -18,7 +17,6 @@ module Lambdacula.World
     ObjectNames (..),
     RoomObjectDetails(..),
     RoomObjectBehaviour,
-    Player(..),
     World(..),
     Actionable(..),
     ObjectStatus(..),
@@ -28,7 +26,12 @@ module Lambdacula.World
     worldRooms,
     currentRoom,
     worldObjects,
-    objectAliases
+    playerObjects,
+    objectAliases,
+    playerPockets,
+    identify,
+    identifyWithContained,
+    canBeNamed
 )
 where
 
@@ -47,6 +50,9 @@ type WorldSituation = State World ()
 type VertexToNodeInfo = Vertex -> (Room, String, [String])
 type KeyToVertex = String -> Maybe Vertex
 type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
+
+-- Constant virtual room for inventory
+playerPockets = "POCKETS"
 
 -- *************
 -- HERE BE TYPES
@@ -70,8 +76,7 @@ data Room =    Room { _roomName :: String
 
 -- The world. A scary place. It figures the encounters between a hero,
 -- the Player, and one of many room (the rooms) in a CurrentRoom.
-data World = World { _player :: Player, 
-                    _currentRoom :: Room, 
+data World = World { _currentRoom :: Room, 
                     _worldRooms :: Graph,
                     _worldObjects :: [RoomObject],
                     _getARoom :: (String -> Maybe Vertex),
@@ -103,14 +108,9 @@ roomByString w s = case ((_getARoom w) s) of
                     Just a -> ((_getANode w) a)^._1
                     Nothing -> error $ "Room" ++ s ++ " does not exist ! Fatal error and all that jazz."
 
--- A player. A hero. Currently, only there has a quite capitalistic
--- representation of an inventory.
-data Player = Player { _inventory :: [String] }
-    deriving (Show)
-
 -- Player lenses
-inventory :: Simple Lens World [String]
-inventory = lens (_inventory . _player) (\w inv -> w {_player = (_player w) {_inventory = inv}})
+playerObjects :: Getter World [RoomObject]
+playerObjects = to (\w -> filter (isInRoom playerPockets) (_worldObjects w))
 
 newtype ObjectNames = ObjectNames{ names :: [String] }
 
@@ -185,3 +185,27 @@ findObjectInteraction s ros = case newWorlds of
                 findAMatch = filter (match s) 
                 actOnAll :: (Actionable a) => [a] -> [Action -> Maybe String -> WorldAction] 
                 actOnAll = fmap actOn
+
+-- Identify objects corresponding to a name
+-- In the given context, namely : among the objects in the room and
+-- the objects in the player inventory.
+identify :: String -> World -> [RoomObject]
+identify s w = identifyObjectWithName s contextObjects 
+    where
+        contextObjects = (w^.currentObjects) ++ (w^.playerObjects)
+
+-- Identify objects with the given context
+-- BUT also objects contained in other objects
+-- in the current room. 
+identifyWithContained :: String -> World -> [RoomObject]
+identifyWithContained s w = identifyObjectWithName s fullContext 
+    where
+        containerAndContained ros = [ro| ro <- ros, ro <- ro^.containedObjects]
+        fullContext =  (containerAndContained (w^.currentObjects)) ++ (w^.playerObjects)
+
+identifyObjectWithName :: String -> [RoomObject] -> [RoomObject]
+identifyObjectWithName s = filter (canBeNamed s) 
+
+canBeNamed :: String -> RoomObject -> Bool
+canBeNamed s ro = s `elem` (ro^.objectAliases)
+
