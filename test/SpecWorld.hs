@@ -56,7 +56,7 @@ trRooms = [Room "The test room" "You are standing in a non-existant place in a v
             , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
 trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (useTestDoor "The test room") (RoomObjectDetails Closed "A hermetically locked door" []) "A second room" 
-            , makeExit "south" [] "A second room" "A door" "The test room"
+            , makeExit ["south"] "A second room" "A door" "The test room"
             , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
 
 noReaction :: RoomObject -> Action -> Maybe String -> WorldAction
@@ -78,10 +78,10 @@ checkWorld x t = t . snd $ runState (multiProceed x) world
                                             multiProceed actions
 
 playerInventoryIsEmpty :: World -> Bool
-playerInventoryIsEmpty w = (length . _inventory . _player $ w) == 0
+playerInventoryIsEmpty w = length(w^.playerObjects) == 0
 
-playerInventoryContains :: String -> World -> Bool
-playerInventoryContains s w = s `elem` w^.inventory 
+playerInventoryContains :: RoomObject -> World -> Bool
+playerInventoryContains ro w = ro { _inRoom = playerPockets } `elem` (w^.playerObjects)
 
 checkStatus :: String               -- Name of the object
                 -> ObjectStatus     -- Status this object should have
@@ -131,7 +131,7 @@ main = hspec $ do
                 checkWorld ([properActions !! 1]) playerInventoryIsEmpty `shouldBe` True
 
             it "Open the cube, takes the key" $ do
-                checkWorld (take 2 properActions) (playerInventoryContains "key") `shouldBe` True
+                checkWorld (take 2 properActions) (playerInventoryContains keyObject) `shouldBe` True
 
             it "Open the cube, take the key and open the door" $ do
                 checkWorld (take 3 properActions) (checkStatus "A test door" Opened) `shouldBe` True
