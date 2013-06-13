@@ -41,7 +41,7 @@ runAction world s = do
 proceed :: PlayerAction -> WorldAction 
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = displayCurrentRoom 
-proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (view inventory) <*> id
+proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (map mainName . view playerObjects) <*> id
 proceed (Interaction act obj) = getPotentialAction obj act Nothing
 proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)
 proceed _ = singleAnswer "Whaaaat ?"
