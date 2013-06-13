@@ -30,7 +30,7 @@ roomsToGraph rms ros = graphFromEdges (map getRoomKeyAndEdges rms)
 buildWorld :: [Room]        -- A list of rooms
             -> [RoomObject] -- A list of objects
             -> World        -- Returns a whole world !
-buildWorld rooms objects = World (Player []) (head rooms) (view _1 rms) objects (view _3 rms) (view _2 rms)
+buildWorld rooms objects = World (head rooms) (view _1 rms) objects (view _3 rms) (view _2 rms)
     where 
         rms = roomsToGraph rooms objects
 
