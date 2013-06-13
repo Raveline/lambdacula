@@ -99,6 +99,7 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         , Room "The dining room" "You're standing in Castle Lambdacula formal dining room. You're quite sure that even before this place was crumbling, hell, even before the Count of Lambdacula became a vampire, this room was already sinister. An enormous, wooden table reinforced with iron stands in the middle. Chairs forged from iron, with impressive and, let's be frank, monstrous creativity surround it. And I don't want to make unwanted comments about the way things are in this castle, but really, if you had to pick a dining room, would you go with the one with a terrible draught ?" Nada
         , Room "The living room" "You're standing in a vast and cosy living room. Strangely enough, this particular room is in perfect state. The armchairs and sofa are still there, and not invaded by spiderwebs. It is as if some people used this room regularly. Well, after all, if they are vampire in this castle, it is normal that they should have a place to meet and talk together, you know." Nada
         , Room "The library" "You're standing in a nice library, perfectly preserved. The whole room is wood-paneled. There are two comfortable armchairs in the middle. From the windows, you can see the distant landscape of Transylvania. Once again, it looks like people have been using the place recently. It's nice, in this day and age, to know that there are some who still find comfort in intellectual activities, and will spend a lovely evening reading books. Well, considering the fact that most inhabitant of the castle must be vampires, they probably spend the night drinking blood of innocent bystanders, but you know, once it's done, they go to the library." Nada
+        , Room "The hall" "This is the entrance hall of Lambdacula Castle. Well, it's not as grandiose as you could have expected, but it's not that bad. Particularly if you've got nothing against dark, eerie shadows or cobwebs, or the nasty feeling that someone is watching your every step. And stone, of course. You have to love stone to appreciate the place, because, except from one or two medieval armours, the only thing you're going to get here is stone. Everywhere." Nada 
         -- UNDERGROUND WORLD
         , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark]
 
@@ -112,6 +113,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,simpleObject ["pile", "pile of junk", "junk", "refuse"] "The southern gate" junkPileAction "There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." 
             -- Castle entrance
             ,makeExit ["North"] "The castle entrance" "To the southern gate" "The southern gate"
+            ,makeDoor ["South", "double doors", "doors", "door"] "The castle entrance" "An impressive double doors" "The hall" Nothing Closed
             -- Kitchen
             ,makeDoor ["West", "wooden door", "wooden door"] "The kitchen" "A wooden door" "The southern gate" Nothing Closed
             ,makeExit ["South"] "The kitchen" "To an antichamber" "Antichamber"
@@ -124,11 +126,21 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,simpleObject ["Sad", "man", "goth", "necromancer", "necro", "man in robes", "man in black robes"] "The dormitory" necroAction "there is a man in black robes, wearing make up to look as pale as possible. He's got skull-shaped rings on almost all his fingers."
             -- Gallery
             ,makeExit ["North"] "A gallery" "To the guard room" "The guard room"
+            ,makeExit ["South"] "A gallery" "To the living room" "The living room"
             -- Antichamber
             , makeExit ["North"] "Antichamber" "To the kitchen" "The kitchen"
             , makeExit ["East"] "Antichamber" "To the dining room" "The dining room"
             -- Dining room
             , makeExit ["West"] "Dining room" "To the antichamber" "The antichamber"
+            -- Living room
+            , makeExit ["North"] "The living room" "To the gallery" "A gallery"
+            , makeExit ["West"] "The living room" "To the library" "The library"
+            , makeExit ["East"] "The living room" "To the hall" "The hall"
+            -- The library
+            , makeExit ["East"] "The library" "To the living room" "The living room"
+            -- The hall
+            , makeExit ["West"] "The hall" "To the living room" "The living room"
+            , makeDoor ["North", "double doors", "doors", "door"] "The hall" "An impressive double doors" "The castle entrance" Nothing Closed
             -- Muddy path
             ,makeExit ["West"] "A muddy path" "an upward path to the castle" "In front of the castle" 
             ,makeDoor ["A door", "door"] "A muddy path" "the gamekeeper shack" "The gamekeeper shack" Nothing Closed 
