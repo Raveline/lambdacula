@@ -73,6 +73,11 @@ changeRoom name ro = do
                         worldObjects .= rebuildList wos ro (ro { _inRoom = name })
                         return ()
 
+------------------------
+-- Ambiguity processing
+------------------------
+
+
 ---------------------
 -- Container related
 ---------------------
@@ -98,34 +103,58 @@ openContainer ro sust
 lookInsideContainer :: RoomObject -> WorldAction
 lookInsideContainer ro
     | isOpened ro = singleAnswer $ (headName . _ronames $ ro) ++ " is closed, you can't look inside."
-    | otherwise = do 
-                    return ("It contains : ":displayContainerContent ro)
+    | otherwise = do return ("It contains : ":displayContainerContent ro)
     where
         displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
 
 pickItemFromContainer :: RoomObject         -- The container 
                         -> String           -- The object to pick
                         -> WorldAction
-pickItemFromContainer ro s
-    | ro `contains` s && isOpened ro = do
-                            let newRo = ro & containedObjects .~ (removeObjectFromList (ro^.containedObjects) s)
-                            w <- get
-                            inventory .= (s:(w^.inventory))
-                            worldObjects .= rebuildList (w^.worldObjects) ro newRo
-                            singleAnswer $ "You picked up " ++ s
-    | not (isOpened ro) = singleAnswer $ mainName ro ++ " is not opened !"
-    | otherwise = singleAnswer $ "There is no " ++  s ++ " in " ++ (mainName ro) ++ "."
+pickItemFromContainer container x = do
+                                        w <- get
+                                        case containeds x w of
+                                            []          -> singleAnswer $ "What on earth are you talking about ?"
+                                            [object]    -> pickItemFromContainer' container object
+                                            (xs)        -> error "Ambiguous case. Not implemented yet."
+    where
+        containeds x w =  identifyWithContained x w
+        pickItemFromContainer' :: RoomObject -> RoomObject -> WorldAction
+        pickItemFromContainer' container contained
+            | container `contains` contained && isOpened container = do
+                            removeItemFromContainer container contained
+                            singleAnswer $ "You picked up " ++ (mainName contained)
+            | not (isOpened container) = singleAnswer $ mainName container ++ " is not opened !"
+
+
+-- To remove an item from a container, we must :
+-- 1°) Redefine the container as "not containing the contained"
+-- 2°) Add the contained object to the list of world's owned RoomObject 
+removeItemFromContainer ::  RoomObject          -- Container
+                            -> RoomObject       -- Contained
+                            -> WorldSituation
+removeItemFromContainer container contained = do
+                            let newContainer = container & containedObjects .~ (removeObjectFromList (container^.containedObjects) (mainName contained))
+                            objects <- use worldObjects
+                            worldObjects .= rebuildList objects container newContainer
+                            addToInventory contained
+                            objects <- use worldObjects
+                            worldObjects .= contained:objects
+                            return ()
+
+addToInventory :: RoomObject    -- The object to change
+                -> WorldSituation
+addToInventory = changeRoom playerPockets 
 
 contains :: RoomObject  -- Container
-            -> String   -- Object name
+            -> RoomObject -- Object name
             -> Bool
-contains ro s = s `elem` (map mainName $ _content . _rodetails $ ro)
+contains container contained = contained `elem` (_content . _rodetails $ container)
 
 openDoor :: String -> RoomObject -> WorldAction
 openDoor kName door 
     | not $ isOpened door = do
                             w <- get
-                            if possessKey kName w
+                            if hasInInventory kName w
                                 then
                                     do
                                         changeStatus door Opened
@@ -133,9 +162,14 @@ openDoor kName door
                                 else
                                     return ["You don't have this object !"]
     | otherwise = singleAnswer "The door is already opened !"
-    where 
-        possessKey :: String -> World -> Bool 
-        possessKey s w = s `elem` (w^.inventory)  
+
+hasInInventory :: String
+                -> World
+                -> Bool
+hasInInventory name world = length (findObjectWithName name (world^.playerObjects)) > 0
+    where
+        findObjectWithName :: String -> [RoomObject] -> [RoomObject]
+        findObjectWithName s ros = filter (canBeNamed s) ros
 
 -------------------------
 -- Inventory management
@@ -147,8 +181,7 @@ openDoor kName door
 pickItem :: RoomObject -> WorldAction
 pickItem ro = do
                 w <- get
-                inventory .= (mainName ro:(w^.inventory))
-                worldObjects .= filter(/= ro) (w & view worldObjects)
+                addToInventory ro
                 return ["You picked up " ++ (mainName ro)]
 
 ------------
@@ -218,6 +251,3 @@ setExternalStatus roName obName stat = do
             matcher :: String -> String -> RoomObject -> Bool
             matcher room name ro = (_inRoom ro) == room && (name `elem` (ro^.objectAliases))
             findObject w = find (matcher roName obName) (w^.worldObjects)
-
-
-    
