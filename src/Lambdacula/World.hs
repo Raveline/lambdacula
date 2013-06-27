@@ -25,6 +25,7 @@ module Lambdacula.World
     WorldAction,
     worldRooms,
     currentRoom,
+    previousRoom,
     worldObjects,
     playerObjects,
     objectAliases,
@@ -89,6 +90,8 @@ worldRooms :: Simple Lens World Graph
 worldRooms = lens _worldRooms (\w rs -> w {_worldRooms = rs})
 currentRoom :: Simple Lens World Room
 currentRoom = lens _currentRoom (\w cr -> w {_currentRoom = cr})
+previousRoom :: Simple Lens World Room
+previousRoom = lens _previousRoom (\w cr -> w {_previousRoom = cr})
 worldObjects :: Simple Lens World [RoomObject]
 worldObjects = lens _worldObjects (\w wos -> w {_worldObjects = wos})
 currentRoomName :: Getter World String
@@ -117,7 +120,7 @@ newtype ObjectNames = ObjectNames{ names :: [String] }
 
 type RoomObjectBehaviour = RoomObject -> Action -> Maybe String -> WorldAction
 
-data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Nada
+data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Luminescent | Powered | Salted | Nada
     deriving (Eq)
 
 -- Details of a room object : its current status and its
