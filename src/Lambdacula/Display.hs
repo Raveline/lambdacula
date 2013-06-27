@@ -74,7 +74,6 @@ displayInventory xs = "You're currently the proud owner of the following items :
 
 printStrs = mapM putStrLn . format80
 
-
 -- Used when State does not need to be changed.
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldAction 
