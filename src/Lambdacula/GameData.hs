@@ -14,28 +14,27 @@ type Topics = Map.Map String String
 type TopicAliases = Map.Map String String
 
 -- VERBS
-verbs = [Transitive Talk "speak" ["with", "to"] ["about"]
-        ,Transitive Talk "talk" ["with", "to"] ["about"]
-        ,Transitive Talk "ask" ["about"] []
+verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
+        ,Transitive Talk "talk" ["with", "to"] ["about"] False
+        ,Transitive Talk "ask" ["about"] [] False
         ,Phrasal Search "look" "for" [] ["in", "with"] True
-        ,Transitive Examine "examine" [] ["with"]
+        ,Transitive Examine "examine" [] ["with"] False
         ,Phrasal Examine "look" "at" [] ["with"] False
-        ,Transitive Examine "look" [] ["with"] 
-        ,Transitive Open "open" [] []
-        ,Transitive Examine "analyze" [] []
-        ,Transitive Move "go" [] []
-        ,Transitive Eat "eat" [] []
-        ,Transitive QuitGame "quit" [] []
-        ,Transitive Take "take" [] []
-        ,Transitive Use "use" [] ["on"]
-        ,Transitive Use "open" [] ["with"]
-        ,Transitive Use "unlock" [] ["with", "using"]
+        ,Transitive Examine "look" [] ["with"] False
+        ,Transitive Open "open" [] [] False
+        ,Transitive Examine "analyze" [] [] False
+        ,Transitive Move "go" [] [] False
+        ,Transitive Eat "eat" [] [] False
+        ,Transitive QuitGame "quit" [] [] False
+        ,Transitive Use "use" [] ["on"] False
+        ,Transitive Use "open" [] ["with"] False
+        ,Transitive Use "unlock" [] ["with", "using"] False
         ,Phrasal Take "pick" "up" [] ["from", "in", "on"] True
-        ,Transitive Take "take" [] ["from", "of", "out"] 
-        ,Transitive Lift "lift" [] []
-        ,Transitive Search "search" [] []
-        ,Transitive Flee "flee" [] []
-        ,Transitive Inventorize "inventory" [] []]
+        ,Transitive Take "take" [] ["from", "of", "out"] True 
+        ,Transitive Lift "lift" [] [] False
+        ,Transitive Search "search" [] [] False
+        ,Transitive Flee "flee" [] [] False
+        ,Transitive Inventorize "inventory" [] [] False]
 
 
 -- CONSTANTS
