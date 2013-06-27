@@ -12,6 +12,7 @@ data Verb = Transitive {    actionType :: Action
                             , form :: String
                             , preposition :: [String]
                             , complement :: [String] 
+                            , reversed :: Bool
                         }
             | Phrasal {     actionType :: Action
                             , form :: String
