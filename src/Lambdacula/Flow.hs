@@ -13,6 +13,7 @@ import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.World
 import Lambdacula.Display
+import Lambdacula.ModelShortcuts
 
 import Control.Lens hiding (Action)
 -- Display a prompt, get some input, call some proceeding function
@@ -42,6 +43,7 @@ proceed :: PlayerAction -> WorldAction
 proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
 proceed (SimpleAction Examine) = displayCurrentRoom 
 proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (map mainName . view playerObjects) <*> id
+proceed (SimpleAction Flee) = flee
 proceed (Interaction act obj) = getPotentialAction obj act Nothing
 proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)
 proceed _ = singleAnswer "Whaaaat ?"
@@ -51,8 +53,9 @@ getPotentialAction :: String            -- The main object
                     -> Maybe String     -- Potential interaction
                     -> WorldAction 
 getPotentialAction obj act comp = do
-                                    ros <- use currentObjects
-                                    case findObjectInteraction obj ros of
+                                    objs <- use currentObjects
+                                    inv <- use playerObjects
+                                    case findObjectInteraction obj (concat [objs, inv]) of
                                         Nothing -> singleAnswer $ "I did not understand what you want to do with " ++ obj ++ ", sorry."
                                         Just func -> func act comp
 
