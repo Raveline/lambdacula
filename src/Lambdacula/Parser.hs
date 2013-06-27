@@ -29,8 +29,7 @@ processInput str vs = buildAction verb objects
         buildAction Nothing _ = SimpleAction Zilch
 
         checkForReversedVerb :: Verb -> Bool
-        checkForReversedVerb (Phrasal _ _ _ _ _ True) = True
-        checkForReversedVerb _ = False
+        checkForReversedVerb = reversed
 
 -- Given a list of verbs, try and find there is one in a given sentence
 findVerb :: [Verb] -> [String] -> Maybe Verb
@@ -40,7 +39,7 @@ findVerb (v:vs) s
     | otherwise = findVerb vs s
     where
         verbInSentence :: Verb -> [String] -> Bool
-        verbInSentence (Transitive _ form prepositions _) s = form `elem` s
+        verbInSentence (Transitive _ form prepositions _ _) s = form `elem` s
                                                     && prepositions `contains` s
         verbInSentence (Phrasal _ form phrasal prepositions _ _) s = form `elem` s 
                                                         && phrasal `elem` s 
@@ -83,7 +82,7 @@ analyseObjects sentence separators =   filter (/= "") . map(trim) . splitOn "___
 
 findObjects :: [String] -> Maybe Verb -> [String]
 findObjects _ Nothing = []
-findObjects sentence (Just (Transitive _ form prep comp)) =
+findObjects sentence (Just (Transitive _ form prep comp _)) =
     analyseObjects sentence (prep ++ comp)
 findObjects sentence (Just (Phrasal _ form phrasal prep comp _)) =
     analyseObjects sentence (phrasal:prep ++ comp)
