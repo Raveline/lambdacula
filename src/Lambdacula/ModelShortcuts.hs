@@ -1,15 +1,21 @@
 module Lambdacula.ModelShortcuts
 (
     MoveAction,
+    numberOfContained,
     openContainer,
+    lookInsideContainer,
     pickItemFromContainer,
+    putInsideContainer,
+    containsSomethingNamed,
     changeStatus, 
     changeRoom,
     openDoor,
     pickItem,
     basicMove,
+    flee,
     moveDoor,
-    setExternalStatus
+    setExternalStatus,
+    ifContainsDo
 ) 
 where
 
@@ -20,7 +26,7 @@ import Lambdacula.Action
 import Control.Lens hiding (contains, Action)
 import Control.Monad.State
 import Data.List
-
+import qualified Data.Map as Map
 
 type MoveAction = String -> RoomObject -> Action -> Maybe String -> State World [String]
 
@@ -50,6 +56,15 @@ removeObjectFromList ros s = case (findObjectToRemove s ros) of
     where
         findObjectToRemove :: String -> [RoomObject] -> Maybe RoomObject
         findObjectToRemove s = find (elem s . view objectAliases)
+
+----------------------
+-- Object utilities --
+----------------------
+
+-- Return the number of objects contained in a roomObject
+numberOfContained :: RoomObject -> Int
+numberOfContained = length . view containedObjects 
+
 
 ---------------------
 -- Changing states
@@ -107,6 +122,20 @@ lookInsideContainer ro
     where
         displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
 
+putInsideContainer :: RoomObject    -- The container
+                        -> String   -- The object to put
+                        -> String   -- Text if it works
+                        -> WorldAction
+putInsideContainer container objectName workingText
+    | not $ isOpened container = singleAnswer "Errr... it's closed. You should open it first."
+    | otherwise = do
+                    w <- get
+                    case getFromInventory objectName w of
+                        Nothing -> singleAnswer "You don't have this object !"
+                        Just contained -> do
+                            putItemInContainer contained container 
+                            return [workingText]
+
 pickItemFromContainer :: RoomObject         -- The container 
                         -> String           -- The object to pick
                         -> WorldAction
@@ -141,6 +170,24 @@ removeItemFromContainer container contained = do
                             worldObjects .= contained:objects
                             return ()
 
+putItemInContainer :: RoomObject
+                    -> RoomObject
+                    -> WorldSituation
+putItemInContainer container contained = do
+                        item <- removeFromInventory $ contained
+                        let newContainer = container & containedObjects .~ (item:(container^.containedObjects))
+                        objects <- use worldObjects
+                        worldObjects .= rebuildList objects container newContainer
+                        return()
+
+removeFromInventory :: RoomObject
+                        -> State World RoomObject 
+removeFromInventory item = do
+                        let newItem = item { _inRoom = "" } 
+                        objects <- use worldObjects
+                        worldObjects .= rebuildList objects item newItem
+                        return newItem
+
 addToInventory :: RoomObject    -- The object to change
                 -> WorldSituation
 addToInventory = changeRoom playerPockets 
@@ -149,6 +196,16 @@ contains :: RoomObject  -- Container
             -> RoomObject -- Object name
             -> Bool
 contains container contained = contained `elem` (_content . _rodetails $ container)
+
+containsSomethingNamed :: RoomObject        -- Container
+                        -> String           -- Object name
+                        -> Bool
+containsSomethingNamed container containedName = containedName `elem` (allNames $ view containedObjects container)
+    where
+        allNames :: [RoomObject] -> [String]
+        allNames = concat . extractNames
+        extractNames :: [RoomObject] -> [[String]]
+        extractNames = map (view objectAliases)
 
 openDoor :: String -> RoomObject -> WorldAction
 openDoor kName door 
@@ -171,6 +228,12 @@ hasInInventory name world = length (findObjectWithName name (world^.playerObject
         findObjectWithName :: String -> [RoomObject] -> [RoomObject]
         findObjectWithName s ros = filter (canBeNamed s) ros
 
+getFromInventory :: String
+                -> World
+                -> Maybe RoomObject
+getFromInventory name world = find (canBeNamed name) (world^.playerObjects)
+
+
 -------------------------
 -- Inventory management
 -------------------------
@@ -184,6 +247,13 @@ pickItem ro = do
                 addToInventory ro
                 return ["You picked up " ++ (mainName ro)]
 
+hasLighting :: World -> Bool
+hasLighting w = length lightsources > 0
+    where 
+        lightsources = filter (isLuminescent) (view playerObjects w)
+        isLuminescent :: RoomObject -> Bool
+        isLuminescent ro = view objectStatus ro == Luminescent
+
 ------------
 -- Doors
 ------------
@@ -192,10 +262,18 @@ basicMove :: MoveAction
 basicMove r passage Move _ 
     | passage^.objectStatus == Opened = do
                     w <- get
+                    current <- use currentRoom
+                    previousRoom .= current 
                     currentRoom .= roomByString w r 
                     displayCurrentRoom 
     | otherwise = singleAnswer "You can't, the path is closed !"
 basicMove _ _ _ _ = singleAnswer "What on earth are you trying to do ?"
+
+flee :: WorldAction
+flee = do
+        w <- get
+        currentRoom .= (w^.previousRoom)
+        displayCurrentRoom
 
 
 -- Handle any move action related to a door.
@@ -251,3 +329,12 @@ setExternalStatus roName obName stat = do
             matcher :: String -> String -> RoomObject -> Bool
             matcher room name ro = (_inRoom ro) == room && (name `elem` (ro^.objectAliases))
             findObject w = find (matcher roName obName) (w^.worldObjects)
+
+-----------------------
+-- Complex behaviour --
+-----------------------
+
+ifContainsDo ro actions = case Map.lookup (numberOfContained ro) actions of
+                    Just x -> x
+                    Nothing -> error $ "No answer for " ++ show (numberOfContained ro) ++ " in " ++ (mainName ro)
+
