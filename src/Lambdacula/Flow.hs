@@ -16,27 +16,31 @@ import Lambdacula.Display
 import Lambdacula.ModelShortcuts
 
 import Control.Lens hiding (Action)
+import System.Console.Haskeline
+
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
-promptLoop :: World -> IO ()
+promptLoop :: World -> InputT IO ()
 promptLoop world = do
     input <- getAction
     let action = processInput input verbs
-    either putStrLn (runAction world) $ quitOrContinue action
+    either outputStrLn (runAction world) $ quitOrContinue action
 
 -- Ask for an action.
-getAction :: IO String
+getAction :: InputT IO String
 getAction = do
-  putStr "> "
-  hFlush stdout
-  getLine
+                input <- getInputLine "> "
+                case input of
+                    Nothing -> return ""
+                    Just x -> return x
 
 -- Execute an action
-runAction :: World -> State World [String] -> IO ()
+runAction :: World -> State World [String] -> InputT IO ()
 runAction world s = do
-  printStrs $ fst reaction
-  promptLoop $ snd reaction 
-  where reaction = runState s world 
+    liftIO $ printStrs $ fst reaction
+    -- runInputT defaultSettings (printStrs (snd reaction))
+    promptLoop $ snd reaction 
+    where reaction = runState s world 
 
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> WorldAction 
