@@ -11,4 +11,5 @@ Cabal-Version:      >= 1.8
 Executable Lambdacula
     Main-is:        Main.hs
     hs-source-dirs: src
-    build-depends:  base, containers, mtl, split, lens
+    build-depends:  base, containers, mtl, split, lens, haskeline
+-- PLEASE NOTE : you will most likely need libncurses5-dev installed on your distro to compile. 
