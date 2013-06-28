@@ -20,6 +20,8 @@ import Control.Lens
 import Control.Monad.State
 import Control.Applicative
 
+import System.Console.Haskeline
+
 import Lambdacula.World
 -- Given a state, will display the current room
 displayCurrentRoom :: WorldAction
@@ -72,7 +74,8 @@ displayInventory :: [String] -> [String]
 displayInventory [] = ["You have nothing, but clothes on your back. I won't comment on your taste, by the way."]
 displayInventory xs = "You're currently the proud owner of the following items : ":(map ((++) "- ") xs)
 
-printStrs = mapM putStrLn . format80
+printStrs :: [String] -> IO ()
+printStrs = mapM_ putStrLn . format80 
 
 -- Used when State does not need to be changed.
 -- Given a string, will return the World "as it is" and the string.
