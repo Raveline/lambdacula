@@ -275,6 +275,9 @@ catBowlAction bowl Use (Just "Electric wires")
     | numberOfContained bowl == 2 && view objectStatus bowl == Salted  = 
             putInsideContainer bowl "Electric wires" "You plug the wires to the zinc and copper bits. You did it ! You know have a source of electricity that would make Tesla proud !"
     | otherwise = singleAnswer $ "No, something is still missing, there."
+catBowlAction bowl Use (Just "salt") = do
+                                    changeStatus bowl Salted
+                                    return ["You put salt in the water. That's not very nice for the pet that'll try to drink it, you know."]
 catBowlAction bowl Use _ = singleAnswer "Look, you might be thirsty, but not THAT thirsty."
 catBowlAction bowl Take _ = singleAnswer "And deprive a cat, dog, or monstrous vampiric pet of his drink ? NOT ON MY WATCH !"
 catBowlAction bowl Examine _ = ifContainsDo bowl (Map.fromList [(0, singleAnswer "Just normal water in a bowl. Nothing to write home about.")
