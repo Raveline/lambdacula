@@ -190,6 +190,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "The antichamber"
             , makeExit ["West"] "The smoking room" "To the hall" "The hall"
+            , simpleObject ["mummy", "Akhoris", "man in bandages", "man"] "The smoking room" mummyAction "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !"
             -- Inner garden
             , makeExit ["West"] "The inner garden" "To the smoking room" "The smoking room"
             , makeExit ["South"] "The inner garden" "To the conservatory" "The conversatory"
@@ -380,6 +381,26 @@ forkAction :: RoomObjectBehaviour
 forkAction fork Examine _ = singleAnswer $ "It is a metallic fork. Really nothing special about it."
 forkAction fork Eat _ = singleAnswer $ "No, no, no, you do not EAT FORKS. You USE THEM TO EAT. I know, it's a lot of stuff to understand. But I'm sure you'll manage."
 forkAction _ _ _ = singleAnswer $ "One player. One fork. Not a whole lot of possibilities, there."
+
+-- Smoking room
+
+mummyAction :: RoomObjectBehaviour
+mummyAction mummy Talk Nothing = mummyAction mummy Talk (Just "hello")
+mummyAction mummy Talk (Just word) = conversation word [("hello", ["hi"]), ("akhoris", []), ("Vlad", []), ("vampire", ["count", "undead"]), ("protection", ["protect myself", "protect"]), ("werewolf", ["werewolves"]), ("fake hair", []), ("fake teeth", []), ("t-shirt", ["Greenpeace"]), ("dentures", []), ("book", []), ("retirement", []), ("pharaoh", []), ("amnesia", [])] [("hello", "Well hello ! Delighted to meet you. My name is Akhoris, first scribe of the Great Pharaoh and... oh, I'm afraid that's ancient history. I'm enjoying my retirement, you see.")
+        , ("akhoris", "That is my name. I have no idea what it means. You see, I've lost all my egyptian. I can't even draw anything properly. My good friend Vlad thinks I have got a severe case of amnesia.")
+        , ("Vlad", "Vlad is the Count of this castle. A very nice fellow, provided you are undead. You being of the still-living disposition, I'm afraid he could consider you more like a meal than like an opportunity for conversation.") 
+        , ("vampire", "Well, I don't want to sound biased... but let's just say vampires are much less pleasant than mummies. You know, we're often prestend as malevolent and scary creatures but the truth is we're really nice guys. Whereas my good friend the Count has needs, like plunging his teeth in your throat. Of course, there are ways to protect yourself against such behaviour.")
+        , ("protect", "Well there are the obvious ones : garlic, crosses and so on. But I wouldn't put too much faith in them. Sure, vampires don't like garlic and avoid crosses, but not to the point they'd refrain from slurping down your blood. No, the absolute anti-vampire protection is to let them think you are a werewolf.") 
+        ,("werewolf", "Yes, you see vampires and werewolves are enemies. And werewolves are much deadlier. So a vampire will avoid any one-on-one confrontation. Now, of course, looking like a werewolf can be tricky. In their human form, werewolves tend to be hairy, have enormous teeth and be tree-huggers. So, I'd say you're going to need fake hair, fake teeth and something like a Greenpeace t-shirt or whatever.")
+        ,("fake hair", "I have no idea where you'd find this, I'm sorry !")
+        ,("fake teeth", "Not only fake teeth, but fake big, scary, wolfish teeth. Well, you are in luck, because it just so happen my dentures are exactly like that. I could give them to you.")
+        ,("t-shirt", "You know, something that makes you look like you care about the planet. Ask Al Gore.")
+        ,("dentures", "I COULD give them to you. But you know, I'm a buinessman, everybody must give something for everything they get. I won't give them out of pure charity.")
+        ,("book", "Oh it's something I bought in the station coming here. It's a terrible book about a teenage girl and a vampire and werewolves and frankly, if you don't mind my saying, they all need to get laid. I'd kill to have a nice, steamy romance instead of this.")
+        ,("amnesia", "I'm sorry, I don't remember speaking about this.")
+        ,("pharaoh", "Oh, pompous old farts, the lot of them. I'm much better off here. Vlad has been so nice to invite me !")
+        ,("retirement", "Well, you could also call it the afterlife. You see, my internal organs were removed from my body, I was covered in magical fluids and carefully bandaged. Which mean I can live forever without the... special needs of my good friend Vlad. So, now, I travel, I meet people, I read... I'm having the time of my afterlife.")
+        ,(none, "I don't think I have interesting things to say about that... sorry.")]
 
 -- various inventory stuff
 coinAction :: RoomObjectBehaviour
