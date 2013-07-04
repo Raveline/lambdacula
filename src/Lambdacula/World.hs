@@ -51,6 +51,9 @@ type WorldSituation = State World ()
 type VertexToNodeInfo = Vertex -> (Room, String, [String])
 type KeyToVertex = String -> Maybe Vertex
 type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
+-- First case is the successful action, taking an Action and a potential interaction.
+-- Second case is simply the failure message.
+type ProcessedAction = Either [String] (Action -> Maybe String -> WorldAction) 
 
 -- Constant virtual room for inventory
 playerPockets = "POCKETS"
@@ -176,12 +179,14 @@ instance Actionable RoomObject where
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
-findObjectInteraction :: String                             -- A name
-                        -> [RoomObject]                     -- A list of objects
-                        -> Maybe (Action -> Maybe String -> WorldAction)    -- A potential action
-findObjectInteraction s ros = case newWorlds of
-                                [x] -> Just x
-                                _ -> Nothing
+findObjectInteraction :: String             -- A name
+                        -> [RoomObject]     -- A list of objects
+                        -> ProcessedAction  -- A potential action or failure message
+findObjectInteraction s ros = case findAMatch ros of
+                                [] -> Left ["I don't think you can interact with " ++ s]
+                                [x] -> Right $ actOn x
+                                (xs) -> Left $ ambiguityProcessing s xs
+                                -- _ -> Left (singleAnswer $ "I don't understand what you want with " ++ s ++ ", sorry !")
             where 
                 newWorlds = actionedObjects
                 actionedObjects = actOnAll . findAMatch $ ros
@@ -189,6 +194,12 @@ findObjectInteraction s ros = case newWorlds of
                 findAMatch = filter (match s) 
                 actOnAll :: (Actionable a) => [a] -> [Action -> Maybe String -> WorldAction] 
                 actOnAll = fmap actOn
+
+ambiguityProcessing :: String -> [RoomObject] -> [String]
+ambiguityProcessing s ro = [s ++ " can mean many things. I need you to narrow it down among : "] ++ nameObjects ro
+    where
+        nameObjects :: [RoomObject] -> [String]
+        nameObjects ro = ["- " ++ mainName x|x <- ro]
 
 -- Identify objects corresponding to a name
 -- In the given context, namely : among the objects in the room and
