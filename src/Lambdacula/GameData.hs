@@ -34,6 +34,9 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Lift "lift" [] [] False
         ,Transitive Search "search" [] [] False
         ,Transitive Flee "flee" [] [] False
+        ,Transitive Attack "attack" [] [] False
+        ,Transitive Attack "kick" [] [] False
+        ,Transitive Attack "hit" [] [] False
         ,Transitive Inventorize "inventory" [] [] False]
 
 
@@ -141,7 +144,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,makeDoor ["West", "wooden door", "wooden door"] "The kitchen" "A wooden door" "The southern gate" Nothing Closed
             ,makeExit ["South"] "The kitchen" "To an antichamber" "Antichamber"
             ,objectContaining ["cupboard", "cupboards"] "The kitchen" cupboardAction "You notice one cupboard that seem in better state than the others." Closed 
-                [simpleObject ["saucepan", "pan"] "" saucepanAction "A saucepan !"
+                [simpleObject ["saucepan", "pan"] "" saucepanAction "A saucepan"
                 ,simpleObject ["salt", "saltcellar", "salt cellar", "saltshaker"] "" saltAction "A saltshaker"
                 ]
             ,simpleObject ["cat bowl", "bowl"] "The kitchen" catBowlAction "On the floor, there seem to be a bowl with some water in it, for a cat. Or a dog. Whatever it is, it's not around anyway."
@@ -158,12 +161,21 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             -- Gallery
             ,makeExit ["North"] "A gallery" "To the guard room" "The guard room"
             ,makeExit ["South"] "A gallery" "To the living room" "The living room"
+            ,simpleObject ["portrait of Stanislas of Lambdacula", "portrait", "Stanislas", "Stanislas of Lambdacula"] "A gallery" stanislasAction "A portrait of Stanislas of Lambdacula !"
+            ,simpleObject ["portrait of Dolores of Lambdacula", "portrait", "Dolores", "Dolores of Lambdacula"] "A gallery" doloresAction "A portrait of Dolores of Lambdacula !"
+            ,simpleObject ["portrait of Igor of Lambdacula", "portrait", "Igor", "Igor of Lambdacula"] "A gallery" igorAction "A portrait of Igor of Lambdacula !"
+            ,simpleObject ["portrait of Sveltana of Lambdacula", "portrait", "Sveltana", "Sveltana of Lambdacula"] "A gallery" sveltanaAction "A portrait of Sveltana of Lambdacula !"
+            ,simpleObject ["portrait of a man without a name", "portrait", "unnamed portrait", "anonymous portrait", "portrait without a name", "nameless man portrait", "portrait of a nameless man"] "A gallery" anonymousPortraitAction "A portrait of a man without a name !"
             -- Antichamber
             , makeExit ["North"] "Antichamber" "To the kitchen" "The kitchen"
             , makeExit ["East"] "Antichamber" "To the dining room" "The dining room"
             , makeExit ["South"] "Antichamber" "To the smoking room" "The smoking room"
+            , simpleObject ["soda vending machine", "vending machine", "machine"] "Antichamber" vendingMachineAction "Against one wall, there is a slightly incongruous vending machine."
             -- Dining room
             , makeExit ["West"] "Dining room" "To the antichamber" "The antichamber"
+            , objectContaining ["dresser"] "Dining room" dresserAction "On the wall opposite to the door, there is a massive dresser to store crockery." Opened
+            [simpleObject ["A vial of emetic", "drugs", "vial of emetic", "emetic", "vial"] "" emeticAction "A vial that, according to its label, contains a potent emetic. Don't ask me what it is doing there."
+            ,simpleObject ["fork"] "" forkAction "A simple fork. That's all there's left of all the cutelry and crockery that must have been stored here once."]
             -- Living room
             , makeExit ["North"] "The living room" "To the gallery" "A gallery"
             , makeExit ["West"] "The living room" "To the library" "The library"
@@ -243,7 +255,6 @@ torchlightAction torch Examine _
     | view objectStatus torch == Luminescent = singleAnswer $ "The torchlight is on. Looking at it would blind you. You're not very bright, are you ? HAHAHAHAHA, GOT YOU AGAIN !"
     | otherwise = singleAnswer $ "Well, it doesn't look like it's broken... but there are no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."
 
-
 -- THE GUARD ROOM
 braseroAction :: RoomObjectBehaviour
 braseroAction brasero Use (Just "mysterious paper") = error "TODO"
@@ -256,7 +267,6 @@ braseroAction brasero examine _
     | otherwise = singleAnswer $ "The brasero is not lit. If you had any kind of fuel and something to start a fire, you could probably use it though." 
 
 -- THE KITCHEN
-
 cupboardAction cupboard Examine _
     | view objectStatus cupboard == Closed = singleAnswer $ "It's a closed cupboard."
     | view objectStatus cupboard == Opened = lookInsideContainer cupboard
@@ -299,7 +309,6 @@ saucepanAction pan Examine _ = singleAnswer $ "Well, it's a saucepan. It's been 
 saucepanAction _ _ _ = nope
 
 -- DORMITORY
-
 necroAction :: RoomObjectBehaviour
 necroAction necro Examine _ = singleAnswer $ "Are we really going to have to spend time considering this emo character ? OK, obviously he is not a vampire. Most likely, he would love to be one. In any case, he's going to make you waste your time. And be annoying. Don't tell me I haven't warned you."
 necroAction necro Talk Nothing = necroAction necro Talk (Just "hello")
@@ -317,3 +326,64 @@ necroAction necro Talk (Just word) = conversation word [("hello", ["hi"]), ("sad
         ,("Transylvania", "Well, it's a nice place, you know. Particularly if you like vampires. Which I do. I mean, come on, I know some people specialize on zombies, but, seriously, ZOMBIES ? Walking rotting corpses with no brain whatsoever ? That's sick, man.")
         ,("zombies", "I think they are some around, but frankly, my dear, I don't give a damn.")
         ,("NONE", "I have nothing to say about that.")] 
+
+-- Gallery
+stanislasAction :: RoomObjectBehaviour
+stanislasAction portrait Examine _ = singleAnswer $ "A portrait of Stanilas Lambdacula, count of the castle between 1357 and 1402. A fine looking fellow, actually."
+stanislasAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
+stanislasAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
+
+doloresAction :: RoomObjectBehaviour
+doloresAction portrait Examine _ = singleAnswer $ "A portrait of Dolores Lambdacula, countess of the castle. Born in 1369, She married Stanislas of Lambdacula in 1385 and ruled till her son was old enough, in 1408. She died in 1423. Wait a second... Dolores doesn't sound like very Roumanian ! She must have come from Spain or something."
+doloresAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
+doloresAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
+
+igorAction :: RoomObjectBehaviour
+igorAction portrait Examine _ = singleAnswer $ "A portrait of Count Igor Lambdacula, son of Stanislas and Dolores, born in 1392. He ruled from 1408 to his death in 1459. Igor didn't look like a very fun guy, considering how dak and brooding he looks on this painting."
+igorAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
+igorAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
+
+sveltanaAction :: RoomObjectBehaviour
+sveltanaAction portrait Examine _ = singleAnswer $ "A portrait of Countess Sveltana Lambdacula, wife of Igor Lambdacula, born in 1397. She married him in 1412. Truth be told, she was quite beautiful. She died in 1453."
+sveltanaAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
+sveltanaAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
+
+anonymousPortraitAction :: RoomObjectBehaviour
+anonymousPortraitAction portrait Examine _ = accordingToStatus portrait (Map.fromList[(Nada, singleAnswer $ "It's weird, there is no name below this portrait. Must be one of the Counts that ruled over the castle, but no informations about him. He's quite dashing. A bit pale, though."), (Fixed, singleAnswer $ "You dropped white spirit on the portrait, embracing your inner call towards vandalism. Since then, one can read on the bottom right side : \"Count Vlad Lambdacula, born in 1418.\".")])
+anonymousPortraitAction portrait Take _ = singleAnswer $ "No ! It's too big. And it's not yours to take."
+anonymousPortraitAction portrait Use (Just "white spirit") = singleAnswer $ "Oblivious of the fact you are most likely desacrating an historical treasure, you pour white spirit on the painting. You manage to scrap the bottom right corner of the canvas. There is something written here ! \"Count Vlad Lambdacula, born in 1418.\" Hmm... no date of death. Could it be... ?"
+anonymousPortraitAction _ _ _ = singleAnswer $ "I don't want to know how you got this idea. Not going to work."
+
+-- Antichamber
+vendingMachineAction :: RoomObjectBehaviour
+vendingMachineAction machine Examine _ = singleAnswer $ "Well, it's a soda vending machine that looked like it was tuned into a cocktail vending machine. But in only serves bloody mary according to the labels on the buttons. Weird. Anyway, the machine is not plugged. And there doesn't even seem to be anything to plug it, so... forget your bloody mary."
+vendingMachineAction machine Attack (Just "crowbar") = do
+                                            addToInventory $ simpleObject ["coin"] "" coinAction "A coin"
+                                            removeFromInventoryByName "crowbar"
+                                            return ["Ha ! I like a thug with some method. Ok, you apply the crowbar on the machine. After a loud \"clang\", you manage to brreak the crowbar, so you won't be able to use it anymore. But there are good news : ONE coin fell on the ground. You pick it up quickly. You are now the proud owner of a coin !"]
+vendingMachineAction machine Attack _ = singleAnswer $ "There is nothing like gratuitous violence. However, as you try to kick the machine with your foot, you hurt yourself. If you want to continue this aggressive behaviour, you are most likely going to need help. Come back with a gang of baddies. Or with some kind of weapon."
+vendingMachineAction _ _ _ = singleAnswer $ "I won't let you do stupid things to a vending machine. Tempting as it might be."
+
+-- Dining room
+
+dresserAction :: RoomObjectBehaviour
+dresserAction dresser Examine _ = accordingToStatus dresser (Map.fromList[(Closed, singleAnswer $ "It is a massive, walnut-made dresser with glass paned doors. Though the glass is very, very dusty you can see through it that there is almost nothing to see inside. You'd probably could check a bit more if you opened it."), (Opened, lookInsideContainer dresser)])
+dresserAction dresser Take (Just x) = pickItemFromContainer dresser x
+dresserAction dresser Open _ = openContainer dresser "You open the dresser, and in a cloud of dust, you manage to check the inside."
+dresserAction _ _ _ = singleAnswer $ "The dresser was most likely not designed for this kind of use."
+
+emeticAction emetic Examine _ = singleAnswer $ "It's an emetic, namely something used to make you vomit."
+emeticAction emetic Eat _ = singleAnswer $ "No, you're not anorexic. And things are already nauseating enough."
+emeticAction _ _ _ = singleAnswer $ "The less you interact with this stuff, the better you'll feel."
+
+forkAction :: RoomObjectBehaviour
+forkAction fork Examine _ = singleAnswer $ "It is a metallic fork. Really nothing special about it."
+forkAction fork Eat _ = singleAnswer $ "No, no, no, you do not EAT FORKS. You USE THEM TO EAT. I know, it's a lot of stuff to understand. But I'm sure you'll manage."
+forkAction _ _ _ = singleAnswer $ "One player. One fork. Not a whole lot of possibilities, there."
+
+-- various inventory stuff
+coinAction :: RoomObjectBehaviour
+coinAction coin Examine _ = singleAnswer "Some romanian coin. Let's face it : you didn't take time to study the local currencies. Me neither. So neither you nor me have the slightest idea how much it's worth. Most likely not a lot."
+coinAction _ _ _ = singleAnswer $ "No, no, no, you don't want to anything that would make you risk this coin."
+
+
