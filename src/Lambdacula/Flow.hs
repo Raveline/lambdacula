@@ -60,8 +60,8 @@ getPotentialAction obj act comp = do
                                     objs <- use currentObjects
                                     inv <- use playerObjects
                                     case findObjectInteraction obj (concat [objs, inv]) of
-                                        Nothing -> singleAnswer $ "I did not understand what you want to do with " ++ obj ++ ", sorry."
-                                        Just func -> func act comp
+                                        Left xs -> return xs
+                                        Right func -> func act comp
 
 -- Check if the proposed action is to quit or to do something.
 quitOrContinue :: PlayerAction -> Either String WorldAction
