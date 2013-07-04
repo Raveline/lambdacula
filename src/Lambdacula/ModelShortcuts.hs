@@ -7,6 +7,8 @@ module Lambdacula.ModelShortcuts
     pickItemFromContainer,
     putInsideContainer,
     containsSomethingNamed,
+    addToInventory,
+    removeFromInventoryByName,
     changeStatus, 
     changeRoom,
     openDoor,
@@ -15,7 +17,8 @@ module Lambdacula.ModelShortcuts
     flee,
     moveDoor,
     setExternalStatus,
-    ifContainsDo
+    ifContainsDo,
+    accordingToStatus
 ) 
 where
 
@@ -188,6 +191,15 @@ removeFromInventory item = do
                         worldObjects .= rebuildList objects item newItem
                         return newItem
 
+removeFromInventoryByName :: String -> WorldSituation
+removeFromInventoryByName s = do
+                                w <- get
+                                case getFromInventory s w of
+                                    Just x -> do 
+                                        removeFromInventory x
+                                        return ()
+                                    Nothing -> error $ "Cannot remove item" ++ s ++ " from inventory !"
+
 addToInventory :: RoomObject    -- The object to change
                 -> WorldSituation
 addToInventory = changeRoom playerPockets 
@@ -338,3 +350,6 @@ ifContainsDo ro actions = case Map.lookup (numberOfContained ro) actions of
                     Just x -> x
                     Nothing -> error $ "No answer for " ++ show (numberOfContained ro) ++ " in " ++ (mainName ro)
 
+accordingToStatus ro actions = case Map.lookup (view objectStatus ro) actions of
+                    Just x -> x
+                    Nothing -> error $ "No answer for " ++ show (view objectStatus ro) ++ " in " ++ (mainName ro) 
