@@ -44,6 +44,7 @@ data Action = Examine       -- Look at something
             | Show          -- Special, more like an event. Display stuff on screen
             | Use           -- Basic interaction (press something, combine objects, etc.)
             | Attack        -- Attack someone or even something
+            | Give          -- Give something
             | Flee          -- Leave the current room for the previous one
             | Zilch         -- Unknown action.
     deriving (Eq, Show, Ord)
