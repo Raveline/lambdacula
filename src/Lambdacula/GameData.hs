@@ -7,7 +7,7 @@ import Control.Lens hiding (Action)
 import Lambdacula.Action
 import Lambdacula.World
 import Lambdacula.Display
-import Lambdacula.ModelShortcuts
+import Lambdacula.Reactions
 import qualified Data.Map as Map
 
 type Topics = Map.Map String String
@@ -37,29 +37,34 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Attack "attack" [] [] False
         ,Transitive Attack "kick" [] [] False
         ,Transitive Attack "hit" [] [] False
+        ,Transitive Give "give" [] ["to"] True
         ,Transitive Inventorize "inventory" [] [] False]
-
 
 -- CONSTANTS
 none = "NONE"
-nope = singleAnswer $ "I don't think I understand what you want."
+
+-- Tbe tuples
+reactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."])
+    ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover"])
+    ,("Lady's Chatterley's Lover", Zilch, Nothing, [], [Display "I don't know what you're trying to do with this book. And frankly, I don't want to know."])
+    ,("rug", Examine, Nothing, [], [Display "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."])
+    ,("rug", Lift, Nothing, [], [ChangeStatus "A hatch" Closed, Display "There is a hatch behind the rug !"])
+    ,("rug", Zilch, Nothing, [], [Display "You DO realize this is a rug, right ?"])]
 
 -- OBJECTS
 simpleObject :: [String]                -- Names 
                 -> String               -- Room
-                -> RoomObjectBehaviour  -- Way it reacts
                 -> String               -- Description
                 -> RoomObject           -- A proper room object
-simpleObject a b c d = objectContaining a b c d Nada []
+simpleObject a b c = objectContaining a b c Nada []
 
 objectContaining :: [String]           -- Names
                 -> String               -- Room
-                -> RoomObjectBehaviour  -- Way it reacs
                 -> String               -- Description
                 -> ObjectStatus         -- Status of the object
                 -> [RoomObject]         -- Content
                 -> RoomObject           -- A proper room object
-objectContaining aliases room reaction description status contained = RoomObject naming room reaction details
+objectContaining aliases room description status contained = RoomObject naming room details
     where
         naming = ObjectNames aliases
         details = RoomObjectDetails status description contained
@@ -69,7 +74,7 @@ makeExit :: [String]     -- Aliases
             -> String       -- Description of the object
             -> String       -- Destination
             -> RoomObject   -- An Exit
-makeExit aliases inRoom description room = Exit (ObjectNames aliases) inRoom (basicMove room) (RoomObjectDetails Opened description []) room 
+makeExit aliases inRoom description room = Exit (ObjectNames aliases) inRoom (RoomObjectDetails Opened description []) Nothing room 
 
 makeDoor :: [String]     -- Aliases
             -> String       -- Room where this exit should be
@@ -78,8 +83,9 @@ makeDoor :: [String]     -- Aliases
             -> Maybe String -- Key ?
             -> ObjectStatus -- Opened / Closed / Hidden ?
             -> RoomObject   -- An Exit
-makeDoor alias inRoom description room key status = Exit (ObjectNames alias) inRoom (moveDoor key room) (RoomObjectDetails status description []) room
+makeDoor alias inRoom description room key status = Exit (ObjectNames alias) inRoom (RoomObjectDetails status description []) (Just (DoorInfo key)) room
 
+{-
 conversation :: String                  -- Word
             -> [(String, [String])]     -- Aliases
             -> [(String, String)]       -- Conversations
@@ -96,6 +102,7 @@ conversation subject aliases topics = case properAnswer of
         
 aliasToMap :: [(String, [String])] -> TopicAliases
 aliasToMap xs = Map.fromList [(alias, key)|(key, aliases)<- xs, alias <- key:aliases]  
+-}
 
 ldRooms = [Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." Nada
         -- FIRST FLOOR.
@@ -129,6 +136,10 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         -- UNDERGROUND WORLD
         , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark]
 
+ldObjects = []
+
+
+{-|
 ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle" "The southern gate" 
             ,makeExit ["East"] "In front of the castle" "a path on the mountain" "A muddy path" 
             -- Southern gate
@@ -204,9 +215,10 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,makeDoor ["A door", "door"] "A muddy path" "the gamekeeper shack" "The gamekeeper shack" Nothing Closed 
             -- Gamekeeper shack
             ,makeDoor ["A door", "door"] "The gamekeeper shack" "a way out to the path below Lambdacula's Castle" "A muddy path" Nothing Closed 
-            ,simpleObject ["the book", "book", "Lady Chatterley", "Lady's Chatterley's Lover"] "The gamekeeper shack" ladyChatAction "On the night table, an old copy of Lady Chatterley's Lover."
+            ,simpleObject ["Lady's Chatterley's Lover", "book", "Lady Chatterley"] "The gamekeeper shack" ladyChatAction "On the night table, an old copy of Lady Chatterley's Lover."
             ,simpleObject ["the rug", "rug", "oriental touch"] "The gamekeeper shack" rugAction "Decorum is not really the place forte, though there is a nice rug on the floor."
             ,makeDoor ["A hatch", "the hatch", "hatch"] "The gamekeeper shack" "Downwards to the unknown" "A dark corridor" Nothing Hidden]
+
 
 -------------------
 -- Ojbect methods
@@ -216,19 +228,10 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
 -- And return a WorldAction
 
 -- THE SHACK
--- Lady Chaterley's Lover
-ladyChatAction :: RoomObjectBehaviour
-ladyChatAction book Use _ = singleAnswer $ "What do you want to use the book on ?"
-ladyChatAction book Examine _ = singleAnswer $ "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."
-ladyChatAction book Take _ = pickItem book
-ladyChatAction _ _ _ = singleAnswer $ "I don't know what you're trying to do with this book. And frankly, I don't want to know."
-
 rugAction :: RoomObjectBehaviour
-rugAction rug Examine _ = singleAnswer $ "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."
+rugAction rug Examine _ = singleAnswer $ 
 rugAction rug Lift _ = do
-                        setExternalStatus "The gamekeeper shack" "A hatch" Closed
-                        return ["There is a hatch behind the rug !"]
-rugAction rug _ _ = singleAnswer $ "You DO realize this is a rug, right ?"
+rugAction rug _ _ = singleAnswer $ 
 
 -- THE SOUTHERN YARD
 junkPileAction :: RoomObjectBehaviour
@@ -366,7 +369,6 @@ vendingMachineAction machine Attack _ = singleAnswer $ "There is nothing like gr
 vendingMachineAction _ _ _ = singleAnswer $ "I won't let you do stupid things to a vending machine. Tempting as it might be."
 
 -- Dining room
-
 dresserAction :: RoomObjectBehaviour
 dresserAction dresser Examine _ = accordingToStatus dresser (Map.fromList[(Closed, singleAnswer $ "It is a massive, walnut-made dresser with glass paned doors. Though the glass is very, very dusty you can see through it that there is almost nothing to see inside. You'd probably could check a bit more if you opened it."), (Opened, lookInsideContainer dresser)])
 dresserAction dresser Take (Just x) = pickItemFromContainer dresser x
@@ -401,10 +403,17 @@ mummyAction mummy Talk (Just word) = conversation word [("hello", ["hi"]), ("akh
         ,("pharaoh", "Oh, pompous old farts, the lot of them. I'm much better off here. Vlad has been so nice to invite me !")
         ,("retirement", "Well, you could also call it the afterlife. You see, my internal organs were removed from my body, I was covered in magical fluids and carefully bandaged. Which mean I can live forever without the... special needs of my good friend Vlad. So, now, I travel, I meet people, I read... I'm having the time of my afterlife.")
         ,(none, "I don't think I have interesting things to say about that... sorry.")]
+mummy Give (Just "book") = do
+                addToInventory $ simpleObject ["a wolfish dentures", "dentures"] "" dentureAction "A set of wolfish dentures"
+                return ["\"THANK GOD ! This sounds MUCH BETTER than what I'm currently reading. Not that it's a challenge. There, take my dentures, with that, you'll look like a real werewolf.\"", "You are now the proud owner of a very ancient set of dentures."]
+
+dentureAction :: RoomObjectBehaviour
+dentureAction denture Eat _ = singleAnswer $ "No, no, no, YOU EAT WITH DENTURES. You do not EAT them. Is that so complex ?"
+dentureAction denture Examine _ = singleAnswer $ "They are squeaky clean. Most likely, the mummy did not use them very often. Thank god."
+dentureAction denture Use _ = singleAnswer $ "You put the denture in your mouth. It fits. If you had a mirror, you could see that you now have some wolfish quality."
 
 -- various inventory stuff
 coinAction :: RoomObjectBehaviour
 coinAction coin Examine _ = singleAnswer "Some romanian coin. Let's face it : you didn't take time to study the local currencies. Me neither. So neither you nor me have the slightest idea how much it's worth. Most likely not a lot."
 coinAction _ _ _ = singleAnswer $ "No, no, no, you don't want to anything that would make you risk this coin."
-
-
+-}
