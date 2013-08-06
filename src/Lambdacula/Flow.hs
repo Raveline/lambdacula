@@ -13,7 +13,7 @@ import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.World
 import Lambdacula.Display
-import Lambdacula.ModelShortcuts
+import Lambdacula.Reactions
 
 import Control.Lens hiding (Action)
 import System.Console.Haskeline
@@ -44,24 +44,23 @@ runAction world s = do
 
 -- Given the world and an action, do some stuff... and analyze the world.
 proceed :: PlayerAction -> WorldAction 
-proceed (SimpleAction Zilch) = singleAnswer "Huh ?"
-proceed (SimpleAction Examine) = displayCurrentRoom 
+proceed (SimpleAction Zilch) = onlyDisplay "Huh ?"
+proceed (SimpleAction Examine) = onlyDo LookAround
 proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (map mainName . view playerObjects) <*> id
-proceed (SimpleAction Flee) = flee
+proceed (SimpleAction Flee) = onlyDo Flight
 proceed (Interaction act obj) = getPotentialAction obj act Nothing
 proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)
-proceed _ = singleAnswer "Whaaaat ?"
+proceed _ = onlyDisplay "Whaaaat ?"
 
 getPotentialAction :: String            -- The main object
                     -> Action           -- The action
                     -> Maybe String     -- Potential interaction
                     -> WorldAction 
 getPotentialAction obj act comp = do
-                                    objs <- use currentObjects
-                                    inv <- use playerObjects
-                                    case findObjectInteraction obj (concat [objs, inv]) of
+                                    objs <- localScope
+                                    case findObjectInteraction obj objs act comp of
                                         Left xs -> return xs
-                                        Right func -> func act comp
+                                        Right trio -> processAction trio
 
 -- Check if the proposed action is to quit or to do something.
 quitOrContinue :: PlayerAction -> Either String WorldAction
