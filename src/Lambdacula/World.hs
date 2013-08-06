@@ -4,6 +4,7 @@ module Lambdacula.World
     VertexToNodeInfo,
     KeyToVertex,
     FullGraphInfo,
+    ActionDetail,
     Room(..),
     RoomObject(..),
     containedObjects,
@@ -16,9 +17,8 @@ module Lambdacula.World
     findObjectInteraction,
     ObjectNames (..),
     RoomObjectDetails(..),
-    RoomObjectBehaviour,
+    DoorInfo(..),
     World(..),
-    Actionable(..),
     ObjectStatus(..),
     roomByString,
     objectDescription,
@@ -32,7 +32,8 @@ module Lambdacula.World
     playerPockets,
     identify,
     identifyWithContained,
-    canBeNamed
+    canBeNamed,
+    localScope
 )
 where
 
@@ -53,7 +54,10 @@ type KeyToVertex = String -> Maybe Vertex
 type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
 -- First case is the successful action, taking an Action and a potential interaction.
 -- Second case is simply the failure message.
-type ProcessedAction = Either [String] (Action -> Maybe String -> WorldAction) 
+type ActionDetail = (RoomObject, Action, Maybe RoomObject)
+type ProcessedAction = Either [String] ActionDetail
+-- When we try to match objects from the player sentence
+type IdentifiedObject = Either [String] RoomObject
 
 -- Constant virtual room for inventory
 playerPockets = "POCKETS"
@@ -61,14 +65,6 @@ playerPockets = "POCKETS"
 -- *************
 -- HERE BE TYPES
 -- *************
-
-class Actionable f where 
-    -- Process an action on this object, return the world 
-    -- and a string to tell what happened
-    actOn :: f -> Action -> Maybe String -> WorldAction 
-    -- Check if a string match this object (usually by looking
-    -- at aliases).
-    match :: String -> f -> Bool
 
 -- A room. A piece of the universe if the universe was only carved
 -- out of rooms. Which would be handy for creators of zork-like games.
@@ -121,8 +117,6 @@ playerObjects = to (\w -> filter (isInRoom playerPockets) (_worldObjects w))
 
 newtype ObjectNames = ObjectNames{ names :: [String] }
 
-type RoomObjectBehaviour = RoomObject -> Action -> Maybe String -> WorldAction
-
 data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Luminescent | Powered | Salted | Nada
     deriving (Eq, Ord, Show)
 
@@ -132,14 +126,16 @@ data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
                                             ,_objectDescription :: String
                                             , _content :: [RoomObject] }
 
+
+data DoorInfo = DoorInfo { key :: Maybe String }
+
 data RoomObject = Exit { _ronames :: ObjectNames            
                         , _inRoom :: String                  
-                        , _robehaviour :: RoomObjectBehaviour
                         , _rodetails :: RoomObjectDetails 
+                        , doorInfo :: Maybe DoorInfo
                         , _rodestination :: String }
                 | RoomObject { _ronames :: ObjectNames
                             , _inRoom :: String
-                            , _robehaviour :: RoomObjectBehaviour
                             , _rodetails :: RoomObjectDetails}
 mainName :: RoomObject -> String
 mainName = headName . _ronames
@@ -156,9 +152,6 @@ objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = ((_rodetai
 objectAliases :: Simple Lens RoomObject [String]
 objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = (ObjectNames als)})
 
-objectReactions :: Simple Lens RoomObject RoomObjectBehaviour
-objectReactions = lens _robehaviour (\ro rea -> ro {_robehaviour = rea}) 
-
 objectDescription :: Simple Lens RoomObject String
 objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = ((_rodetails ro) {_objectDescription = od})})
 
@@ -172,29 +165,40 @@ instance Show RoomObject where
 instance Eq RoomObject where
     (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
 
-instance Actionable RoomObject where
-    actOn r = view objectReactions r r
-    match s = (s `elem`) . map(map toLower) . view objectAliases
-
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
 findObjectInteraction :: String             -- A name
                         -> [RoomObject]     -- A list of objects
+                        -> Action           -- An action to do
+                        -> Maybe String     -- A potential other object
                         -> ProcessedAction  -- A potential action or failure message
-findObjectInteraction s ros = case findAMatch ros of
-                                [] -> Left ["I don't think you can interact with " ++ s]
-                                [x] -> Right $ actOn x
-                                (xs) -> Left $ ambiguityProcessing s xs
-                                -- _ -> Left (singleAnswer $ "I don't understand what you want with " ++ s ++ ", sorry !")
-            where 
-                newWorlds = actionedObjects
-                actionedObjects = actOnAll . findAMatch $ ros
-                findAMatch :: (Actionable a) => [a] -> [a]
-                findAMatch = filter (match s) 
-                actOnAll :: (Actionable a) => [a] -> [Action -> Maybe String -> WorldAction] 
-                actOnAll = fmap actOn
+findObjectInteraction s ros action interactor = 
+        packAction mainObject $ handleInteractor interactor
+    where 
+        mainObject = wordFilter s ros
 
+        handleInteractor Nothing = Nothing
+        handleInteractor (Just x) = Just (wordFilter x ros)
+
+        packAction :: IdentifiedObject -> Maybe IdentifiedObject -> ProcessedAction
+        packAction (Right ro) Nothing = Right (ro, action, Nothing)
+        packAction (Right ro) (Just (Right ro')) = Right (ro, action, Just ro')
+        packAction (Left x) _ = Left x
+        packAction _ (Just(Left x)) = Left x
+        
+
+-- Given a world, and a list of potential objects :
+-- Look for the object corresponding to a given name.
+-- If no object or more than one object are found, return a Left string.
+-- If one and only one object is found, return it as Right.
+wordFilter :: String -> [RoomObject] -> Either [String] RoomObject
+wordFilter s ros = case findAMatch ros of
+            [] -> Left ["I don't think you can interact with " ++ s]
+            [x] -> Right x
+            (xs) -> Left $ ambiguityProcessing s xs
+        where
+            findAMatch = filter (match s) 
 ambiguityProcessing :: String -> [RoomObject] -> [String]
 ambiguityProcessing s ro = [s ++ " can mean many things. I need you to narrow it down among : "] ++ nameObjects ro
     where
@@ -224,3 +228,12 @@ identifyObjectWithName s = filter (canBeNamed s)
 canBeNamed :: String -> RoomObject -> Bool
 canBeNamed s ro = s `elem` (ro^.objectAliases)
 
+match s = canBeNamed s
+
+-- Give all potential objects the player can interact with
+-- Namely, its surroundings and inventory
+localScope :: State World [RoomObject]
+localScope = do
+                objs <- use currentObjects  -- Visible objects in the world
+                inv <- use playerObjects    -- Inventory of the player
+                return $ concat([objs, inv])
