@@ -12,7 +12,6 @@ import Lambdacula.Flow
 import Control.Lens hiding(Action)
 
 import Lambdacula.Action
-import Lambdacula.ModelShortcuts
 
 import System.Console.Haskeline
 
