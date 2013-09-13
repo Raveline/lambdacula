@@ -24,48 +24,49 @@ import Lambdacula.World
 import Lambdacula.GameData
 import Lambdacula.WorldBuilder
 import Lambdacula.Flow
-import Lambdacula.ModelShortcuts
 import Lambdacula.Display
+import Lambdacula.Reactions
 import qualified Data.Map as Map
 import Data.List
 
+import System.Console.Haskeline
 
 examineString = "A simple test cube. Look, how pretty !" 
 zilchString = "You can't do that to the test cube" 
 noSuchObjectString = "I did not understand what you want to do with gizmo, sorry."
 cubeWithWeather = "The cube has nothing to say about the weather."
 
--- Test method for a test cube
-useTestCube :: RoomObject -> Action -> Maybe String -> WorldAction 
-useTestCube cube Talk (Just "weather") = singleAnswer cubeWithWeather
-useTestCube cube Take (Just x) = pickItemFromContainer cube x
-useTestCube cube Examine _ = singleAnswer examineString
-useTestCube _ Talk _ = singleAnswer "You can't talk to a cube, don't be silly."
-useTestCube _ Move _ = singleAnswer "You push the cube. Happy now ?"
-useTestCube cube Open _ = openContainer cube "You open the cube !"
-useTestCube _ Eat _ = singleAnswer "You try to eat the cube. It's not very good. Particularly for your teeth."
-useTestCube cube Take _ = pickItem cube
-useTestCube _ _ _ = singleAnswer zilchString 
+openCubeReaction :: [Reaction]
+openCubeReaction = [ChangeStatus "cube" Opened, Display "You open the cube !"]
 
--- Test method for the door
-useTestDoor :: MoveAction
-useTestDoor dest door Move nthg = basicMove dest door Move nthg
-useTestDoor _ door Use (Just "key") = openDoor "key" door
+-- Reaction tuples
+reactions_tests = [("cube", Talk, Just "Weather", [], [Display cubeWithWeather])
+    ,("cube", Take, Just "key", [], [PickFromContainer "cube" "key"])
+    ,("cube", Examine, Nothing, [], [Display examineString])
+    ,("cube", Talk, Nothing, [], [Display "You can't talk to a cube, don't be silly"])
+    ,("cube", Open, Nothing, [], openCubeReaction)
+    ,("cube", Eat, Nothing, [], [Display "You try to eat the cube. It's not very good. Particularly for your teeth."])]
 
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" Nada
             , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
-trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (useTestDoor "The test room") (RoomObjectDetails Closed "A hermetically locked door" []) "A second room" 
+trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (RoomObjectDetails Closed "A hermetically locked door" []) (Just (DoorInfo (Just "key")))  "A second room" 
             , makeExit ["south"] "A second room" "A door" "The test room"
-            , RoomObject (ObjectNames ["the test cube","test cube", "cube"]) "The test room" (useTestCube) (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
+            , RoomObject (ObjectNames ["cube", "the test cube","test cube"]) "The test room" (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
 
-noReaction :: RoomObject -> Action -> Maybe String -> WorldAction
-noReaction _ _ _ = singleAnswer "This object is just for tests."
+keyObject = simpleObject ["key", "a key"] "NOWHERE" "Nothing worth looking at"
 
-keyObject = simpleObject ["key", "a key"] "NOWHERE" noReaction "Nothing worth looking at"
-
-world = buildWorld trRooms trObjects
+world = buildWorld trRooms trObjects reactions_tests
 testProceed x = head . fst $ runState (proceed x) world
+
+-- Get the reaction after processing them
+probeReactions :: (String, Action, Maybe String) -> [Reaction]
+probeReactions trio = fst $ runState (findReactions trio) world
+
+-- Test a given reaction
+testReaction :: Reaction -> (World -> Bool) -> Bool
+testReaction reaction f = f resultingWorld
+    where resultingWorld = snd $ runState (onlyDo reaction) world
 
 checkWorld :: [PlayerAction] -> (World -> Bool) -> Bool
 checkWorld x t = t . snd $ runState (multiProceed x) world
@@ -99,20 +100,22 @@ properActions = [(Interaction Open "cube")
                 ,(Complex Use "door" "key")
                 ,(Interaction Move "door")]
 
+-- Just a lambdacula-repl loader to test things with GHCI
+repl = do
+    printStrs $ displayRoom (view currentRoom world) (view currentObjects world)
+    runInputT defaultSettings (promptLoop world)
+
 main :: IO()
 main = hspec $ do
-    describe "processInput" $ do
-            it "Finds the action Examine on the verb Examine in a sentence." $ do
-                testProceed (Interaction Examine "cube") `shouldBe` examineString  
+    describe "reaction matching" $ do
+            it "Finds the proper reaction when trying to open the cube" $ do
+                probeReactions ("cube", Open, Nothing) `shouldBe` openCubeReaction
+            it "Finds no reaction when trying to move the cube" $ do
+                probeReactions ("cube", Move, Nothing) `shouldBe` []
 
-            it "Finds no action and print a default error" $ do
-                testProceed (Interaction Zilch "cube") `shouldBe` zilchString
-
-            it "Doesn't find an object and says so" $ do
-                testProceed (Interaction Open "gizmo") `shouldBe` noSuchObjectString 
-
-            it "Handle an interaction" $ do
-                testProceed (Complex Talk "cube" "weather") `shouldBe` cubeWithWeather
+    describe "reaction processing" $ do
+            it "Process the open cube reaction and make sure it works !" $ do
+                testReaction (head openCubeReaction) (checkStatus "cube" Opened) `shouldBe` True
 
     describe "scenario" $ do
             it "Tries to take the key out of the cube but fails, because it is closed" $ do
@@ -122,7 +125,7 @@ main = hspec $ do
                 checkWorld ([Interaction Move "north"]) (checkCurrentRoom "The test room") `shouldBe` True
 
             it "Opens the cube" $ do
-                checkWorld ([Interaction Open "cube"]) (checkStatus "the test cube" Opened) `shouldBe` True
+                checkWorld ([Interaction Open "cube"]) (checkStatus "cube" Opened) `shouldBe` True
 
             it "Tries to open the door while not having the key" $ do
                 checkWorld ([(properActions !! 0), (properActions !! 2)]) (checkStatus "A test door" Closed) `shouldBe` True
@@ -137,4 +140,4 @@ main = hspec $ do
                 checkWorld (take 3 properActions) (checkStatus "A test door" Opened) `shouldBe` True
 
             it "Do every action to open the door and cross it" $ do
-                checkWorld (take 4 properActions) (checkCurrentRoom "The test room") `shouldBe` True
+                checkWorld (take 4 properActions) (checkCurrentRoom "A second room") `shouldBe` True

@@ -4,15 +4,15 @@ import Test.QuickCheck
 import Lambdacula.Action
 import Lambdacula.Parser
 
-speak = Transitive Talk "speak" ["with", "to"] ["about"]
-talk = Transitive Talk "talk" ["with", "to"] ["about"]
-ask = Transitive Talk "ask" ["about"] []
+speak = Transitive Talk "speak" ["with", "to"] ["about"] False
+talk = Transitive Talk "talk" ["with", "to"] ["about"] False
+ask = Transitive Talk "ask" ["about"] [] False
 lookFor = Phrasal Search "look" "for" [] ["in", "with"] False
-examine = Transitive Examine "examine" [] ["with"]
-look = Transitive Examine "look" [] ["with"] 
+examine = Transitive Examine "examine" [] ["with"] False
+look = Transitive Examine "look" [] ["with"] False
 lookAt = Phrasal Examine "look" "at" [] ["with"] False
-analyze = Transitive Examine "analyze" [] []
-quit = Transitive QuitGame "quit" [] []
+analyze = Transitive Examine "analyze" [] [] False
+quit = Transitive QuitGame "quit" [] [] False
 pick = Phrasal Take "take" "out" [] ["of"] True
 verbs = [speak, talk, ask, lookFor, lookAt, examine, look, analyze, quit, pick]
 
