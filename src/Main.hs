@@ -20,5 +20,5 @@ main = do
         runInputT defaultSettings (promptLoop aWorld)
 
 -- Load it from WorldBuilder
-aWorld = buildWorld ldRooms ldObjects
+aWorld = buildWorld ldRooms ldObjects ldreactions
 
