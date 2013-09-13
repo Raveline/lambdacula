@@ -33,7 +33,11 @@ module Lambdacula.World
     identify,
     identifyWithContained,
     canBeNamed,
-    localScope
+    localScope,
+    Reaction (..),
+    Reactions,
+    Condition (..),
+    ReactionSet
 )
 where
 
@@ -58,6 +62,8 @@ type ActionDetail = (RoomObject, Action, Maybe RoomObject)
 type ProcessedAction = Either [String] ActionDetail
 -- When we try to match objects from the player sentence
 type IdentifiedObject = Either [String] RoomObject
+type Reactions = [Reaction]
+type ReactionSet = (String, Action, Maybe String, [Condition], Reactions)
 
 -- Constant virtual room for inventory
 playerPockets = "POCKETS"
@@ -80,6 +86,7 @@ data World = World { _currentRoom :: Room,
                     _previousRoom :: Room,
                     _worldRooms :: Graph,
                     _worldObjects :: [RoomObject],
+                    _reactions :: [ReactionSet],
                     _getARoom :: (String -> Maybe Vertex),
                     _getANode :: (Vertex -> (Room, String, [String]))}
 
@@ -99,6 +106,10 @@ currentRoomName = to (\w -> _roomName . _currentRoom $ w)
 -- Give the objects belonging to the current room
 currentObjects :: Getter World [RoomObject]
 currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom $ w)) (_worldObjects w))
+
+-- Give the objects belonging to the current room... AND their contained objects.
+fullCurrentObjects :: Getter World [RoomObject]
+fullCurrentObjects = to (\w -> [ro|ro <- (view currentObjects w)] ++ [ro| ro <- (view currentObjects w), ro <- ro^.containedObjects])
 
 isInRoom :: String   -- The name of the current room
             -> RoomObject  -- An object to consider
@@ -158,6 +169,21 @@ objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodet
 containedObjects :: Simple Lens RoomObject [RoomObject]
 containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = ((_rodetails ro) {_content = ct})})
 
+-- Reactions
+data Reaction =  Display String                             -- Display some text
+                | PickItem String                           -- Add to inventory
+                | ChangeStatus String ObjectStatus          -- Change object status
+                | PickFromContainer String String           -- Pick from container (1) object (2)
+                | LookInsideContainer String String         -- Look content of container (1) with intro sentence (2)
+                | PutInsideContainer String String String   -- Put inside container (1) the item (2) with resulting sentence (3)
+                | RebranchTo Action String (Maybe String)   -- Rephrase a command so that it'll be retranslated 
+                | Conversation [(String, [String])] [(String, String)] 
+                | MoveTo String                             -- Move somewhere
+                | Flight                                    -- Flee
+                | LookAround                                -- Display current room
+                | Error                                     -- Not Implemented Yet 
+    deriving (Eq, Show)
+
 -- Room object instances
 instance Show RoomObject where
    show = show . mainName
@@ -165,11 +191,18 @@ instance Show RoomObject where
 instance Eq RoomObject where
     (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
 
+
+-- Conditions
+data Condition = ContainsAmountOfItem Int
+                | PlayerHasStatus ObjectStatus
+                | HasStatus ObjectStatus
+                | Contains String
+
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
 findObjectInteraction :: String             -- A name
-                        -> [RoomObject]     -- A list of objects
+                        -> [RoomObject]     -- A list of objects - typically, the local scope
                         -> Action           -- An action to do
                         -> Maybe String     -- A potential other object
                         -> ProcessedAction  -- A potential action or failure message
@@ -234,6 +267,6 @@ match s = canBeNamed s
 -- Namely, its surroundings and inventory
 localScope :: State World [RoomObject]
 localScope = do
-                objs <- use currentObjects  -- Visible objects in the world
+                objs <- use fullCurrentObjects  -- Visible objects in the world
                 inv <- use playerObjects    -- Inventory of the player
                 return $ concat([objs, inv])
