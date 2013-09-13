@@ -43,8 +43,8 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
 -- CONSTANTS
 none = "NONE"
 
--- Tbe tuples
-reactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."])
+-- Lambdacula reaction set
+ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."])
     ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover"])
     ,("Lady's Chatterley's Lover", Zilch, Nothing, [], [Display "I don't know what you're trying to do with this book. And frankly, I don't want to know."])
     ,("rug", Examine, Nothing, [], [Display "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."])
