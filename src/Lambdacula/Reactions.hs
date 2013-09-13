@@ -5,13 +5,12 @@
 
 module Lambdacula.Reactions
 ( 
-    Reaction (..),
-    Condition (..),
     Reactions,
     ReactionSet,
     processAction,
     onlyDo,
-    onlyDisplay
+    onlyDisplay,
+    findReactions
 )
 where
 
@@ -25,28 +24,11 @@ import qualified Data.Foldable as Fd
 import Data.List
 import qualified Data.Map as Map
 
-type Reactions = [Reaction]
-type ReactionSet = (String, Action, Maybe String, Reactions)
-
-type PureActionDetail = (String, Action, Maybe String)
 type Feedback = Maybe [String]
 type WorldFeedback = State World Feedback
-
+type PureActionDetail = (String, Action, Maybe String)
 type Aliases = [(String, [String])]
 type Topic = [(String, String)]
-
-data Reaction =  Display String                             -- Display some text
-                | PickItem String                           -- Add to inventory
-                | ChangeStatus String ObjectStatus          -- Change object status
-                | PickFromContainer String String           -- Pick from container (1) object (2)
-                | LookInsideContainer String String         -- Look content of container (1) with intro sentence (2)
-                | PutInsideContainer String String String   -- Put inside container (1) the item (2) with resulting sentence (3)
-                | RebranchTo Action String (Maybe String)   -- Rephrase a command so that it'll be retranslated 
-                | Conversation [(String, [String])] [(String, String)] 
-                | MoveTo String                             -- Move somewhere
-                | Flight                                    -- Flee
-                | LookAround                                -- Display current room
-                | Error                                     -- Not Implemented Yet 
 
 onlyDisplay :: String -> WorldAction
 onlyDisplay s = onlyDo $ Display s
@@ -60,25 +42,72 @@ onlyDo r = do
                     
 
 processAction :: (RoomObject, Action, Maybe RoomObject) -> WorldAction
-processAction ((Exit _ _ _ info dest), a, x) = handleExit info dest a x
-processAction (x, a, Just (Exit _ _ _ info dest)) = handleExit info dest a (Just x)
+-- Doors & exit interactions
+processAction ((Exit name _ (RoomObjectDetails status _ _) info dest), a, x) = handleExit (headName name) info status dest a x
+processAction (x, a, Just (Exit name _ (RoomObjectDetails status _ _) info dest)) = handleExit (headName name) info status dest a (Just x)
+-- Other interactions
 processAction detail = do
                     reactions <- findReactions $ simplifyAction detail
-                    Fd.foldlM process [] reactions
+                    processReactions reactions
+
+processReactions :: [Reaction] -> State World [String]
+processReactions = Fd.foldlM process []  
+
+process :: [String] -> Reaction -> State World [String]
+process strs reac = do
+    feedback <- processReaction reac 
+    return $ extractStr strs feedback
     where
-        process :: [String] -> Reaction -> State World [String]
-        process strs reac = do
-                    feedback <- processReaction reac 
-                    return $ extractStr strs feedback
         extractStr :: [String] -> Feedback -> [String]
         extractStr strs (Just s) = s ++ strs
         extractStr strs Nothing = strs 
 
-handleExit :: Maybe DoorInfo -> String -> Action -> Maybe RoomObject -> WorldAction
-handleExit = error "NIY, and probably should not be implemented."
+handleExit :: String                -- Name of the Exit
+            -> Maybe DoorInfo          -- If it's a door, information on it
+            -> ObjectStatus         -- Current status
+            -> String               -- Destination name
+            -> Action               -- Action taken
+            -> Maybe RoomObject     -- Potential interaction, with a key normally
+            -> WorldAction          -- Returns a world and an output 
+-- OPENING
+handleExit n (Just di) Closed _ Use (Just k')
+    | testKey (key di) (mainName k') = do
+                                        keyContained <- inventoryContains k'
+                                        if keyContained
+                                        then processReactions [ChangeStatus n Opened]
+                                        else return ["You don't have this key on you !"]
+    | otherwise = return ["This is the wrong key."]
+handleExit n Nothing Closed _ Open _ = processReactions [ChangeStatus n Opened]
+-- MOVES : impossible
+handleExit _ (Just (DoorInfo (Just di))) Closed _ Move _ = return ["The door is locked !"]
+handleExit _ (Just (DoorInfo Nothing)) Closed _ Move _ = return ["The door is closed !"]
+-- MOVES : possible
+handleExit _ _ Opened s Move _ = processReactions [MoveTo s]
+
+testKey :: Maybe String -> String -> Bool
+testKey Nothing _ = False
+testKey (Just k) k' = k == k'
 
 findReactions :: PureActionDetail -> State World [Reaction]
-findReactions = error "NIY"
+findReactions specs = do
+            w <- get
+            scope <- localScope
+            case (find (satisfy w scope specs) (_reactions w)) of
+                Just px -> return $ extractReactions px
+                Nothing -> return []
+    where
+        satisfy :: World -> [RoomObject] -> PureActionDetail -> ReactionSet -> Bool
+        satisfy w scope set1 set2 = matchAction set1 set2 && testConditions (extractCondition set2) w (realObject set1 scope)
+        matchAction :: PureActionDetail -> ReactionSet -> Bool
+        matchAction (objA, action, objB) (objA', action', objB', _, _) = objA == objA' && action == action' && objB == objB'
+        realObject :: PureActionDetail -> [RoomObject] -> RoomObject
+        realObject (n, _, _) scope = fetchByNameInScope n scope 
+        extractCondition :: ReactionSet -> [Condition]
+        extractCondition (_,_,_,cs,_) = cs
+        testConditions :: [Condition] -> World -> RoomObject -> Bool
+        testConditions cs w r = all (== True) $ map (testCondition w r) cs
+        extractReactions :: ReactionSet -> Reactions
+        extractReactions rs = view _5 rs
 
 simplifyAction :: ActionDetail -> PureActionDetail
 simplifyAction (ro, a, Nothing) = (mainName ro, a, Nothing)
@@ -101,18 +130,14 @@ processReaction (PutInsideContainer container item resultSentence) = do
 processReaction (RebranchTo act n react) = error "NIY"
 processReaction (Conversation aliases topics) = handleConversation aliases topics
 processReaction (LookAround) = displayCurrentRoom
-processReaction (MoveTo location) = error "NIY"
+processReaction (MoveTo location) = basicMove location
 
-data Condition = ContainsAmountOfItem Int
-                | PlayerHasStatus ObjectStatus
-                | HasStatus ObjectStatus
-                | Contains String
 
-testCondition :: Condition -> World -> RoomObject -> Bool
-testCondition (ContainsAmountOfItem x) w r = (==) x . length . view containedObjects $ r
-testCondition (PlayerHasStatus stat) w r = error "NIY"
-testCondition (HasStatus stat) w r = (==) stat . view objectStatus $ r
-testCondition (Contains name) w ro = ro `containsSomethingNamed` name  
+testCondition :: World -> RoomObject -> Condition -> Bool
+testCondition w r (ContainsAmountOfItem x) = (==) x . length . view containedObjects $ r
+testCondition w r (PlayerHasStatus stat) = error "NIY"
+testCondition w r (HasStatus stat) = (==) stat . view objectStatus $ r
+testCondition w ro (Contains name) = ro `containsSomethingNamed` name  
 
 ------------------------------------------------
 -- All utilies methods should be stored there --
@@ -152,9 +177,13 @@ isOpened ro = view objectStatus ro == Opened
 fetchByName :: String -> State World RoomObject 
 fetchByName s = do
                 scope <- localScope
-                case find (\ro -> (mainName ro) == s) scope of
-                    Nothing -> error "Object not found in scope. This should not happen."
-                    Just x -> return x
+                return $ fetchByNameInScope s scope 
+fetchByNameInScope :: String -> [RoomObject] -> RoomObject
+fetchByNameInScope s ros = case finder ros of
+                    Nothing -> error $ "Object " ++ s ++ " not found in scope : " ++ (show ros) ++ ". This should not happen."
+                    Just x -> x
+    where
+        finder = find (\ro -> (mainName ro) == s)
 
 -- CONTAINER UTILITIES
 
@@ -181,14 +210,16 @@ pickItemFromContainer :: RoomObject         -- The container
                         -> WorldFeedback
 pickItemFromContainer container x = do
                                         w <- get
-                                        case containeds x w of
+                                        case containeds x w of  -- Is the object really in the container ?
                                             []          -> singleAnswer $ "What on earth are you talking about ?"
                                             [object]    -> pickItemFromContainer' container object
                                             (xs)        -> error "Ambiguous case. Not implemented yet."
     where
         containeds x w =  identifyWithContained x w
         pickItemFromContainer' :: RoomObject -> RoomObject -> WorldFeedback
-        pickItemFromContainer' container contained
+        pickItemFromContainer' container contained  -- Is the container opened ?
+            -- TODO - Should be refactored : container CONTAINS contained, since we checked in the calling method.
+            -- TODO - Should be refactored : the method says "pick", yet the item is not added to the inventory.
             | container `contains` contained && isOpened container = do
                             removeItemFromContainer container contained
                             singleAnswer $ "You picked up " ++ (mainName contained)
@@ -241,6 +272,13 @@ removeItemFromContainer container contained = do
                             return Nothing
 
 -- INVENTORY MANAGEMENT
+
+inventoryContains :: RoomObject
+                -> State World Bool
+inventoryContains r = do
+                        w <- get
+                        return $ r { _inRoom = playerPockets } `elem` (w^.playerObjects)
+
 hasInInventory :: String    -- Name of an object
                 -> World    -- World 
                 -> Bool
@@ -297,16 +335,14 @@ singleAnswer :: String -> WorldFeedback
 singleAnswer = return . Just . ((:[]))
 
 -- MOVE
-basicMove :: String -> RoomObject -> Action -> WorldFeedback
-basicMove r passage Move 
-    | passage^.objectStatus == Opened = do
-                    w <- get
-                    current <- use currentRoom
-                    previousRoom .= current 
-                    currentRoom .= roomByString w r 
-                    displayCurrentRoom
-    | otherwise = singleAnswer "You can't, the path is closed !"
-basicMove _ _ _ = singleAnswer "What on earth are you trying to do ?"
+basicMove :: String -- Destination
+            -> WorldFeedback
+basicMove r = do
+        w <- get
+        current <- use currentRoom
+        previousRoom .= current             -- Memory of previous room kept to allow Flee action
+        currentRoom .= roomByString w r 
+        displayCurrentRoom
 
 flee :: WorldFeedback
 flee = do
