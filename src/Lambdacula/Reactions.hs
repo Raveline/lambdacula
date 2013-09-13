@@ -74,8 +74,8 @@ handleExit n (Just di) Closed _ Use (Just k')
     | testKey (key di) (mainName k') = do
                                         keyContained <- inventoryContains k'
                                         if keyContained
-                                        then processReactions [ChangeStatus n Opened]
-                                        else return ["You don't have this key on you !"]
+                                        	then processReactions [ChangeStatus n Opened]
+	                                        else return ["You don't have this key on you !"]
     | otherwise = return ["This is the wrong key."]
 handleExit n Nothing Closed _ Open _ = processReactions [ChangeStatus n Opened]
 -- MOVES : impossible
