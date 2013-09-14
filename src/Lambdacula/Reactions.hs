@@ -101,6 +101,7 @@ findReactions specs = do
         satisfy :: World -> [RoomObject] -> PureActionDetail -> ReactionSet -> Bool
         satisfy w scope set1 set2 = matchAction set1 set2 && testConditions (extractCondition set2) w (realObject set1 scope)
         matchAction :: PureActionDetail -> ReactionSet -> Bool
+        matchAction (objA, Talk, _) (objA', Talk, _, _, _) = True
         matchAction (objA, action, objB) (objA', action', objB', _, _) = objA == objA' && action == action' && objB == objB'
         realObject :: PureActionDetail -> [RoomObject] -> RoomObject
         realObject (n, _, _) = fetchByNameInScope n 
