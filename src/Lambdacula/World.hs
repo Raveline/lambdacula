@@ -193,7 +193,7 @@ instance Eq RoomObject where
 
 
 -- Conditions
-data Condition = ContainsAmountOfItem Int
+data Condition = ContainsAmountOfItem (Int -> Bool)
                 | PlayerHasStatus ObjectStatus
                 | HasStatus ObjectStatus
                 | Contains String
