@@ -135,7 +135,7 @@ processReaction (MoveTo location) = basicMove location
 
 
 testCondition :: World -> RoomObject -> Condition -> Bool
-testCondition w r (ContainsAmountOfItem x) = (==) x . length . view containedObjects $ r
+testCondition w r (ContainsAmountOfItem x) = x . length . view containedObjects $ r
 testCondition w r (PlayerHasStatus stat) = error "NIY"
 testCondition w r (HasStatus stat) = (==) stat . view objectStatus $ r
 testCondition w ro (Contains name) = ro `containsSomethingNamed` name  
