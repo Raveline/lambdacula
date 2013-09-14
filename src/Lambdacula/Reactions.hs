@@ -10,7 +10,8 @@ module Lambdacula.Reactions
     processAction,
     onlyDo,
     onlyDisplay,
-    findReactions
+    findReactions,
+    notopic
 )
 where
 
@@ -30,6 +31,9 @@ type WorldFeedback = State World Feedback
 type PureActionDetail = (String, Action, Maybe String)
 type Aliases = [(String, [String])]
 type Topic = [(String, String)]
+type TopicAliases = Map.Map String String
+
+notopic = "NONE"
 
 onlyDisplay :: String -> WorldAction
 onlyDisplay s = onlyDo $ Display s
@@ -41,11 +45,10 @@ onlyDo r = do
                     Just s' -> return s'
                     Nothing -> return []
                     
-
-processAction :: (RoomObject, Action, Maybe RoomObject) -> WorldAction
+processAction :: (RoomObject, Action, Maybe Interactor) -> WorldAction
 -- Doors & exit interactions
 processAction (Exit name _ (RoomObjectDetails status _ _) info dest, a, x) = handleExit (headName name) info status dest a x
-processAction (x, a, Just (Exit name _ (RoomObjectDetails status _ _) info dest)) = handleExit (headName name) info status dest a (Just x)
+processAction (x, a, Just (ObjectInteractor (Exit name _ (RoomObjectDetails status _ _) info dest))) = handleExit (headName name) info status dest a (Just $ ObjectInteractor x)
 -- Other interactions
 processAction detail = do
                     reactions <- findReactions $ simplifyAction detail
@@ -68,33 +71,31 @@ handleExit :: String                -- Name of the Exit
             -> ObjectStatus         -- Current status
             -> String               -- Destination name
             -> Action               -- Action taken
-            -> Maybe RoomObject     -- Potential interaction, with a key normally
+            -> Maybe Interactor     -- Potential interaction, with a key normally
             -> WorldAction          -- Returns a world and an output 
 -- OPENING
-handleExit n (Just di) Closed _ Use (Just k')
-    | testKey (key di) (mainName k') = do
-                                        keyContained <- inventoryContains k'
-                                        if keyContained
-                                        	then processReactions [ChangeStatus n Opened]
-	                                        else return ["You don't have this key on you !"]
+handleExit n (Just (DoorInfo (Just k))) Closed _ Use (Just (ObjectInteractor k'))
+    | k == mainName k' = do
+                keyContained <- inventoryContains k'
+                if keyContained
+                    then processReactions [ChangeStatus n Opened]
+	                else return ["You don't have this key on you !"]
     | otherwise = return ["This is the wrong key."]
-handleExit n Nothing Closed _ Open _ = processReactions [ChangeStatus n Opened]
+handleExit n (Just (DoorInfo Nothing)) Closed _ Use (Just (ObjectInteractor k')) = return ["This door isn't locked, Sherlock."]
+handleExit n (Just (DoorInfo (Just _))) Closed _ Open _ = return ["It is locked, you need a key to open it."]
+handleExit n (Just (DoorInfo Nothing)) Closed _ Open _ = processReactions [ChangeStatus n Opened]
 -- MOVES : impossible
 handleExit _ (Just (DoorInfo (Just di))) Closed _ Move _ = return ["The door is locked !"]
 handleExit _ (Just (DoorInfo Nothing)) Closed _ Move _ = return ["The door is closed !"]
 -- MOVES : possible
 handleExit _ _ Opened s Move _ = processReactions [MoveTo s]
 
-testKey :: Maybe String -> String -> Bool
-testKey Nothing _ = False
-testKey (Just k) k' = k == k'
-
 findReactions :: PureActionDetail -> State World [Reaction]
 findReactions specs = do
             w <- get
             scope <- localScope
             case find (satisfy w scope specs) (_reactions w) of
-                Just px -> return $ extractReactions px
+                Just px -> return $ addConversationInfo specs . extractReactions $ px
                 Nothing -> return []
     where
         satisfy :: World -> [RoomObject] -> PureActionDetail -> ReactionSet -> Bool
@@ -110,9 +111,20 @@ findReactions specs = do
         extractReactions :: ReactionSet -> Reactions
         extractReactions = view _5 
 
+addConversationInfo :: PureActionDetail -> [Reaction] -> [Reaction]
+addConversationInfo det = map (addTopic (extractTopic det))
+    where
+        extractTopic :: PureActionDetail -> String
+        extractTopic (_, _, Nothing) = notopic
+        extractTopic (_,_, Just s) = s
+        addTopic :: String -> Reaction -> Reaction
+        addTopic s (Conversation a b _) = Conversation a b s
+        addTopic _ r = r
+
 simplifyAction :: ActionDetail -> PureActionDetail
 simplifyAction (ro, a, Nothing) = (mainName ro, a, Nothing)
-simplifyAction (ro, a, Just ro') = (mainName ro, a, Just(mainName ro'))
+simplifyAction (ro, a, Just (ObjectInteractor ro')) = (mainName ro, a, Just(mainName ro'))
+simplifyAction (ro, a, Just (StringInteractor s)) = (mainName ro, a, Just(s))
 
 processReaction :: Reaction -> WorldFeedback
 processReaction (Display s) = singleAnswer s
@@ -129,7 +141,7 @@ processReaction (PutInsideContainer container item resultSentence) = do
                         objContainer <- fetchByName container
                         putInsideContainer objContainer item resultSentence
 processReaction (RebranchTo act n react) = error "NIY"
-processReaction (Conversation aliases topics) = handleConversation aliases topics
+processReaction (Conversation aliases topics s) = handleConversation s aliases topics
 processReaction (LookAround) = displayCurrentRoom
 processReaction (MoveTo location) = basicMove location
 
@@ -323,9 +335,23 @@ changeRoom name ro = do
                         return Nothing
 
 -- CONVERSATIONS
-handleConversation :: Aliases -> Topic -> WorldFeedback
-handleConversation conv = error "NIY"
-
+handleConversation :: String 
+                -> Aliases 
+                -> Topic 
+                -> WorldFeedback
+handleConversation subject aliases topics = case properAnswer of 
+                                        Just x -> return . Just . bracketize $ x 
+                                        Nothing -> error $ "There should be a " ++ notopic ++ " topic." 
+    where 
+        bracketize :: String -> [String]
+        bracketize s = ['"':s ++ "\""]
+        properAnswer = case properTopic of
+                        Just x -> Map.lookup x (Map.fromList topics)
+                        Nothing -> Map.lookup notopic (Map.fromList topics)
+        properTopic = Map.lookup subject mapAliases
+        mapAliases = aliasToMap aliases
+        aliasToMap :: [(String, [String])] -> TopicAliases
+        aliasToMap xs = Map.fromList [(alias, key)|(key, aliases)<- xs, alias <- key:aliases]  
 
 -- Used when State does not need to be changed.
 -- Given a string, will return the World "as it is" and the string.
