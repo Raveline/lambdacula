@@ -32,24 +32,29 @@ import Data.List
 import System.Console.Haskeline
 
 examineString = "A simple test cube. Look, how pretty !" 
+sayhello = "hello world !"
 
 openCubeReaction :: [Reaction]
 openCubeReaction = [ChangeStatus "cube" Opened, Display "You open the cube !"]
 
 -- Reaction tuples
-reactions_tests = [("cube", Talk, Just "Weather", [], [Display cubeWithWeather])
-    ,("cube", Take, Just "key", [], [PickFromContainer "cube" "key"])
+reactions_tests = [("cube", Take, Just "key", [], [PickFromContainer "cube" "key"])
     ,("cube", Examine, Nothing, [], [Display examineString])
-    ,("cube", Talk, Nothing, [], [Display "You can't talk to a cube, don't be silly"])
     ,("cube", Open, Nothing, [], openCubeReaction)
-    ,("cube", Eat, Nothing, [], [Display "You try to eat the cube. It's not very good. Particularly for your teeth."])]
+    ,("cube", Eat, Nothing, [], [Display "You try to eat the cube. It's not very good. Particularly for your teeth."])
+    ,("dude", Talk, Nothing, [], [Conversation charatopics charaanswers undefined])]
 
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" Nada
             , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
+charatopics = [("hello", ["hi"]), ("endgame", [])]
+charaanswers = [("hello", sayhello),("endgame", "Just say end to me")]
+
+
 trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (RoomObjectDetails Closed "A hermetically locked door" []) (Just (DoorInfo (Just "key")))  "A second room" 
             , makeExit ["south"] "A second room" "A door" "The test room"
-            , RoomObject (ObjectNames ["cube", "the test cube","test cube"]) "The test room" (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])]
+            , RoomObject (ObjectNames ["cube", "the test cube","test cube"]) "The test room" (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])
+            , RoomObject (ObjectNames ["dude"]) "The test room" (RoomObjectDetails Nada "A dude" [])]
 
 keyObject = simpleObject ["key", "a key"] "NOWHERE" "Nothing worth looking at"
 
@@ -120,6 +125,9 @@ main = hspec $ do
     describe "string display" $ do
             it "Make sure the proper string is displayed when examining the cube" $ do
                 testFeedback (Interaction Examine "cube") `shouldBe` [examineString]
+
+            it "Make sure the proper string is displayed when talking to the dude" $ do
+                testFeedback (Complex Talk "dude" "hello") `shouldBe` [sayhello]
 
     describe "scenario" $ do
             it "Tries to take the key out of the cube but fails, because it is closed" $ do
