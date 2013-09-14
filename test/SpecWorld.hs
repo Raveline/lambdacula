@@ -32,9 +32,6 @@ import Data.List
 import System.Console.Haskeline
 
 examineString = "A simple test cube. Look, how pretty !" 
-zilchString = "You can't do that to the test cube" 
-noSuchObjectString = "I did not understand what you want to do with gizmo, sorry."
-cubeWithWeather = "The cube has nothing to say about the weather."
 
 openCubeReaction :: [Reaction]
 openCubeReaction = [ChangeStatus "cube" Opened, Display "You open the cube !"]
@@ -78,6 +75,9 @@ checkWorld x t = t . snd $ runState (multiProceed x) world
                                             proceed action
                                             multiProceed actions
 
+-- Get the string result from an action
+testFeedback act = fst $ runState (proceed act) world
+
 playerInventoryIsEmpty :: World -> Bool
 playerInventoryIsEmpty w = length(w^.playerObjects) == 0
 
@@ -116,6 +116,10 @@ main = hspec $ do
     describe "reaction processing" $ do
             it "Process the open cube reaction and make sure it works !" $ do
                 testReaction (head openCubeReaction) (checkStatus "cube" Opened) `shouldBe` True
+
+    describe "string display" $ do
+            it "Make sure the proper string is displayed when examining the cube" $ do
+                testFeedback (Interaction Examine "cube") `shouldBe` [examineString]
 
     describe "scenario" $ do
             it "Tries to take the key out of the cube but fails, because it is closed" $ do
