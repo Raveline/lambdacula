@@ -87,8 +87,8 @@ data World = World { _currentRoom :: Room,
                     _worldRooms :: Graph,
                     _worldObjects :: [RoomObject],
                     _reactions :: [ReactionSet],
-                    _getARoom :: (String -> Maybe Vertex),
-                    _getANode :: (Vertex -> (Room, String, [String]))}
+                    _getARoom :: String -> Maybe Vertex,
+                    _getANode :: Vertex -> (Room, String, [String])}
 
 
 -- World lenses
@@ -114,17 +114,17 @@ fullCurrentObjects = to (\w -> [ro|ro <- (view currentObjects w)] ++ [ro| ro <- 
 isInRoom :: String   -- The name of the current room
             -> RoomObject  -- An object to consider
             -> Bool     -- Is the object in this room ?
-isInRoom name ro = (_inRoom ro) == name
+isInRoom name ro = _inRoom ro == name
             
 
 roomByString :: World -> String -> Room
-roomByString w s = case ((_getARoom w) s) of
-                    Just a -> ((_getANode w) a)^._1
+roomByString w s = case _getARoom w s of
+                    Just a -> _getANode w a ^. _1
                     Nothing -> error $ "Room" ++ s ++ " does not exist ! Fatal error and all that jazz."
 
 -- Player lenses
 playerObjects :: Getter World [RoomObject]
-playerObjects = to (\w -> filter (isInRoom playerPockets) (_worldObjects w))
+playerObjects = to $ filter (isInRoom playerPockets) . _worldObjects
 
 newtype ObjectNames = ObjectNames{ names :: [String] }
 
@@ -155,19 +155,19 @@ headName = head . names
 
 -- RoomObject lenses
 objectDetails :: Simple Lens RoomObject RoomObjectDetails
-objectDetails = lens (_rodetails) (\ro d -> ro {_rodetails = d })
+objectDetails = lens _rodetails (\ro d -> ro {_rodetails = d })
 
 objectStatus :: Simple Lens RoomObject ObjectStatus
-objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = ((_rodetails ro) {_status = s})})
+objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = (_rodetails ro) {_status = s}})
 
 objectAliases :: Simple Lens RoomObject [String]
-objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = (ObjectNames als)})
+objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = ObjectNames als})
 
 objectDescription :: Simple Lens RoomObject String
-objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = ((_rodetails ro) {_objectDescription = od})})
+objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = (_rodetails ro) {_objectDescription = od}})
 
 containedObjects :: Simple Lens RoomObject [RoomObject]
-containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = ((_rodetails ro) {_content = ct})})
+containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = (_rodetails ro) {_content = ct}})
 
 -- Reactions
 data Reaction =  Display String                             -- Display some text
@@ -233,7 +233,7 @@ wordFilter s ros = case findAMatch ros of
         where
             findAMatch = filter (match s) 
 ambiguityProcessing :: String -> [RoomObject] -> [String]
-ambiguityProcessing s ro = [s ++ " can mean many things. I need you to narrow it down among : "] ++ nameObjects ro
+ambiguityProcessing s ro = (s ++ " can mean many things. I need you to narrow it down among : "): nameObjects ro
     where
         nameObjects :: [RoomObject] -> [String]
         nameObjects ro = ["- " ++ mainName x|x <- ro]
@@ -253,7 +253,7 @@ identifyWithContained :: String -> World -> [RoomObject]
 identifyWithContained s w = identifyObjectWithName s fullContext 
     where
         containerAndContained ros = [ro| ro <- ros, ro <- ro^.containedObjects]
-        fullContext =  (containerAndContained (w^.currentObjects)) ++ (w^.playerObjects)
+        fullContext =  containerAndContained (w^.currentObjects) ++ (w^.playerObjects)
 
 identifyObjectWithName :: String -> [RoomObject] -> [RoomObject]
 identifyObjectWithName s = filter (canBeNamed s) 
@@ -261,7 +261,7 @@ identifyObjectWithName s = filter (canBeNamed s)
 canBeNamed :: String -> RoomObject -> Bool
 canBeNamed s ro = s `elem` (ro^.objectAliases)
 
-match s = canBeNamed s
+match = canBeNamed 
 
 -- Give all potential objects the player can interact with
 -- Namely, its surroundings and inventory
@@ -269,4 +269,4 @@ localScope :: State World [RoomObject]
 localScope = do
                 objs <- use fullCurrentObjects  -- Visible objects in the world
                 inv <- use playerObjects    -- Inventory of the player
-                return $ concat([objs, inv])
+                return $ objs ++ inv

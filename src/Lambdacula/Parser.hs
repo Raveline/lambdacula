@@ -18,7 +18,7 @@ processInput str vs = buildAction verb objects
     where 
         verb = findVerb vs statement 
         objects = findObjects (tail statement) verb
-        statement = words . map (toLower) $ str
+        statement = words . map toLower $ str
         
         buildAction :: Maybe Verb -> [String] -> PlayerAction
         buildAction (Just v) [] = SimpleAction (actionType v) 
@@ -51,14 +51,14 @@ contains xs ys = intersect xs ys /= []
 analyseObjects :: [String] -- A sentence, without the initial verb
                 -> [String] -- The first possible separators
                 -> [String] -- A list of objects
-analyseObjects sentence separators =   filter (/= "") . map(trim) . splitOn "___" . unwords . filter (notArticles) $ parse sentence separators
+analyseObjects sentence separators =   filter (/= "") . map trim . splitOn "___" . unwords . filter notArticles $ parse sentence separators
     where
         -- Parse a sentence, replace separators by "_"
         parse :: [String] -> [String] -> [String]
         parse [] _ = []
         parse (w:ws) sep 
-            | w `elem` sep = "___":(parse ws sep)
-            | otherwise = w:(parse ws sep)
+            | w `elem` sep = "___":parse ws sep
+            | otherwise = w:parse ws sep
         -- Remove if starts with separator
         removeHead :: [String] -> [String]
         removeHead [] = []
@@ -73,11 +73,11 @@ analyseObjects sentence separators =   filter (/= "") . map(trim) . splitOn "___
                 trimLeft ws = ws
                 trimRight :: String -> String
                 trimRight ws
-                    | length ws == 0 = ws
-                    | (last ws) == ' ' = trimRight $ take ((length ws)- 1) ws
+                    | null ws = ws
+                    | last ws == ' ' = trimRight $ take (length ws - 1) ws
                     | otherwise = ws
         notArticles :: String -> Bool
-        notArticles s = not ((map toLower s) `elem` articles)
+        notArticles s = map toLower s `notElem` articles
 
 
 findObjects :: [String] -> Maybe Verb -> [String]

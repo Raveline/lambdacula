@@ -34,7 +34,7 @@ displayRoom :: Room         -- The room
             -> [RoomObject] -- The objects in this room
             -> [String]     -- The text to display
 displayRoom (Room name desc status) ros
-    | status /= Dark = [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ (displayObjects ros)] ++ ["Exits :"] ++ displayExits ros 
+    | status /= Dark = [stars] ++ [map toUpper name] ++ [stars] ++ [desc ++ displayObjects ros] ++ ["Exits :"] ++ displayExits ros 
     | otherwise = displayDarkRoom
     where 
         -- Display a line of stars
@@ -43,14 +43,14 @@ displayRoom (Room name desc status) ros
         displayObjects :: [RoomObject] -> String
         displayObjects = foldr ((++) . displayObjects') ""
         displayObjects' :: RoomObject -> String
-        displayObjects' (RoomObject _ _ details) = " " ++ _objectDescription details
+        displayObjects' (RoomObject _ _ details) = ' ' : _objectDescription details
         displayObjects' _ = ""
         -- Display the exits on separate lines
         -- BEWARE. Exits who are hidden should not be displayed.
         displayExits :: [RoomObject] -> [String]
         displayExits [] = []
-        displayExits ((Exit nms _ desc _ _):ros)
-            | _status desc /= Hidden = (("\t" ++ (headName nms) ++ " : " ++ (_objectDescription desc)):(displayExits ros))
+        displayExits (Exit nms _ desc _ _:ros)
+            | _status desc /= Hidden = ("\t" ++ headName nms ++ " : " ++ _objectDescription desc):displayExits ros
             | otherwise = displayExits ros
         displayExits (_:ros) = displayExits ros
 displayDarkRoom :: [String]
@@ -63,14 +63,14 @@ format80 strings = splitOn "\n" . format80' 0 $ (splitOn " ". intercalate "\n" $
         format80' :: Int -> [String] -> String
         format80' _ [] = []
         format80' n (s:ss) 
-            | "\n" `isInfixOf` s = s ++ " " ++ (format80' 0 ss)
-            | length s + n >= 80 = "\n" ++ s ++ " " ++ (format80' (length s + 1) ss)
-            | otherwise = s ++ " " ++ (format80' (n + length s + 1) ss)
+            | "\n" `isInfixOf` s = s ++ " " ++ format80' 0 ss
+            | length s + n >= 80 = "\n" ++ s ++ " " ++ format80' (length s + 1) ss
+            | otherwise = s ++ " " ++ format80' (n + length s + 1) ss
 
 -- Display the player inventory
 displayInventory :: [String] -> [String]
 displayInventory [] = ["You have nothing, but clothes on your back. I won't comment on your taste, by the way."]
-displayInventory xs = "You're currently the proud owner of the following items : ":(map ((++) "- ") xs)
+displayInventory xs = "You're currently the proud owner of the following items : ":map ("- " ++) xs
 
 printStrs :: [String] -> IO ()
 printStrs = mapM_ putStrLn . format80 

@@ -16,9 +16,7 @@ module Lambdacula.ModelShortcuts
     basicMove,
     flee,
     moveDoor,
-    setExternalStatus,
-    ifContainsDo,
-    accordingToStatus
+    setExternalStatus
 ) 
 where
 
@@ -105,12 +103,12 @@ pickItem :: RoomObject -> WorldAction
 pickItem ro = do
                 w <- get
                 addToInventory ro
-                return ["You picked up " ++ (mainName ro)]
+                return ["You picked up " ++ mainName ro]
 
 hasLighting :: World -> Bool
-hasLighting w = length lightsources > 0
+hasLighting w = not $ null lightsources
     where 
-        lightsources = filter (isLuminescent) (view playerObjects w)
+        lightsources = filter isLuminescent (view playerObjects w)
         isLuminescent :: RoomObject -> Bool
         isLuminescent ro = view objectStatus ro == Luminescent
 
@@ -172,17 +170,6 @@ setExternalStatus roName obName stat = do
                                         Nothing -> return ()
         where
             matcher :: String -> String -> RoomObject -> Bool
-            matcher room name ro = (_inRoom ro) == room && (name `elem` (ro^.objectAliases))
+            matcher room name ro = _inRoom ro == room && (name `elem` (ro^.objectAliases))
             findObject w = find (matcher roName obName) (w^.worldObjects)
 
------------------------
--- Complex behaviour --
------------------------
-
-ifContainsDo ro actions = case Map.lookup (numberOfContained ro) actions of
-                    Just x -> x
-                    Nothing -> error $ "No answer for " ++ show (numberOfContained ro) ++ " in " ++ (mainName ro)
-
-accordingToStatus ro actions = case Map.lookup (view objectStatus ro) actions of
-                    Just x -> x
-                    Nothing -> error $ "No answer for " ++ show (view objectStatus ro) ++ " in " ++ (mainName ro) 

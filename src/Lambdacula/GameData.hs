@@ -74,7 +74,7 @@ makeExit :: [String]     -- Aliases
             -> String       -- Description of the object
             -> String       -- Destination
             -> RoomObject   -- An Exit
-makeExit aliases inRoom description room = Exit (ObjectNames aliases) inRoom (RoomObjectDetails Opened description []) Nothing room 
+makeExit aliases inRoom description = Exit (ObjectNames aliases) inRoom (RoomObjectDetails Opened description []) Nothing 
 
 makeDoor :: [String]     -- Aliases
             -> String       -- Room where this exit should be

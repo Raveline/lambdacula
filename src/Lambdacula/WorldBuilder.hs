@@ -23,7 +23,7 @@ roomsToGraph rms ros = graphFromEdges (map getRoomKeyAndEdges rms)
         exitKeys name ros = exitKeys' $ filter (isInRoom name) ros
         exitKeys' :: [RoomObject] -> [String]
         exitKeys' [] = []
-        exitKeys' ((Exit _ _  _ _ dest):ros) = dest:(exitKeys' ros)
+        exitKeys' (Exit _ _  _ _ dest:ros) = dest:exitKeys' ros
         exitKeys' (_:ros) = exitKeys' ros
 
 

@@ -6,8 +6,8 @@ module Lambdacula (
     module Lambdacula.Display
 ) where
 
-import Lambdacula.Action
-import Lambdacula.GameData
-import Lambdacula.World
-import Lambdacula.Parser
-import Lambdacula.Display
+import Lambdacula.Action as Action
+import Lambdacula.GameData as Gamedata
+import Lambdacula.World as World
+import Lambdacula.Parser as Parser
+import Lambdacula.Display as Display

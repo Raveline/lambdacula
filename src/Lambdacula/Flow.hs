@@ -46,7 +46,7 @@ runAction world s = do
 proceed :: PlayerAction -> WorldAction 
 proceed (SimpleAction Zilch) = onlyDisplay "Huh ?"
 proceed (SimpleAction Examine) = onlyDo LookAround
-proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . (map mainName . view playerObjects) <*> id
+proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . map mainName . view playerObjects <*> id
 proceed (SimpleAction Flee) = onlyDo Flight
 proceed (Interaction act obj) = getPotentialAction obj act Nothing
 proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)

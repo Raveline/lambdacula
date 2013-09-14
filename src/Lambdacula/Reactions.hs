@@ -22,6 +22,7 @@ import Control.Lens hiding (contains, Action)
 import Control.Monad.State
 import qualified Data.Foldable as Fd
 import Data.List
+import Data.Maybe
 import qualified Data.Map as Map
 
 type Feedback = Maybe [String]
@@ -43,7 +44,7 @@ onlyDo r = do
 
 processAction :: (RoomObject, Action, Maybe RoomObject) -> WorldAction
 -- Doors & exit interactions
-processAction ((Exit name _ (RoomObjectDetails status _ _) info dest), a, x) = handleExit (headName name) info status dest a x
+processAction (Exit name _ (RoomObjectDetails status _ _) info dest, a, x) = handleExit (headName name) info status dest a x
 processAction (x, a, Just (Exit name _ (RoomObjectDetails status _ _) info dest)) = handleExit (headName name) info status dest a (Just x)
 -- Other interactions
 processAction detail = do
@@ -92,7 +93,7 @@ findReactions :: PureActionDetail -> State World [Reaction]
 findReactions specs = do
             w <- get
             scope <- localScope
-            case (find (satisfy w scope specs) (_reactions w)) of
+            case find (satisfy w scope specs) (_reactions w) of
                 Just px -> return $ extractReactions px
                 Nothing -> return []
     where
@@ -101,17 +102,17 @@ findReactions specs = do
         matchAction :: PureActionDetail -> ReactionSet -> Bool
         matchAction (objA, action, objB) (objA', action', objB', _, _) = objA == objA' && action == action' && objB == objB'
         realObject :: PureActionDetail -> [RoomObject] -> RoomObject
-        realObject (n, _, _) scope = fetchByNameInScope n scope 
+        realObject (n, _, _) = fetchByNameInScope n 
         extractCondition :: ReactionSet -> [Condition]
         extractCondition (_,_,_,cs,_) = cs
         testConditions :: [Condition] -> World -> RoomObject -> Bool
         testConditions cs w r = all (== True) $ map (testCondition w r) cs
         extractReactions :: ReactionSet -> Reactions
-        extractReactions rs = view _5 rs
+        extractReactions = view _5 
 
 simplifyAction :: ActionDetail -> PureActionDetail
 simplifyAction (ro, a, Nothing) = (mainName ro, a, Nothing)
-simplifyAction (ro, a, (Just ro')) = (mainName ro, a, Just(mainName ro'))
+simplifyAction (ro, a, Just ro') = (mainName ro, a, Just(mainName ro'))
 
 processReaction :: Reaction -> WorldFeedback
 processReaction (Display s) = singleAnswer s
@@ -154,16 +155,16 @@ rebuildList :: (Eq a) => [a]    -- A list
                         -> [a]  -- A list with the element replaced
 rebuildList xs old new = case find (==old) xs of
                             Just _  -> rebuildList' xs old new
-                            Nothing -> (new:xs)
+                            Nothing -> new:xs
     where
         rebuildList' [] _ _ = []
         rebuildList' (x:xs) old new
-            | x == old = new:(rebuildList' xs old new)
-            | otherwise = x:(rebuildList' xs old new)
+            | x == old = new:rebuildList' xs old new
+            | otherwise = x:rebuildList' xs old new
 
 -- Given a simple string, look for potential aliases in the list
 removeObjectFromList :: [RoomObject] -> String -> [RoomObject]
-removeObjectFromList ros s = case (findObjectToRemove s ros) of
+removeObjectFromList ros s = case findObjectToRemove s ros of
                                 Just x -> filter (/= x) ros
                                 Nothing -> ros
     where
@@ -179,11 +180,9 @@ fetchByName s = do
                 scope <- localScope
                 return $ fetchByNameInScope s scope 
 fetchByNameInScope :: String -> [RoomObject] -> RoomObject
-fetchByNameInScope s ros = case finder ros of
-                    Nothing -> error $ "Object " ++ s ++ " not found in scope : " ++ (show ros) ++ ". This should not happen."
-                    Just x -> x
+fetchByNameInScope s ros = fromMaybe (error $ "Object " ++ s ++ " not found in scope : " ++ show ros ++ ". This should not happen.") (finder ros)
     where
-        finder = find (\ro -> (mainName ro) == s)
+        finder = find (\ro -> mainName ro == s)
 
 -- CONTAINER UTILITIES
 
@@ -191,7 +190,7 @@ fetchByNameInScope s ros = case finder ros of
 containsSomethingNamed :: RoomObject        -- Container
                         -> String           -- Object name
                         -> Bool
-containsSomethingNamed container containedName = containedName `elem` (allNames $ view containedObjects container)
+containsSomethingNamed container containedName = containedName `elem` allNames (view containedObjects container)
     where
         allNames :: [RoomObject] -> [String]
         allNames = concat . extractNames
@@ -210,19 +209,18 @@ pickItemFromContainer :: RoomObject         -- The container
                         -> WorldFeedback
 pickItemFromContainer container x = do
                                         w <- get
-                                        case containeds x w of  -- Is the object really in the container ?
-                                            []          -> singleAnswer $ "What on earth are you talking about ?"
+                                        case identifyWithContained x w of  -- Is the object really in the container ?
+                                            []          -> singleAnswer "What on earth are you talking about ?"
                                             [object]    -> pickItemFromContainer' container object
                                             (xs)        -> error "Ambiguous case. Not implemented yet."
     where
-        containeds x w =  identifyWithContained x w
         pickItemFromContainer' :: RoomObject -> RoomObject -> WorldFeedback
         pickItemFromContainer' container contained  -- Is the container opened ?
             -- TODO - Should be refactored : container CONTAINS contained, since we checked in the calling method.
             -- TODO - Should be refactored : the method says "pick", yet the item is not added to the inventory.
             | container `contains` contained && isOpened container = do
                             removeItemFromContainer container contained
-                            singleAnswer $ "You picked up " ++ (mainName contained)
+                            singleAnswer $ "You picked up " ++ mainName contained
             | not (isOpened container) = singleAnswer $ mainName container ++ " is not opened !"
 
 lookInsideContainer :: RoomObject -> String -> WorldFeedback
@@ -230,7 +228,7 @@ lookInsideContainer ro s
     | isOpened ro = singleAnswer $ (headName . _ronames $ ro) ++ " is closed, you can't look inside."
     | otherwise = return . Just $ (s:displayContainerContent ro)
     where
-        displayContainerContent ro = [mainName x| x <- (ro^.containedObjects)]
+        displayContainerContent ro = [mainName x| x <- ro^.containedObjects]
 
 putInsideContainer :: RoomObject    -- The container
                         -> String   -- The object to put
@@ -250,7 +248,7 @@ putItemInContainer :: RoomObject
                     -> RoomObject
                     -> WorldFeedback
 putItemInContainer container contained = do
-                        item <- removeFromInventory $ contained
+                        item <- removeFromInventory contained
                         let newContainer = container & containedObjects .~ (item:(container^.containedObjects))
                         objects <- use worldObjects
                         worldObjects .= rebuildList objects container newContainer
@@ -263,7 +261,7 @@ removeItemFromContainer ::  RoomObject          -- Container
                             -> RoomObject       -- Contained
                             -> WorldFeedback
 removeItemFromContainer container contained = do
-                            let newContainer = container & containedObjects .~ (removeObjectFromList (container^.containedObjects) (mainName contained))
+                            let newContainer = container & containedObjects .~ removeObjectFromList (container^.containedObjects) (mainName contained)
                             objects <- use worldObjects
                             worldObjects .= rebuildList objects container newContainer
                             addToInventory contained
@@ -282,10 +280,10 @@ inventoryContains r = do
 hasInInventory :: String    -- Name of an object
                 -> World    -- World 
                 -> Bool
-hasInInventory name world = length (findObjectWithName name (world^.playerObjects)) > 0
+hasInInventory name world = not $ null (findObjectWithName name (world^.playerObjects))
     where
         findObjectWithName :: String -> [RoomObject] -> [RoomObject]
-        findObjectWithName s ros = filter (canBeNamed s) ros
+        findObjectWithName s = filter (canBeNamed s)
 
 removeFromInventory :: RoomObject
                         -> State World RoomObject 
@@ -332,7 +330,7 @@ handleConversation conv = error "NIY"
 -- Used when State does not need to be changed.
 -- Given a string, will return the World "as it is" and the string.
 singleAnswer :: String -> WorldFeedback
-singleAnswer = return . Just . ((:[]))
+singleAnswer = return . Just . (:[])
 
 -- MOVE
 basicMove :: String -- Destination
