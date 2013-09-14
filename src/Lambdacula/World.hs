@@ -1,12 +1,26 @@
 module Lambdacula.World
 (
+    -- Data
+    Room(..),
+    RoomObject(..),
+    ObjectNames (..),
+    RoomObjectDetails(..),
+    DoorInfo(..),
+    World(..),
+    ObjectStatus(..),
+    Reaction (..),
+    Condition (..),
+    Interactor (..),
+    -- types
     WorldSituation,
     VertexToNodeInfo,
     KeyToVertex,
     FullGraphInfo,
     ActionDetail,
-    Room(..),
-    RoomObject(..),
+    WorldAction,
+    Reactions,
+    ReactionSet,
+    -- Functions
     containedObjects,
     currentObjects,
     currentRoomName,
@@ -15,14 +29,8 @@ module Lambdacula.World
     objectStatus,
     isInRoom,
     findObjectInteraction,
-    ObjectNames (..),
-    RoomObjectDetails(..),
-    DoorInfo(..),
-    World(..),
-    ObjectStatus(..),
     roomByString,
     objectDescription,
-    WorldAction,
     worldRooms,
     currentRoom,
     previousRoom,
@@ -33,11 +41,7 @@ module Lambdacula.World
     identify,
     identifyWithContained,
     canBeNamed,
-    localScope,
-    Reaction (..),
-    Reactions,
-    Condition (..),
-    ReactionSet
+    localScope
 )
 where
 
@@ -56,12 +60,10 @@ type WorldSituation = State World ()
 type VertexToNodeInfo = Vertex -> (Room, String, [String])
 type KeyToVertex = String -> Maybe Vertex
 type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
--- First case is the successful action, taking an Action and a potential interaction.
--- Second case is simply the failure message.
-type ActionDetail = (RoomObject, Action, Maybe RoomObject)
+type ActionDetail = (RoomObject, Action, Maybe Interactor)
 type ProcessedAction = Either [String] ActionDetail
--- When we try to match objects from the player sentence
 type IdentifiedObject = Either [String] RoomObject
+type IdentifiedInteractor = Either [String] Interactor
 type Reactions = [Reaction]
 type ReactionSet = (String, Action, Maybe String, [Condition], Reactions)
 
@@ -177,7 +179,7 @@ data Reaction =  Display String                             -- Display some text
                 | LookInsideContainer String String         -- Look content of container (1) with intro sentence (2)
                 | PutInsideContainer String String String   -- Put inside container (1) the item (2) with resulting sentence (3)
                 | RebranchTo Action String (Maybe String)   -- Rephrase a command so that it'll be retranslated 
-                | Conversation [(String, [String])] [(String, String)] 
+                | Conversation [(String, [String])] [(String, String)] String
                 | MoveTo String                             -- Move somewhere
                 | Flight                                    -- Flee
                 | LookAround                                -- Display current room
@@ -198,6 +200,9 @@ data Condition = ContainsAmountOfItem (Int -> Bool)
                 | HasStatus ObjectStatus
                 | Contains String
 
+data Interactor = ObjectInteractor RoomObject
+                | StringInteractor String
+
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back
 -- a potential reaction function.
@@ -212,9 +217,9 @@ findObjectInteraction s ros action interactor =
         mainObject = wordFilter s ros
 
         handleInteractor Nothing = Nothing
-        handleInteractor (Just x) = Just (wordFilter x ros)
+        handleInteractor (Just x) = Just (interactorFilter x ros)
 
-        packAction :: IdentifiedObject -> Maybe IdentifiedObject -> ProcessedAction
+        packAction :: IdentifiedObject -> Maybe IdentifiedInteractor -> ProcessedAction
         packAction (Right ro) Nothing = Right (ro, action, Nothing)
         packAction (Right ro) (Just (Right ro')) = Right (ro, action, Just ro')
         packAction (Left x) _ = Left x
@@ -225,13 +230,20 @@ findObjectInteraction s ros action interactor =
 -- Look for the object corresponding to a given name.
 -- If no object or more than one object are found, return a Left string.
 -- If one and only one object is found, return it as Right.
-wordFilter :: String -> [RoomObject] -> Either [String] RoomObject
-wordFilter s ros = case findAMatch ros of
+wordFilter :: String -> [RoomObject] -> IdentifiedObject
+wordFilter s ros = case findAMatch s ros of
             [] -> Left ["I don't think you can interact with " ++ s]
             [x] -> Right x
             (xs) -> Left $ ambiguityProcessing s xs
-        where
-            findAMatch = filter (match s) 
+
+interactorFilter :: String -> [RoomObject] -> IdentifiedInteractor
+interactorFilter s ros = case findAMatch s ros of
+            [] -> Right $ StringInteractor s
+            [x] -> Right $ ObjectInteractor x
+            (xs) -> Left $ ambiguityProcessing s xs
+
+findAMatch s = filter (match s) 
+
 ambiguityProcessing :: String -> [RoomObject] -> [String]
 ambiguityProcessing s ro = (s ++ " can mean many things. I need you to narrow it down among : "): nameObjects ro
     where
@@ -259,7 +271,9 @@ identifyObjectWithName :: String -> [RoomObject] -> [RoomObject]
 identifyObjectWithName s = filter (canBeNamed s) 
 
 canBeNamed :: String -> RoomObject -> Bool
-canBeNamed s ro = s `elem` (ro^.objectAliases)
+canBeNamed s ro = lowerStr s `elem` (map lowerStr $ ro^.objectAliases)
+    where
+        lowerStr = map toLower
 
 match = canBeNamed 
 
