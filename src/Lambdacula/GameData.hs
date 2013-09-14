@@ -10,9 +10,6 @@ import Lambdacula.Display
 import Lambdacula.Reactions
 import qualified Data.Map as Map
 
-type Topics = Map.Map String String
-type TopicAliases = Map.Map String String
-
 -- VERBS
 verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Talk "talk" ["with", "to"] ["about"] False
@@ -49,8 +46,47 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("Lady's Chatterley's Lover", Zilch, Nothing, [], [Display "I don't know what you're trying to do with this book. And frankly, I don't want to know."])
     ,("rug", Examine, Nothing, [], [Display "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."])
     ,("rug", Lift, Nothing, [], [ChangeStatus "A hatch" Closed, Display "There is a hatch behind the rug !"])
-    ,("rug", Zilch, Nothing, [], [Display "You DO realize this is a rug, right ?"])]
-
+    ,("rug", Zilch, Nothing, [], [Display "You DO realize this is a rug, right ?"])
+    ,("pile", Examine, Nothing, [], [Display "It is your classical junk pile, fully equipped with rags, bits of wood and metal, organic matter we do not want to know more about, most likely a rat nest. Who am I kidding ? A rat kingdom. With counties and all."])
+    ,("pile", Search, Nothing, [ContainsAmountOfItem (== 1)], [Display "The only think you're going to get from this is a severe case of tetanos. Well. Your funeral. You only find one interesting thing in the pile : a torchlight. Most likely broken. I would not pick it up if I were you."])
+    ,("pile", Search, Nothing, [ContainsAmountOfItem (== 0)], [Display "Look, you already managed to pick up a torchlight from this thing. And you survived. You should be grateful, and not playing with your life again."])
+    ,("pile", Take, Just "torchlight", [], [PickFromContainer "junk" "torchlight", Display "You gather enough courage to pick up the torchlight from the junk pile."])
+    ,("pile", Zilch, Nothing, [], [Display "There is a limited amount of things you can do with a junk pile. Fortunately."])
+    ,("cupboard", Examine, Nothing, [HasStatus Closed], [Display "It's a closed cupboard."])
+    ,("cupboard", Examine, Nothing, [HasStatus Opened], [LookInsideContainer "cupboard" "This is your typical kitchen cupboard, containing : "])
+    ,("cupboard", Open, Nothing, [], [ChangeStatus "cupboard" Opened, Display "You open the cupboard"])
+    ,("cupboard", Search, Nothing, [], [RebranchTo Examine "cupboard" Nothing])
+    ,("cupboard", Take, Nothing, [], [Display "It's heavy. You're weak. And anyway, it's a stupid idea. No offense."])
+    ,("cupboard", Take, Just "salt", [], [PickFromContainer "cupboard" "salt", Display "You are now the proud owner of an excellent way of protecting yourself from fairies. Neat."])
+    ,("cupboard", Take, Just "saucepan", [], [PickFromContainer "cupboard" "saucepan", Display "You take the saucepan. Yeah, that's really useful when going after a vampire."])
+    ,("cat bowl", Use, Just "Zinc bit", [], [PutInsideContainer "cat bowl" "Zinc bit" "You've put the zinc in the bowl. Look at you, doing chemistry or whatever !"])
+    ,("cat bowl", Use, Just "Copper bit", [], [PutInsideContainer "cat bowl" "Copper bit" "You've put the copper in the bowl. That'll teach him !"])
+    ,("cat bowl", Use, Just "Electric wires", [ContainsAmountOfItem (== 2), HasStatus Salted], [PutInsideContainer "cupboard" "Electric wires" "You plug the wires to the zinc and copper bits. You did it ! You know have a source of electricity that would make Tesla proud !"])
+    ,("cat bowl", Use, Just "Electric wires", [], [Display "No, something is still missing, there."])
+    ,("cat bowl", Use, Just "Salt", [], [ChangeStatus "cat bowl" Salted, Display "You put salt in the water. That's not very nice for the pet that'll try to drink it, you know."])
+    ,("cat bowl", Take, Nothing, [], [Display "And deprive a cat, dog, or monstrous vampiric pet of his drink ? NOT ON MY WATCH !"])
+    ,("cat bowl", Examine, Nothing, [ContainsAmountOfItem (== 0)], [Display "Just normal water in a bowl. Nothing to write home about."])
+    ,("cat bowl", Examine, Nothing, [ContainsAmountOfItem (== 1)], [Display "A bowl with a bit of metal inside. How weird !"])
+    ,("cat bowl", Examine, Nothing, [ContainsAmountOfItem (== 2)], [Display "A bowl with one bit of zinc and one bit of copper inside. This is weird indeed !"])
+    ,("cat bowl", Examine, Nothing, [ContainsAmountOfItem (== 3)], [Display "A bowl with two bits of metal and electric wire connected to them... OK. OK."])
+    ,("car bowl", Talk, Nothing, [], [Display "You complain to the bowl for a while about how hard your life is, what with your tendency to speak to inanimous objects and all."])
+    ,("oven", Examine, Nothing, [], [Display "A wonderful old oven, as they used to do them in the old days. It works a bit like a fireplace. You could use it to cook anything. Even meth, I think. Don't do it, though. Meth is bad. I didn't just encourage you to do such a thing."])
+    ,("oven", Use, Nothing, [], [Display "You need to put wood and start a fire"])
+    ,("saucepan", Examine, Nothing, [], [Display "Well, it's a saucepan. It's been used before, but still ready to fry stuff if neeeded."])
+    ,("salt", Examine, Nothing, [], [Display "It's a saltshaker. With salt inside. I WOULD give you the name of the brand, but they refused to sponsor this game, so you know. I won't."])
+    ,("salt", Use, Nothing, [], [Display "Use it how ? To throw behind your shoulder ? OH COME ON, don't tell me you believe this ? OK, vampire, werewolf and zombies do exist in this game, but fairies ? Please."])
+    ,("salt", Eat, Nothing, [], [Display "It wouldn't be good for your arteries. I'm doing you a favour."])
+    ,("salt", Talk, Nothing, [], [Display "The salt is not answering. Ever considered having your mental health tested ? Just asking."])
+    ,("brasero", Use, Just "mysterious paper", [HasStatus Luminescent], [Display "TODO !"])
+    -- HERE, WE NEED TO MODIFY. Should be Maybe, Just x or Anything.
+    ,("brasero", Use, Nothing, [HasStatus Luminescent], [Display "What do you want to use the brasero for ?"])
+    ,("brasero", Use, Nothing, [ContainsAmountOfItem (== 1)], [Display "There is some coal in the brasero. If you have a lighter or a match, you can try to start a fire."])
+    ,("brasero", Use, Nothing, [], [Display "The brasero is not lit. You need some kind of fuel to light it."])
+    ,("brasero", Examine, Nothing, [HasStatus Luminescent], [Display "There is a nice fire in the brasero to warm you up."])
+    ,("brasero", Examine, Nothing, [], [Display "The brasero is not lit. If you had any kind of fuel and something to start a fire, you could probably use it though."])
+    ,("Sad", Examine, Nothing, [], [Display "Are we really going to have to spend time considering this emo character ? OK, obviously he is not a vampire. Most likely, he would love to be one. In any case, he's going to make you waste your time. And be annoying. Don't tell me I haven't warned you."])
+    ,("Sad", Talk, Nothing, [], [Conversation necrotopics necroanswers undefined])]
+    
 -- OBJECTS
 simpleObject :: [String]                -- Names 
                 -> String               -- Room
@@ -85,25 +121,6 @@ makeDoor :: [String]     -- Aliases
             -> RoomObject   -- An Exit
 makeDoor alias inRoom description room key status = Exit (ObjectNames alias) inRoom (RoomObjectDetails status description []) (Just (DoorInfo key)) room
 
-{-
-conversation :: String                  -- Word
-            -> [(String, [String])]     -- Aliases
-            -> [(String, String)]       -- Conversations
-            -> State World [String]     -- Reaction 
-conversation subject aliases topics = case properAnswer of 
-                                        Just x -> singleAnswer $ '"':(x ++ "\"")
-                                        Nothing -> error $ "There should be a " ++ none ++ " topic." 
-    where 
-        properAnswer = case properTopic of
-                        Just x -> Map.lookup x (Map.fromList topics)
-                        Nothing -> Map.lookup none (Map.fromList topics)
-        properTopic = Map.lookup subject mapAliases
-        mapAliases = aliasToMap aliases
-        
-aliasToMap :: [(String, [String])] -> TopicAliases
-aliasToMap xs = Map.fromList [(alias, key)|(key, aliases)<- xs, alias <- key:aliases]  
--}
-
 ldRooms = [Room "In front of the castle" "You're standing in front of the castle of Lambdacula, in the heart of transylvania. It is standing at the top of a moutain, as any proper gothic castle should be. In front of you, to the south, the gates of the castle lead to the inner yard. I could describe the howling wind, the eerie atmosphere, the uncanny mist, the noise of flapping bats and other items from my Dictionnary Of Transylvanian Clichés, but I think you've got the idea. To the south, you'll find the gate of the castle, that you can cross to enter into an inner yard. On the east, a little path should lead you to safety or towards new adventures, but, come on, try to finish this one first." Nada
         -- FIRST FLOOR.
         , Room "The southern gate" "This is the inner yard of the castle. Obviously, count Lambdacula must have financial trouble, or his skills in household management are more than lacking. The place is a wreck, let's face it. There is an awful stench everywhere, rats are running through the place, the windows are dusty and frankly, UNESCO World Heritage Centre would be appalled by this place." Nada
@@ -136,10 +153,6 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         -- UNDERGROUND WORLD
         , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark]
 
-ldObjects = []
-
-
-{-|
 ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle" "The southern gate" 
             ,makeExit ["East"] "In front of the castle" "a path on the mountain" "A muddy path" 
             -- Southern gate
@@ -147,31 +160,33 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,makeExit ["South"] "The southern gate" "the rest of the yard" "The castle entrance"
             ,makeDoor ["West", "metallic door", "metal door"] "The southern gate" "A metallic door" "The guard room" Nothing Closed
             ,makeDoor ["East", "wooden door", "wooden door"] "The southern gate" "A wooden door" "The kitchen" Nothing Closed
-            ,objectContaining ["pile", "pile of junk", "junk", "refuse"] "The southern gate" junkPileAction "There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." Opened [simpleObject ["a torchlight", "torchlight", "torch"] "NOWHERE" torchlightAction "A torchlight"] 
+            ,objectContaining ["pile", "pile of junk", "junk", "refuse"] "The southern gate" "There is a pile of junk next to the gates of the castle, and if you stay there too long, I'd say a pool of vomit close to it." Opened [simpleObject ["a torchlight", "torchlight", "torch"] "NOWHERE" "A torchlight"]
             -- Castle entrance
             ,makeExit ["North"] "The castle entrance" "To the southern gate" "The southern gate"
             ,makeDoor ["South", "double doors", "doors", "door"] "The castle entrance" "An impressive double doors" "The hall" Nothing Closed
             -- Kitchen
             ,makeDoor ["West", "wooden door", "wooden door"] "The kitchen" "A wooden door" "The southern gate" Nothing Closed
             ,makeExit ["South"] "The kitchen" "To an antichamber" "Antichamber"
-            ,objectContaining ["cupboard", "cupboards"] "The kitchen" cupboardAction "You notice one cupboard that seem in better state than the others." Closed 
-                [simpleObject ["saucepan", "pan"] "" saucepanAction "A saucepan"
-                ,simpleObject ["salt", "saltcellar", "salt cellar", "saltshaker"] "" saltAction "A saltshaker"
+            ,objectContaining ["cupboard", "cupboards"] "The kitchen" "You notice one cupboard that seem in better state than the others." Closed 
+                [simpleObject ["saucepan", "pan"] "" "A saucepan"
+                ,simpleObject ["salt", "saltcellar", "salt cellar", "saltshaker"] "" "A saltshaker"
                 ]
-            ,simpleObject ["cat bowl", "bowl"] "The kitchen" catBowlAction "On the floor, there seem to be a bowl with some water in it, for a cat. Or a dog. Whatever it is, it's not around anyway."
-            ,simpleObject ["oven", "old oven"] "The kitchen" ovenAction "The old oven is still there, a tribute to the quality of the craftsmanship of yore."
+            ,simpleObject ["cat bowl", "bowl"] "The kitchen" "On the floor, there seem to be a bowl with some water in it, for a cat. Or a dog. Whatever it is, it's not around anyway."
+            ,simpleObject ["oven", "old oven"] "The kitchen" "The old oven is still there, a tribute to the quality of the craftsmanship of yore."
             -- Guard room
             ,makeDoor ["East", "metallic door", "metal door"] "The guard room" "A metallic door" "The southern gate" Nothing Closed
             ,makeExit ["West", "wooden door", "wooden door"] "The guard room" "An opened door" "The dormitory"
             ,makeExit ["South"] "The guard room" "An impressive corridor" "A gallery" 
             ,makeExit ["Up", "upstairs"] "The guard room" "Stairs leading to the second floor" "The north-west corridor"
-            ,simpleObject ["brasero"] "The guard room" braseroAction "One of the braseros seems in perfect condition."
+            ,simpleObject ["brasero"] "The guard room" "One of the braseros seems in perfect condition."
             -- Dormitory
             ,makeExit ["East", "wooden door", "wooden door"] "The dormitory" "An opened door" "The guard room" 
-            ,simpleObject ["Sad", "man", "goth", "necromancer", "necro", "man in robes", "man in black robes"] "The dormitory" necroAction "there is a man in black robes, wearing make up to look as pale as possible. He's got skull-shaped rings on almost all his fingers."
+            ,simpleObject ["Sad", "man", "goth", "necromancer", "necro", "man in robes", "man in black robes"] "The dormitory" "there is a man in black robes, wearing make up to look as pale as possible. He's got skull-shaped rings on almost all his fingers."
             -- Gallery
             ,makeExit ["North"] "A gallery" "To the guard room" "The guard room"
-            ,makeExit ["South"] "A gallery" "To the living room" "The living room"
+            ,makeExit ["South"] "A gallery" "To the living room" "The living room"]
+
+{-|
             ,simpleObject ["portrait of Stanislas of Lambdacula", "portrait", "Stanislas", "Stanislas of Lambdacula"] "A gallery" stanislasAction "A portrait of Stanislas of Lambdacula !"
             ,simpleObject ["portrait of Dolores of Lambdacula", "portrait", "Dolores", "Dolores of Lambdacula"] "A gallery" doloresAction "A portrait of Dolores of Lambdacula !"
             ,simpleObject ["portrait of Igor of Lambdacula", "portrait", "Igor", "Igor of Lambdacula"] "A gallery" igorAction "A portrait of Igor of Lambdacula !"
@@ -227,20 +242,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
 -- ROBehaviour = object -> action -> Maybe String for complex actions
 -- And return a WorldAction
 
--- THE SHACK
-rugAction :: RoomObjectBehaviour
-rugAction rug Examine _ = singleAnswer $ 
-rugAction rug Lift _ = do
-rugAction rug _ _ = singleAnswer $ 
-
 -- THE SOUTHERN YARD
-junkPileAction :: RoomObjectBehaviour
-junkPileAction junk Examine _ = singleAnswer $ "It is your classical junk pile, fully equipped with rags, bits of wood and metal, organic matter we do not want to know more about, most likely a rat nest. Who am I kidding ? A rat kingdom. With counties and all."
-junkPileAction junk Search _
-    | length (view containedObjects junk) > 0 = singleAnswer $ "The only think you're going to get from this is a severe case of tetanos. Well. Your funeral. You only find one interesting thing in the pile : a torchlight. Most likely broken. I would not pick it up if I were you."
-    | otherwise = singleAnswer $ "Look, you already managed to pick up a torchlight from this thing. And you survived. You should be grateful, and not playing with your life again."
-junkPileAction junk Take (Just x) = pickItemFromContainer junk x
-junkPileAction _ _ _ = singleAnswer $ "There is a limited amount of things you can do with a junk pile. Fortunately."
 
 torchlightAction :: RoomObjectBehaviour
 torchlightAction torch Use (Just "battery") = do
@@ -259,78 +261,27 @@ torchlightAction torch Examine _
     | view objectStatus torch == Luminescent = singleAnswer $ "The torchlight is on. Looking at it would blind you. You're not very bright, are you ? HAHAHAHAHA, GOT YOU AGAIN !"
     | otherwise = singleAnswer $ "Well, it doesn't look like it's broken... but there are no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."
 
--- THE GUARD ROOM
-braseroAction :: RoomObjectBehaviour
-braseroAction brasero Use (Just "mysterious paper") = error "TODO"
-braseroAction brasero Use _ 
-    | view objectStatus brasero == Luminescent = singleAnswer $ "What do you want to use the brasero for ?"
-    | brasero `containsSomethingNamed` "coal" = singleAnswer $ "There is some coal in the brasero. If you have a lighter or a match, you can try to start a fire."
-    | otherwise = singleAnswer $ "The brasero is not lit. You need some kind of fuel to light it."
-braseroAction brasero examine _
-    | view objectStatus brasero == Luminescent = singleAnswer $ "There is a nice fire in the brasero to warm you up."
-    | otherwise = singleAnswer $ "The brasero is not lit. If you had any kind of fuel and something to start a fire, you could probably use it though." 
-
--- THE KITCHEN
-cupboardAction cupboard Examine _
-    | view objectStatus cupboard == Closed = singleAnswer $ "It's a closed cupboard."
-    | view objectStatus cupboard == Opened = lookInsideContainer cupboard
-cupboardAction cupboard Open _ = openContainer cupboard "You open the cupboard"
-cupboardAction cupboard Search _ = cupboardAction cupboard Examine Nothing
-cupboardAction cupboard Take (Just x) = pickItemFromContainer cupboard x
-cupboardAction cupboard Take _ = singleAnswer "It's heavy. You're weak. And anyway, it's a stupid idea. No offense."
-cupboardAction _ _ _ = nope
-
-ovenAction oven Examine _ = singleAnswer "A wonderful old oven, as they used to do them in the old days. It works a bit like a fireplace. You could use it to cook anything. Even meth, I think. Don't do it, though. Meth is bad. I didn't just encourage you to do such a thing."
-ovenAction oven Use _ = singleAnswer "You need to put wood and start a fire"
-
-catBowlAction bowl Use (Just "Zinc bit") = putInsideContainer bowl "Zinc bit" "You've put the zinc in the bowl."
-catBowlAction bowl Use (Just "Copper bit") = putInsideContainer bowl "Copper bit" "You've put the copper in the bowl."
-catBowlAction bowl Use (Just "Electric wires") 
-    | numberOfContained bowl == 2 && view objectStatus bowl == Salted  = 
-            putInsideContainer bowl "Electric wires" "You plug the wires to the zinc and copper bits. You did it ! You know have a source of electricity that would make Tesla proud !"
-    | otherwise = singleAnswer $ "No, something is still missing, there."
-catBowlAction bowl Use (Just "salt") = do
-                                    changeStatus bowl Salted
-                                    return ["You put salt in the water. That's not very nice for the pet that'll try to drink it, you know."]
-catBowlAction bowl Use _ = singleAnswer "Look, you might be thirsty, but not THAT thirsty."
-catBowlAction bowl Take _ = singleAnswer "And deprive a cat, dog, or monstrous vampiric pet of his drink ? NOT ON MY WATCH !"
-catBowlAction bowl Examine _ = ifContainsDo bowl (Map.fromList [(0, singleAnswer "Just normal water in a bowl. Nothing to write home about.")
-                                                        ,(1, singleAnswer "A bowl with a bit of metal inside. How weird !")
-                                                        ,(2, singleAnswer "A bowl with one bit of zinc and one bit of copper inside. This is weird indeed !")
-                                                        ,(3, singleAnswer "A bowl with two bits of metal and electric wire connected to them... OK. OK.")])
-catBowlAction bowl Talk _ = singleAnswer $ "You complain to the bowl for a while about how hard your life is, what with your tendency to speak to inanimous objects and all."
-catBowlAction _ _ _ = nope
-
-saltAction salt Examine _ = singleAnswer $ "It's a saltshaker. With salt inside. I WOULD give you the name of the brand, but they refused to sponsor this game, so you know. I won't."
-saltAction salt Take _ = pickItem salt
-saltAction salt Use _ = singleAnswer $ "Use it how ? To throw behind your shoulder ? OH COME ON, don't tell me you believe this ? OK, vampire, werewolf and zombies do exist in this game, but fairies ? Please."
-saltAction salt Eat _ = singleAnswer $ "It wouldn't be good for your arteries. I'm doing you favour."
-saltAction salt Talk _ = singleAnswer $ "The salt is not answering. Ever considered having your mental health tested ? Just asking."
-saltAction _ _ _ = nope
-
-saucepanAction pan Take _ = pickItem pan
-saucepanAction pan Examine _ = singleAnswer $ "Well, it's a saucepan. It's been used before, but still ready to boil stuff if neeeded."
-saucepanAction _ _ _ = nope
+-}
 
 -- DORMITORY
-necroAction :: RoomObjectBehaviour
-necroAction necro Examine _ = singleAnswer $ "Are we really going to have to spend time considering this emo character ? OK, obviously he is not a vampire. Most likely, he would love to be one. In any case, he's going to make you waste your time. And be annoying. Don't tell me I haven't warned you."
-necroAction necro Talk Nothing = necroAction necro Talk (Just "hello")
-necroAction necro Talk (Just word) = conversation word [("hello", ["hi"]), ("sad", ["sadness", "being sad", "him being sad"]), ("mother", ["mum", "mummy"]), ("happy", []), ("necromancer", ["necro", "necromancy"]), ("dissertation", ["essay", "topic"]), ("death", []), ("taxes", ["tax"]), ("count", ["count Lambdacula"]),("crypt", ["secret crypt"]), ("vampire", ["vampiric society", "vampires", "vampire society"]), ("Transylvania", []), ("zombies", ["zombie"])] [("hello", "Hellooooo dude. I'm sad.")
-        ,("sad", "No, no, I'm pretty happy. My NAME is Sad is all. You know. My mother was kinda depressed when she had me. It was supposed to be just an ordinary case of baby blues, but actually, it never stopped. I think she's better now I've left her to become a Necromancer.")
-        ,("mother", "My mother was a tailor, my father was a gambler... you know how it goes.")
-        ,("happy", "Look, man, this is Lambdacula Castle. There is no BETTER PLACE to be for a Necromancer.")
-        ,("necromancer", "Yes, that's my major. I wanted to major in arts and stuff, but in this economy... Anyway, it turned out to be a passion, so I'm doing my PhD in Necromancy. I'm doing this trip here to collect data for my dissertation.")
-        ,("dissertation", "What's my dissertation about ? \"Adoration of Death and Cult of Decline amongst Transylvanian Vampiric Communities from a Postmodern Point Of View\". I know, the title is too short, it doesn't look serious...")
-        ,("death",  "Look, dude, I spend my WHOLE DAY talking, reading and writing about death, I'd like to speak about something else. Like taxes, for instance. Taxes are fun.")
-        ,("taxes", "Did you know, for instance, that Count Lambdacula is a very law-abiding citizen ? He pays his taxes every year. Well, that's what I've heard.")
-        ,("count", "The count ? I've never met him. I hope to. The rumour is he's sleeping in a secret crypt somewhere in the castle.")
-        ,("crypt", "Well it's been fashionable to have a secret crypt in the vampire society for quite a long time, you know. I have no idea where it is though.")
-        ,("vampire", "Vampires are living dead who drink blood. I think that you should know that before coming to Transylvania, you know.")
-        ,("Transylvania", "Well, it's a nice place, you know. Particularly if you like vampires. Which I do. I mean, come on, I know some people specialize on zombies, but, seriously, ZOMBIES ? Walking rotting corpses with no brain whatsoever ? That's sick, man.")
-        ,("zombies", "I think they are some around, but frankly, my dear, I don't give a damn.")
-        ,("NONE", "I have nothing to say about that.")] 
 
+necrotopics = [("hello", ["hi"]), ("sad", ["sadness", "being sad", "him being sad"]), ("mother", ["mum", "mummy"]), ("happy", []), ("necromancer", ["necro", "necromancy"]), ("dissertation", ["essay", "topic"]), ("death", []), ("taxes", ["tax"]), ("count", ["count Lambdacula"]),("crypt", ["secret crypt"]), ("vampire", ["vampiric society", "vampires", "vampire society"]), ("Transylvania", []), ("zombies", ["zombie"])]
+necroanswers =  [("hello", "Hellooooo dude. I'm sad.")
+    ,("sad", "No, no, I'm pretty happy. My NAME is Sad is all. You know. My mother was kinda depressed when she had me. It was supposed to be just an ordinary case of baby blues, but actually, it never stopped. I think she's better now I've left her to become a Necromancer.")
+    ,("mother", "My mother was a tailor, my father was a gambler... you know how it goes.")
+    ,("happy", "Look, man, this is Lambdacula Castle. There is no BETTER PLACE to be for a Necromancer.")
+    ,("necromancer", "Yes, that's my major. I wanted to major in arts and stuff, but in this economy... Anyway, it turned out to be a passion, so I'm doing my PhD in Necromancy. I'm doing this trip here to collect data for my dissertation.")
+    ,("dissertation", "What's my dissertation about ? \"Adoration of Death and Cult of Decline amongst Transylvanian Vampiric Communities from a Postmodern Point Of View\". I know, the title is too short, it doesn't look serious...")
+    ,("death",  "Look, dude, I spend my WHOLE DAY talking, reading and writing about death, I'd like to speak about something else. Like taxes, for instance. Taxes are fun.")
+    ,("taxes", "Did you know, for instance, that Count Lambdacula is a very law-abiding citizen ? He pays his taxes every year. Well, that's what I've heard.")
+    ,("count", "The count ? I've never met him. I hope to. The rumour is he's sleeping in a secret crypt somewhere in the castle.")
+    ,("crypt", "Well it's been fashionable to have a secret crypt in the vampire society for quite a long time, you know. I have no idea where it is though.")
+    ,("vampire", "Vampires are living dead who drink blood. I think that you should know that before coming to Transylvania, you know.")
+    ,("Transylvania", "Well, it's a nice place, you know. Particularly if you like vampires. Which I do. I mean, come on, I know some people specialize on zombies, but, seriously, ZOMBIES ? Walking rotting corpses with no brain whatsoever ? That's sick, man.")
+    ,("zombies", "I think they are some around, but frankly, my dear, I don't give a damn.")
+    ,(notopic, "I have nothing to say about that.")] 
+
+{-|
 -- Gallery
 stanislasAction :: RoomObjectBehaviour
 stanislasAction portrait Examine _ = singleAnswer $ "A portrait of Stanilas Lambdacula, count of the castle between 1357 and 1402. A fine looking fellow, actually."
