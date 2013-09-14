@@ -127,7 +127,7 @@ main = hspec $ do
                 testFeedback (Interaction Examine "cube") `shouldBe` [examineString]
 
             it "Make sure the proper string is displayed when talking to the dude" $ do
-                testFeedback (Complex Talk "dude" "hello") `shouldBe` [sayhello]
+                testFeedback (Complex Talk "dude" "hello") `shouldBe` ["\"" ++ sayhello ++ "\""]
 
     describe "scenario" $ do
             it "Tries to take the key out of the cube but fails, because it is closed" $ do
