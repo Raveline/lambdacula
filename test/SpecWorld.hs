@@ -33,6 +33,7 @@ import System.Console.Haskeline
 
 examineString = "A simple test cube. Look, how pretty !" 
 sayhello = "hello world !"
+zilchReaction = [Display "Err... no."]
 
 openCubeReaction :: [Reaction]
 openCubeReaction = [ChangeStatus "cube" Opened, Display "You open the cube !"]
@@ -41,13 +42,13 @@ openCubeReaction = [ChangeStatus "cube" Opened, Display "You open the cube !"]
 reactions_tests = [("cube", Take, Just "key", [], [PickFromContainer "cube" "key"])
     ,("cube", Examine, Nothing, [], [Display examineString])
     ,("cube", Open, Nothing, [], openCubeReaction)
-    ,("cube", Eat, Nothing, [], [Display "You try to eat the cube. It's not very good. Particularly for your teeth."])
+    ,("cube", Zilch, Nothing, [], zilchReaction)
     ,("dude", Talk, Nothing, [], [Conversation charatopics charaanswers undefined])]
 
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" Nada
-            , Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
+    ,Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
-charatopics = [("hello", ["hi"]), ("endgame", [])]
+charatopics = [("hello", ["hi", "yo"]), ("endgame", [])]
 charaanswers = [("hello", sayhello),("endgame", "Just say end to me")]
 
 
@@ -115,19 +116,28 @@ main = hspec $ do
     describe "reaction matching" $ do
             it "Finds the proper reaction when trying to open the cube" $ do
                 probeReactions ("cube", Open, Nothing) `shouldBe` openCubeReaction
-            it "Finds no reaction when trying to move the cube" $ do
-                probeReactions ("cube", Move, Nothing) `shouldBe` []
+            it "Finds no reaction when trying to move the dude" $ do
+                probeReactions ("dude", Move, Nothing) `shouldBe` []
+            it "Make sure the Zilch case is used when no other case work" $ do
+                probeReactions ("cube", Eat, Nothing) `shouldBe` zilchReaction
 
     describe "reaction processing" $ do
             it "Process the open cube reaction and make sure it works !" $ do
                 testReaction (head openCubeReaction) (checkStatus "cube" Opened) `shouldBe` True
-
-    describe "string display" $ do
+    
+    describe "String feedback" $ do
             it "Make sure the proper string is displayed when examining the cube" $ do
                 testFeedback (Interaction Examine "cube") `shouldBe` [examineString]
 
+    describe "conversation" $ do
             it "Make sure the proper string is displayed when talking to the dude" $ do
                 testFeedback (Complex Talk "dude" "hello") `shouldBe` ["\"" ++ sayhello ++ "\""]
+
+            it "Make sure the hello string is displayed when talking with no subject" $ do
+                testFeedback (Interaction Talk "dude") `shouldBe` ["\"" ++ sayhello ++ "\""]
+
+            it "Make sure the hello string is displayed when using an alias" $ do
+                testFeedback (Complex Talk "dude" "yo") `shouldBe` ["\"" ++ sayhello ++ "\""]
 
     describe "scenario" $ do
             it "Tries to take the key out of the cube but fails, because it is closed" $ do
