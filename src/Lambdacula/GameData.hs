@@ -85,8 +85,52 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("brasero", Examine, Nothing, [HasStatus Luminescent], [Display "There is a nice fire in the brasero to warm you up."])
     ,("brasero", Examine, Nothing, [], [Display "The brasero is not lit. If you had any kind of fuel and something to start a fire, you could probably use it though."])
     ,("Sad", Examine, Nothing, [], [Display "Are we really going to have to spend time considering this emo character ? OK, obviously he is not a vampire. Most likely, he would love to be one. In any case, he's going to make you waste your time. And be annoying. Don't tell me I haven't warned you."])
-    ,("Sad", Talk, Nothing, [], [Conversation necrotopics necroanswers undefined])]
-    
+    ,("Sad", Talk, Nothing, [], [Conversation necrotopics necroanswers undefined])
+    ,("torchlight", Use, Just "battery", [], [ChangeStatus "torchlight" Powered, Display "Great, you now have a functioning torchlight. This should shed some light on your current issues. Shed some light... got it ? HAHAHAHA. Ahem. Sorry."])
+    ,("torchlight", Use, Nothing, [HasStatus Powered], [ChangeStatus "torchlight" Luminescent, Display "You turn the torchlight on. You now have a lightsource and can go in dark places !"])
+    ,("torchlight", Use, Nothing, [HasStatus Luminescent], [ChangeStatus "torchlight" Powered, Display "You turn the torchligts off. You have no lightsource now. Avoid dark places !"])
+    ,("torchlight", Use, Nothing, [], [Display "There are no batteries in the torchlight !"])
+    ,("torchlight", Examine, Nothing, [HasStatus Powered], [Display "A torchlight in almost perfect condition."])
+    ,("torchlight", Examine, Nothing, [HasStatus Luminescent], [Display "The torchlight is on. Looking at it would blind you. You're not very bright, are you ? HAHAHAHAHA, GOT YOU AGAIN !"])
+    ,("torchlight", Examine, Nothing, [], [Display "Well, it doesn't look like it's broken... but there are no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."])
+    ,("stanislas", Examine, Nothing, [], [Display "A portrait of Stanilas Lambdacula, count of the castle between 1357 and 1402. A fine looking fellow, actually."])
+    ,("dolores", Examine, Nothing, [], [Display "A portrait of Dolores Lambdacula, countess of the castle. Born in 1369, She married Stanislas of Lambdacula in 1385 and ruled till her son was old enough, in 1408. She died in 1423. Wait a second... Dolores doesn't sound like a very Romanian name ! She must have come from Spain or something."])
+    ,("Igor", Examine, Nothing, [], [Display "A portrait of Count Igor Lambdacula, son of Stanislas and Dolores, born in 1392. He ruled from 1408 to his death in 1459. Igor didn't look like a very fun guy, considering how dak and brooding he looks on this painting."])
+    ,("Sveltana", Examine, Nothing, [], [Display "A portrait of Countess Sveltana Lambdacula, wife of Igor Lambdacula, born in 1397. She married him in 1412. Truth be told, she was quite beautiful. She died in 1453."])
+    ,("unnamed portrait", Examine, Nothing, [HasStatus Nada], [Display "It's weird, there is no name below this portrait. Must be one of the Counts that ruled over the castle, but no informations about him. He's quite dashing. A bit pale, though."])
+    ,("unnamed portrait", Examine, Nothing, [HasStatus Fixed], [Display "You dropped white spirit on the portrait, embracing your inner call towards vandalism. Since then, one can read on the bottom right side : \"Count Vlad Lambdacula, born in 1418.\"."])
+    ,("unnamed portrait", Use, Just "white spirit", [PlayerHasObject "white spirit"], [Display "Oblivious of the fact you are most likely desacrating an historical treasure, you pour white spirit on the painting. You manage to scrap the bottom right corner of the canvas. There is something written here ! \"Count Vlad Lambdacula, born in 1418.\" Hmm... no date of death. Could it be... ?"])
+    ,("unnamed portrait", Zilch, Nothing, [], [Display "I don't want to know how you got this idea. Not going to work."])
+    -- TODO : Make sure aliases can be used to group reactions with synonyms.
+    ,("portrait", Take, Nothing, [], [Display "You're not a burglar. Besides, you don't want to carry this thing with you all the time."])
+    ,("portrait", Zilch, Nothing, [], [Display "You can't do much with this portrait."])
+    ,("soda vending machine", Examine, Nothing, [], [Display "Well, it's a soda vending machine that looked like it was tuned into a cocktail vending machine. But in only serves bloody mary according to the labels on the buttons. Weird. Anyway, the machine is not plugged. And there doesn't even seem to be anything to plug it, so... forget your bloody mary."])
+    ,("soda vending machine", Attack, Just "crowbar", [PlayerHasObject "crowbar"], [PickItem "coin", RemoveItem "crowbar", Display "Ha ! I like a thug with some method. Ok, you apply the crowbar on the machine. After a loud \"clang\", you manage to brreak the crowbar, so you won't be able to use it anymore. But there are good news : ONE coin fell on the ground. You pick it up quickly. You are now the proud owner of a coin !"])
+    ,("soda vending machine", Attack, Nothing, [], [Display "There is nothing like gratuitous violence. However, as you try to kick the machine with your foot, you hurt yourself. If you want to continue this aggressive behaviour, you are most likely going to need help. Come back with a gang of baddies. Or with some kind of weapon."])
+    ,("soda vending machine", Zilch, Nothing, [], [Display "I won't let you do stupid things to a vending machine. Tempting as it might be."])
+    ,("dresser", Examine, Nothing, [HasStatus Closed], [Display "It is a massive, walnut-made dresser with glass paned doors. Though the glass is very, very dusty you can see through it that there is almost nothing to see inside. You'd probably could check a bit more if you opened it."])
+    ,("dresser", Examine, Nothing, [HasStatus Opened, ContainsAmountOfItem (> 0)], [LookInsideContainer "dresser" "The dresser contains the following items : "])
+    ,("dresser", Examine, Nothing, [HasStatus Opened, ContainsAmountOfItem (== 0)], [Display "The dresser is empty. You took everything. You greedy bastard."])
+    ,("dresser", Open, Nothing, [], [ChangeStatus "dresser" Opened, LookInsideContainer "dresser" "You open the dresser, and in a cloud of dust, you manage to check the inside."])
+    ,("dresser", Take, Just "fork", [], [PickFromContainer "dresser" "fork"])
+    ,("dresser", Take, Just "emetic", [], [PickFromContainer "dresser" "emetic"])
+    ,("dresser", Zilch, Nothing, [], [Display "The dresser was most likely not designed for this kind of use."])
+    ,("emetic", Examine, Nothing, [], [Display "It's an emetic, namely something used to make you vomit."])
+    ,("emetic", Eat, Nothing, [], [Display "No, you're not anorexic. And things are already nauseating enough."])
+    ,("emetic", Zilch, Nothing, [], [Display "The less you interact with this stuff, the better you'll feel."])
+    ,("fork", Examine, Nothing, [], [Display "It is a metallic fork. Really nothing special about it."])
+    ,("fork", Eat, Nothing, [], [Display "No, no, no, you do not EAT FORKS. You USE THEM TO EAT. I know, it's a lot of stuff to understand. But I'm sure you'll manage."])
+    ,("fork", Zilch, Nothing, [], [Display "One player. One fork. Not a whole lot of possibilities, there."])
+    ,("mummy", Examine, Nothing, [], [Display "Well, this guy looks like a mummy in an armchair."])
+    ,("mummy", Talk, Nothing, [], [Conversation mummytopics mummyanswers undefined])
+    ,("mummy", Give, Just "book", [PlayerHasObject "book"], [PickItem "dentures", Display "\"THANK GOD ! This sounds MUCH BETTER than what I'm currently reading. Not that it's a challenge. There, take my dentures, with that, you'll look like a real werewolf.\"", RemoveItem "book" ,Display "You are now the proud owner of a very ancient set of dentures."])
+    ,("dentures", Eat, Nothing, [], [Display "No, no, no, YOU EAT WITH DENTURES. You do not EAT them. Is that so complex ?"])
+    ,("dentures", Examine, Nothing, [], [Display "They are squeaky clean. Most likely, the mummy did not use them very often. Thank god."])
+    ,("dentures", Use, Nothing, [], [Display "You put the denture in your mouth. It fits. If you had a mirror, you could see that you now have some wolfish quality."])
+    ,("coin", Examine, Nothing, [], [Display "Some romanian coin. Let's face it : you didn't take time to study the local currencies. Me neither. So neither you nor me have the slightest idea how much it's worth. Most likely not a lot."])
+    ,("coin", Zilch, Nothing, [], [Display "No, no, no, you don't want to anything that would make you risk this coin."])]
+
+-- Antichamber
 -- OBJECTS
 simpleObject :: [String]                -- Names 
                 -> String               -- Room
@@ -184,24 +228,22 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,simpleObject ["Sad", "man", "goth", "necromancer", "necro", "man in robes", "man in black robes"] "The dormitory" "there is a man in black robes, wearing make up to look as pale as possible. He's got skull-shaped rings on almost all his fingers."
             -- Gallery
             ,makeExit ["North"] "A gallery" "To the guard room" "The guard room"
-            ,makeExit ["South"] "A gallery" "To the living room" "The living room"]
-
-{-|
-            ,simpleObject ["portrait of Stanislas of Lambdacula", "portrait", "Stanislas", "Stanislas of Lambdacula"] "A gallery" stanislasAction "A portrait of Stanislas of Lambdacula !"
-            ,simpleObject ["portrait of Dolores of Lambdacula", "portrait", "Dolores", "Dolores of Lambdacula"] "A gallery" doloresAction "A portrait of Dolores of Lambdacula !"
-            ,simpleObject ["portrait of Igor of Lambdacula", "portrait", "Igor", "Igor of Lambdacula"] "A gallery" igorAction "A portrait of Igor of Lambdacula !"
-            ,simpleObject ["portrait of Sveltana of Lambdacula", "portrait", "Sveltana", "Sveltana of Lambdacula"] "A gallery" sveltanaAction "A portrait of Sveltana of Lambdacula !"
-            ,simpleObject ["portrait of a man without a name", "portrait", "unnamed portrait", "anonymous portrait", "portrait without a name", "nameless man portrait", "portrait of a nameless man"] "A gallery" anonymousPortraitAction "A portrait of a man without a name !"
+            ,makeExit ["South"] "A gallery" "To the living room" "The living room"
+            ,simpleObject ["Stanislas","portrait of Stanislas of Lambdacula", "portrait", "Stanislas of Lambdacula"] "A gallery" "A portrait of Stanislas of Lambdacula !"
+            ,simpleObject ["Dolores", "portrait of Dolores of Lambdacula", "portrait", "Dolores of Lambdacula"] "A gallery" "A portrait of Dolores of Lambdacula !"
+            ,simpleObject ["Igor", "portrait of Igor of Lambdacula", "portrait", "Igor of Lambdacula"] "A gallery" "A portrait of Igor of Lambdacula !"
+            ,simpleObject ["Sveltana", "portrait of Sveltana of Lambdacula", "portrait", "Sveltana of Lambdacula"] "A gallery" "A portrait of Sveltana of Lambdacula !"
+            ,simpleObject ["unnamed portrait", "portrait of a man without a name", "portrait", "anonymous portrait", "portrait without a name", "nameless man portrait", "portrait of a nameless man"] "A gallery" "A portrait of a man without a name !"
             -- Antichamber
             , makeExit ["North"] "Antichamber" "To the kitchen" "The kitchen"
             , makeExit ["East"] "Antichamber" "To the dining room" "The dining room"
             , makeExit ["South"] "Antichamber" "To the smoking room" "The smoking room"
-            , simpleObject ["soda vending machine", "vending machine", "machine"] "Antichamber" vendingMachineAction "Against one wall, there is a slightly incongruous vending machine."
+            , objectContaining ["soda vending machine", "vending machine", "machine"] "Antichamber" "Against one wall, there is a slightly incongruous vending machine." Nada [simpleObject ["coin", "romanian coin"] "" "A coin."]
             -- Dining room
             , makeExit ["West"] "Dining room" "To the antichamber" "The antichamber"
-            , objectContaining ["dresser"] "Dining room" dresserAction "On the wall opposite to the door, there is a massive dresser to store crockery." Opened
-            [simpleObject ["A vial of emetic", "drugs", "vial of emetic", "emetic", "vial"] "" emeticAction "A vial that, according to its label, contains a potent emetic. Don't ask me what it is doing there."
-            ,simpleObject ["fork"] "" forkAction "A simple fork. That's all there's left of all the cutelry and crockery that must have been stored here once."]
+            , objectContaining ["dresser"] "Dining room" "On the wall opposite to the door, there is a massive dresser to store crockery." Opened
+            [simpleObject ["emetic", "A vial of emetic", "drugs", "vial of emetic", "vial"] "" "A vial that, according to its label, contains a potent emetic. Don't ask me what it is doing there."
+            ,simpleObject ["fork"] "" "A simple fork. That's all there's left of all the cutelry and crockery that must have been stored here once."]
             -- Living room
             , makeExit ["North"] "The living room" "To the gallery" "A gallery"
             , makeExit ["West"] "The living room" "To the library" "The library"
@@ -216,7 +258,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "The antichamber"
             , makeExit ["West"] "The smoking room" "To the hall" "The hall"
-            , simpleObject ["mummy", "Akhoris", "man in bandages", "man"] "The smoking room" mummyAction "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !"
+            , objectContaining ["mummy", "Akhoris", "man in bandages", "man"] "The smoking room" "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !" Nada [simpleObject ["a wolfish dentures", "dentures"] "" "A set of wolfish dentures"]
             -- Inner garden
             , makeExit ["West"] "The inner garden" "To the smoking room" "The smoking room"
             , makeExit ["South"] "The inner garden" "To the conservatory" "The conversatory"
@@ -230,44 +272,14 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             ,makeDoor ["A door", "door"] "A muddy path" "the gamekeeper shack" "The gamekeeper shack" Nothing Closed 
             -- Gamekeeper shack
             ,makeDoor ["A door", "door"] "The gamekeeper shack" "a way out to the path below Lambdacula's Castle" "A muddy path" Nothing Closed 
-            ,simpleObject ["Lady's Chatterley's Lover", "book", "Lady Chatterley"] "The gamekeeper shack" ladyChatAction "On the night table, an old copy of Lady Chatterley's Lover."
-            ,simpleObject ["the rug", "rug", "oriental touch"] "The gamekeeper shack" rugAction "Decorum is not really the place forte, though there is a nice rug on the floor."
+            ,simpleObject ["Lady's Chatterley's Lover", "book", "Lady Chatterley"] "The gamekeeper shack" "On the night table, an old copy of Lady Chatterley's Lover."
+            ,simpleObject ["the rug", "rug", "oriental touch"] "The gamekeeper shack" "Decorum is not really the place forte, though there is a nice rug on the floor."
             ,makeDoor ["A hatch", "the hatch", "hatch"] "The gamekeeper shack" "Downwards to the unknown" "A dark corridor" Nothing Hidden]
 
-
--------------------
--- Ojbect methods
--------------------
--- Reminder:
--- ROBehaviour = object -> action -> Maybe String for complex actions
--- And return a WorldAction
-
--- THE SOUTHERN YARD
-
-torchlightAction :: RoomObjectBehaviour
-torchlightAction torch Use (Just "battery") = do
-                                                changeStatus torch Powered
-                                                return ["Great, you now have a functioning torchlight. This should shed some light on your current issues. Shed some light... got it ? HAHAHAHA. Ahem. Sorry."]
-torchlightAction torch Use _ 
-    | view objectStatus torch == Powered = do
-                                            changeStatus torch Luminescent
-                                            return ["You turn the torchlight on. You now have a lightsource and can go in dark places !"]
-    | view objectStatus torch == Luminescent = do
-                                                changeStatus torch Powered
-                                                return ["You turn the torchligts off. You have no lightsource now. Avoid dark places !"]
-    | otherwise = singleAnswer $ "There are no batteries in the torchlight !"
-torchlightAction torch Examine _
-    | view objectStatus torch == Powered = singleAnswer $ "A torchlight in almost perfect condition."
-    | view objectStatus torch == Luminescent = singleAnswer $ "The torchlight is on. Looking at it would blind you. You're not very bright, are you ? HAHAHAHAHA, GOT YOU AGAIN !"
-    | otherwise = singleAnswer $ "Well, it doesn't look like it's broken... but there are no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."
-
--}
-
--- DORMITORY
-
-necrotopics = [("hello", ["hi"]), ("sad", ["sadness", "being sad", "him being sad"]), ("mother", ["mum", "mummy"]), ("happy", []), ("necromancer", ["necro", "necromancy"]), ("dissertation", ["essay", "topic"]), ("death", []), ("taxes", ["tax"]), ("count", ["count Lambdacula"]),("crypt", ["secret crypt"]), ("vampire", ["vampiric society", "vampires", "vampire society"]), ("Transylvania", []), ("zombies", ["zombie"])]
+-- cONVERSATIONS
+necrotopics = [("hello", ["hi"]), ("Sad", ["sadness", "being sad", "him being sad"]), ("mother", ["mum", "mummy"]), ("happy", []), ("necromancer", ["necro", "necromancy"]), ("dissertation", ["essay", "topic"]), ("death", []), ("taxes", ["tax"]), ("count", ["count Lambdacula"]),("crypt", ["secret crypt"]), ("vampire", ["vampiric society", "vampires", "vampire society"]), ("Transylvania", []), ("zombies", ["zombie"])]
 necroanswers =  [("hello", "Hellooooo dude. I'm sad.")
-    ,("sad", "No, no, I'm pretty happy. My NAME is Sad is all. You know. My mother was kinda depressed when she had me. It was supposed to be just an ordinary case of baby blues, but actually, it never stopped. I think she's better now I've left her to become a Necromancer.")
+    ,("Sad", "No, no, I'm pretty happy. My NAME is Sad is all. You know. My mother was kinda depressed when she had me. It was supposed to be just an ordinary case of baby blues, but actually, it never stopped. I think she's better now I've left her to become a Necromancer.")
     ,("mother", "My mother was a tailor, my father was a gambler... you know how it goes.")
     ,("happy", "Look, man, this is Lambdacula Castle. There is no BETTER PLACE to be for a Necromancer.")
     ,("necromancer", "Yes, that's my major. I wanted to major in arts and stuff, but in this economy... Anyway, it turned out to be a passion, so I'm doing my PhD in Necromancy. I'm doing this trip here to collect data for my dissertation.")
@@ -281,65 +293,9 @@ necroanswers =  [("hello", "Hellooooo dude. I'm sad.")
     ,("zombies", "I think they are some around, but frankly, my dear, I don't give a damn.")
     ,(notopic, "I have nothing to say about that.")] 
 
-{-|
--- Gallery
-stanislasAction :: RoomObjectBehaviour
-stanislasAction portrait Examine _ = singleAnswer $ "A portrait of Stanilas Lambdacula, count of the castle between 1357 and 1402. A fine looking fellow, actually."
-stanislasAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
-stanislasAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
+mummytopics = [("hello", ["hi"]), ("akhoris", []), ("Vlad", []), ("vampire", ["count", "undead"]), ("protection", ["protect myself", "protect"]), ("werewolf", ["werewolves"]), ("fake hair", []), ("fake teeth", []), ("t-shirt", ["Greenpeace"]), ("dentures", []), ("book", []), ("retirement", []), ("pharaoh", []), ("amnesia", [])] 
 
-doloresAction :: RoomObjectBehaviour
-doloresAction portrait Examine _ = singleAnswer $ "A portrait of Dolores Lambdacula, countess of the castle. Born in 1369, She married Stanislas of Lambdacula in 1385 and ruled till her son was old enough, in 1408. She died in 1423. Wait a second... Dolores doesn't sound like very Roumanian ! She must have come from Spain or something."
-doloresAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
-doloresAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
-
-igorAction :: RoomObjectBehaviour
-igorAction portrait Examine _ = singleAnswer $ "A portrait of Count Igor Lambdacula, son of Stanislas and Dolores, born in 1392. He ruled from 1408 to his death in 1459. Igor didn't look like a very fun guy, considering how dak and brooding he looks on this painting."
-igorAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
-igorAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
-
-sveltanaAction :: RoomObjectBehaviour
-sveltanaAction portrait Examine _ = singleAnswer $ "A portrait of Countess Sveltana Lambdacula, wife of Igor Lambdacula, born in 1397. She married him in 1412. Truth be told, she was quite beautiful. She died in 1453."
-sveltanaAction portrait Take _ = singleAnswer $ "You're not a burglar. Besides, you don't want to carry this thing with you all the time."
-sveltanaAction _ _ _ = singleAnswer $ "You can't do much with this portrait."
-
-anonymousPortraitAction :: RoomObjectBehaviour
-anonymousPortraitAction portrait Examine _ = accordingToStatus portrait (Map.fromList[(Nada, singleAnswer $ "It's weird, there is no name below this portrait. Must be one of the Counts that ruled over the castle, but no informations about him. He's quite dashing. A bit pale, though."), (Fixed, singleAnswer $ "You dropped white spirit on the portrait, embracing your inner call towards vandalism. Since then, one can read on the bottom right side : \"Count Vlad Lambdacula, born in 1418.\".")])
-anonymousPortraitAction portrait Take _ = singleAnswer $ "No ! It's too big. And it's not yours to take."
-anonymousPortraitAction portrait Use (Just "white spirit") = singleAnswer $ "Oblivious of the fact you are most likely desacrating an historical treasure, you pour white spirit on the painting. You manage to scrap the bottom right corner of the canvas. There is something written here ! \"Count Vlad Lambdacula, born in 1418.\" Hmm... no date of death. Could it be... ?"
-anonymousPortraitAction _ _ _ = singleAnswer $ "I don't want to know how you got this idea. Not going to work."
-
--- Antichamber
-vendingMachineAction :: RoomObjectBehaviour
-vendingMachineAction machine Examine _ = singleAnswer $ "Well, it's a soda vending machine that looked like it was tuned into a cocktail vending machine. But in only serves bloody mary according to the labels on the buttons. Weird. Anyway, the machine is not plugged. And there doesn't even seem to be anything to plug it, so... forget your bloody mary."
-vendingMachineAction machine Attack (Just "crowbar") = do
-                                            addToInventory $ simpleObject ["coin"] "" coinAction "A coin"
-                                            removeFromInventoryByName "crowbar"
-                                            return ["Ha ! I like a thug with some method. Ok, you apply the crowbar on the machine. After a loud \"clang\", you manage to brreak the crowbar, so you won't be able to use it anymore. But there are good news : ONE coin fell on the ground. You pick it up quickly. You are now the proud owner of a coin !"]
-vendingMachineAction machine Attack _ = singleAnswer $ "There is nothing like gratuitous violence. However, as you try to kick the machine with your foot, you hurt yourself. If you want to continue this aggressive behaviour, you are most likely going to need help. Come back with a gang of baddies. Or with some kind of weapon."
-vendingMachineAction _ _ _ = singleAnswer $ "I won't let you do stupid things to a vending machine. Tempting as it might be."
-
--- Dining room
-dresserAction :: RoomObjectBehaviour
-dresserAction dresser Examine _ = accordingToStatus dresser (Map.fromList[(Closed, singleAnswer $ "It is a massive, walnut-made dresser with glass paned doors. Though the glass is very, very dusty you can see through it that there is almost nothing to see inside. You'd probably could check a bit more if you opened it."), (Opened, lookInsideContainer dresser)])
-dresserAction dresser Take (Just x) = pickItemFromContainer dresser x
-dresserAction dresser Open _ = openContainer dresser "You open the dresser, and in a cloud of dust, you manage to check the inside."
-dresserAction _ _ _ = singleAnswer $ "The dresser was most likely not designed for this kind of use."
-
-emeticAction emetic Examine _ = singleAnswer $ "It's an emetic, namely something used to make you vomit."
-emeticAction emetic Eat _ = singleAnswer $ "No, you're not anorexic. And things are already nauseating enough."
-emeticAction _ _ _ = singleAnswer $ "The less you interact with this stuff, the better you'll feel."
-
-forkAction :: RoomObjectBehaviour
-forkAction fork Examine _ = singleAnswer $ "It is a metallic fork. Really nothing special about it."
-forkAction fork Eat _ = singleAnswer $ "No, no, no, you do not EAT FORKS. You USE THEM TO EAT. I know, it's a lot of stuff to understand. But I'm sure you'll manage."
-forkAction _ _ _ = singleAnswer $ "One player. One fork. Not a whole lot of possibilities, there."
-
--- Smoking room
-
-mummyAction :: RoomObjectBehaviour
-mummyAction mummy Talk Nothing = mummyAction mummy Talk (Just "hello")
-mummyAction mummy Talk (Just word) = conversation word [("hello", ["hi"]), ("akhoris", []), ("Vlad", []), ("vampire", ["count", "undead"]), ("protection", ["protect myself", "protect"]), ("werewolf", ["werewolves"]), ("fake hair", []), ("fake teeth", []), ("t-shirt", ["Greenpeace"]), ("dentures", []), ("book", []), ("retirement", []), ("pharaoh", []), ("amnesia", [])] [("hello", "Well hello ! Delighted to meet you. My name is Akhoris, first scribe of the Great Pharaoh and... oh, I'm afraid that's ancient history. I'm enjoying my retirement, you see.")
+mummyanswers = [("hello", "Well hello ! Delighted to meet you. My name is Akhoris, first scribe of the Great Pharaoh and... oh, I'm afraid that's ancient history. I'm enjoying my retirement, you see.")
         , ("akhoris", "That is my name. I have no idea what it means. You see, I've lost all my egyptian. I can't even draw anything properly. My good friend Vlad thinks I have got a severe case of amnesia.")
         , ("Vlad", "Vlad is the Count of this castle. A very nice fellow, provided you are undead. You being of the still-living disposition, I'm afraid he could consider you more like a meal than like an opportunity for conversation.") 
         , ("vampire", "Well, I don't want to sound biased... but let's just say vampires are much less pleasant than mummies. You know, we're often prestend as malevolent and scary creatures but the truth is we're really nice guys. Whereas my good friend the Count has needs, like plunging his teeth in your throat. Of course, there are ways to protect yourself against such behaviour.")
@@ -354,17 +310,4 @@ mummyAction mummy Talk (Just word) = conversation word [("hello", ["hi"]), ("akh
         ,("pharaoh", "Oh, pompous old farts, the lot of them. I'm much better off here. Vlad has been so nice to invite me !")
         ,("retirement", "Well, you could also call it the afterlife. You see, my internal organs were removed from my body, I was covered in magical fluids and carefully bandaged. Which mean I can live forever without the... special needs of my good friend Vlad. So, now, I travel, I meet people, I read... I'm having the time of my afterlife.")
         ,(none, "I don't think I have interesting things to say about that... sorry.")]
-mummy Give (Just "book") = do
-                addToInventory $ simpleObject ["a wolfish dentures", "dentures"] "" dentureAction "A set of wolfish dentures"
-                return ["\"THANK GOD ! This sounds MUCH BETTER than what I'm currently reading. Not that it's a challenge. There, take my dentures, with that, you'll look like a real werewolf.\"", "You are now the proud owner of a very ancient set of dentures."]
 
-dentureAction :: RoomObjectBehaviour
-dentureAction denture Eat _ = singleAnswer $ "No, no, no, YOU EAT WITH DENTURES. You do not EAT them. Is that so complex ?"
-dentureAction denture Examine _ = singleAnswer $ "They are squeaky clean. Most likely, the mummy did not use them very often. Thank god."
-dentureAction denture Use _ = singleAnswer $ "You put the denture in your mouth. It fits. If you had a mirror, you could see that you now have some wolfish quality."
-
--- various inventory stuff
-coinAction :: RoomObjectBehaviour
-coinAction coin Examine _ = singleAnswer "Some romanian coin. Let's face it : you didn't take time to study the local currencies. Me neither. So neither you nor me have the slightest idea how much it's worth. Most likely not a lot."
-coinAction _ _ _ = singleAnswer $ "No, no, no, you don't want to anything that would make you risk this coin."
--}
