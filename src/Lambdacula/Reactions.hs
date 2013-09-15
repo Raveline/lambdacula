@@ -101,7 +101,7 @@ findReactions specs = do
         satisfy :: World -> [RoomObject] -> PureActionDetail -> ReactionSet -> Bool
         satisfy w scope set1 set2 = matchAction set1 set2 && testConditions (extractCondition set2) w (realObject set1 scope)
         matchAction :: PureActionDetail -> ReactionSet -> Bool
-        matchAction (objA, Talk, _) (objA', Talk, _, _, _) = True
+        matchAction (objA, Talk, _) (objA', Talk, _, _, _) = objA == objA'
         matchAction (objA, action, objB) (objA', action', objB', _, _) = objA == objA' && action == action' && objB == objB'
         realObject :: PureActionDetail -> [RoomObject] -> RoomObject
         realObject (n, _, _) = fetchByNameInScope n 
@@ -145,6 +145,12 @@ processReaction (RebranchTo act n react) = error "NIY"
 processReaction (Conversation aliases topics s) = handleConversation s aliases topics
 processReaction (LookAround) = displayCurrentRoom
 processReaction (MoveTo location) = basicMove location
+processReaction (PickItem s) = do
+                        obj <- fetchByName s
+                        addToInventory obj
+processReaction (RemoveItem s) = do
+                        obj <- fetchByName s
+                        removeFromInventory obj
 
 
 testCondition :: World -> RoomObject -> Condition -> Bool
@@ -261,7 +267,7 @@ putItemInContainer :: RoomObject
                     -> RoomObject
                     -> WorldFeedback
 putItemInContainer container contained = do
-                        item <- removeFromInventory contained
+                        item <- popFromInventory contained
                         let newContainer = container & containedObjects .~ (item:(container^.containedObjects))
                         objects <- use worldObjects
                         worldObjects .= rebuildList objects container newContainer
@@ -298,13 +304,17 @@ hasInInventory name world = not $ null (findObjectWithName name (world^.playerOb
         findObjectWithName :: String -> [RoomObject] -> [RoomObject]
         findObjectWithName s = filter (canBeNamed s)
 
-removeFromInventory :: RoomObject
+
+popFromInventory :: RoomObject
                         -> State World RoomObject 
-removeFromInventory item = do
+popFromInventory item = do
                         let newItem = item { _inRoom = "" } 
                         objects <- use worldObjects
                         worldObjects .= rebuildList objects item newItem
                         return newItem
+
+removeFromInventory :: RoomObject -> WorldFeedback
+removeFromInventory = changeRoom ""
 
 addToInventory :: RoomObject    -- The object to change
                 -> WorldFeedback
