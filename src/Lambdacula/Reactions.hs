@@ -33,6 +33,7 @@ type Aliases = [(String, [String])]
 type Topic = [(String, String)]
 type TopicAliases = Map.Map String String
 
+helloTopic = "hello"
 notopic = "NONE"
 
 onlyDisplay :: String -> WorldAction
@@ -102,6 +103,7 @@ findReactions specs = do
         satisfy w scope set1 set2 = matchAction set1 set2 && testConditions (extractCondition set2) w (realObject set1 scope)
         matchAction :: PureActionDetail -> ReactionSet -> Bool
         matchAction (objA, Talk, _) (objA', Talk, _, _, _) = objA == objA'
+        matchAction (objA, _,_)(objA', Zilch,_,_,_) = objA == objA'
         matchAction (objA, action, objB) (objA', action', objB', _, _) = objA == objA' && action == action' && objB == objB'
         realObject :: PureActionDetail -> [RoomObject] -> RoomObject
         realObject (n, _, _) = fetchByNameInScope n 
@@ -116,7 +118,7 @@ addConversationInfo :: PureActionDetail -> [Reaction] -> [Reaction]
 addConversationInfo det = map (addTopic (extractTopic det))
     where
         extractTopic :: PureActionDetail -> String
-        extractTopic (_, _, Nothing) = notopic
+        extractTopic (_, _, Nothing) = helloTopic
         extractTopic (_,_, Just s) = s
         addTopic :: String -> Reaction -> Reaction
         addTopic s (Conversation a b _) = Conversation a b s
@@ -357,8 +359,8 @@ handleConversation subject aliases topics = case properAnswer of
         bracketize :: String -> [String]
         bracketize s = ['"':s ++ "\""]
         properAnswer = case properTopic of
-                        Just x -> Map.lookup x (Map.fromList topics)
-                        Nothing -> Map.lookup notopic (Map.fromList topics)
+                       Just x -> Map.lookup x (Map.fromList topics)
+                       Nothing -> Map.lookup notopic (Map.fromList topics)
         properTopic = Map.lookup subject mapAliases
         mapAliases = aliasToMap aliases
         aliasToMap :: [(String, [String])] -> TopicAliases
