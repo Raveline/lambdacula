@@ -174,6 +174,7 @@ containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = (_ro
 -- Reactions
 data Reaction =  Display String                             -- Display some text
                 | PickItem String                           -- Add to inventory
+                | RemoveItem String                         -- Remove from inventory
                 | ChangeStatus String ObjectStatus          -- Change object status
                 | PickFromContainer String String           -- Pick from container (1) object (2)
                 | LookInsideContainer String String         -- Look content of container (1) with intro sentence (2)
@@ -197,6 +198,7 @@ instance Eq RoomObject where
 -- Conditions
 data Condition = ContainsAmountOfItem (Int -> Bool)
                 | PlayerHasStatus ObjectStatus
+                | PlayerHasObject String
                 | HasStatus ObjectStatus
                 | Contains String
 
