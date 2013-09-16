@@ -42,7 +42,7 @@ none = "NONE"
 
 -- Lambdacula reaction set
 ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."])
-    ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover"])
+    ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover", Display "You take this wicked, naughty book. Like I'm surprised."])
     ,("Lady's Chatterley's Lover", Zilch, Nothing, [], [Display "I don't know what you're trying to do with this book. And frankly, I don't want to know."])
     ,("rug", Examine, Nothing, [], [Display "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."])
     ,("rug", Lift, Nothing, [], [ChangeStatus "A hatch" Closed, Display "There is a hatch behind the rug !"])
@@ -54,14 +54,14 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("pile", Zilch, Nothing, [], [Display "There is a limited amount of things you can do with a junk pile. Fortunately."])
     ,("cupboard", Examine, Nothing, [HasStatus Closed], [Display "It's a closed cupboard."])
     ,("cupboard", Examine, Nothing, [HasStatus Opened], [LookInsideContainer "cupboard" "This is your typical kitchen cupboard, containing : "])
-    ,("cupboard", Open, Nothing, [], [ChangeStatus "cupboard" Opened, Display "You open the cupboard"])
+    ,("cupboard", Open, Nothing, [], [ChangeStatus "cupboard" Opened, LookInsideContainer "cupboard" "You open the cupboard and look at its content : "])
     ,("cupboard", Search, Nothing, [], [RebranchTo Examine "cupboard" Nothing])
     ,("cupboard", Take, Nothing, [], [Display "It's heavy. You're weak. And anyway, it's a stupid idea. No offense."])
     ,("cupboard", Take, Just "salt", [], [PickFromContainer "cupboard" "salt", Display "You are now the proud owner of an excellent way of protecting yourself from fairies. Neat."])
     ,("cupboard", Take, Just "saucepan", [], [PickFromContainer "cupboard" "saucepan", Display "You take the saucepan. Yeah, that's really useful when going after a vampire."])
     ,("cat bowl", Use, Just "Zinc bit", [], [PutInsideContainer "cat bowl" "Zinc bit" "You've put the zinc in the bowl. Look at you, doing chemistry or whatever !"])
     ,("cat bowl", Use, Just "Copper bit", [], [PutInsideContainer "cat bowl" "Copper bit" "You've put the copper in the bowl. That'll teach him !"])
-    ,("cat bowl", Use, Just "Electric wires", [ContainsAmountOfItem (== 2), HasStatus Salted], [PutInsideContainer "cupboard" "Electric wires" "You plug the wires to the zinc and copper bits. You did it ! You know have a source of electricity that would make Tesla proud !"])
+    ,("cat bowl", Use, Just "Electric wires", [ContainsAmountOfItem (== 2), HasStatus Salted], [PutInsideContainer "cat bowl" "Electric wires" "You plug the wires to the zinc and copper bits. You did it ! You know have a source of electricity that would make Tesla proud !"])
     ,("cat bowl", Use, Just "Electric wires", [], [Display "No, something is still missing, there."])
     ,("cat bowl", Use, Just "Salt", [], [ChangeStatus "cat bowl" Salted, Display "You put salt in the water. That's not very nice for the pet that'll try to drink it, you know."])
     ,("cat bowl", Take, Nothing, [], [Display "And deprive a cat, dog, or monstrous vampiric pet of his drink ? NOT ON MY WATCH !"])
@@ -123,7 +123,7 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("fork", Zilch, Nothing, [], [Display "One player. One fork. Not a whole lot of possibilities, there."])
     ,("mummy", Examine, Nothing, [], [Display "Well, this guy looks like a mummy in an armchair."])
     ,("mummy", Talk, Nothing, [], [Conversation mummytopics mummyanswers undefined])
-    ,("mummy", Give, Just "book", [PlayerHasObject "book"], [PickItem "dentures", Display "\"THANK GOD ! This sounds MUCH BETTER than what I'm currently reading. Not that it's a challenge. There, take my dentures, with that, you'll look like a real werewolf.\"", RemoveItem "book" ,Display "You are now the proud owner of a very ancient set of dentures."])
+    ,("mummy", Give, Just "Lady's Chatterley's Lover", [PlayerHasObject "book"], [GetFromCharacter "mummy" "dentures", Display "\"THANK GOD ! This sounds MUCH BETTER than what I'm currently reading. Not that it's a challenge. There, take my dentures, with that, you'll look like a real werewolf.\"", RemoveItem "Lady's Chatterley's Lover",Display "You are now the proud owner of a very ancient set of dentures."])
     ,("dentures", Eat, Nothing, [], [Display "No, no, no, YOU EAT WITH DENTURES. You do not EAT them. Is that so complex ?"])
     ,("dentures", Examine, Nothing, [], [Display "They are squeaky clean. Most likely, the mummy did not use them very often. Thank god."])
     ,("dentures", Use, Nothing, [], [Display "You put the denture in your mouth. It fits. If you had a mirror, you could see that you now have some wolfish quality."])
@@ -256,9 +256,9 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["East"] "The hall" "To the smoking room" "The smoking room"
             -- The smoking room
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
-            , makeExit ["North"] "The smoking room" "To an antichamber" "The antichamber"
+            , makeExit ["North"] "The smoking room" "To an antichamber" "Antichamber"
             , makeExit ["West"] "The smoking room" "To the hall" "The hall"
-            , objectContaining ["mummy", "Akhoris", "man in bandages", "man"] "The smoking room" "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !" Nada [simpleObject ["a wolfish dentures", "dentures"] "" "A set of wolfish dentures"]
+            , objectContaining ["mummy", "akhoris", "man in bandages", "man"] "The smoking room" "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !" Nada [simpleObject ["dentures", "a wolfish dentures"] "" "A set of wolfish dentures"]
             -- Inner garden
             , makeExit ["West"] "The inner garden" "To the smoking room" "The smoking room"
             , makeExit ["South"] "The inner garden" "To the conservatory" "The conversatory"
@@ -293,13 +293,13 @@ necroanswers =  [("hello", "Hellooooo dude. I'm sad.")
     ,("zombies", "I think they are some around, but frankly, my dear, I don't give a damn.")
     ,(notopic, "I have nothing to say about that.")] 
 
-mummytopics = [("hello", ["hi"]), ("akhoris", []), ("vlad", []), ("vampire", ["count", "undead"]), ("protection", ["protect myself", "protect"]), ("werewolf", ["werewolves"]), ("fake hair", []), ("fake teeth", []), ("t-shirt", ["Greenpeace"]), ("dentures", []), ("book", []), ("retirement", []), ("pharaoh", []), ("amnesia", [])] 
+mummytopics = [(helloTopic,["hi"]), ("vlad", []), ("akhoris", []), ("vampire", ["count", "undead"]), ("protection", ["protect myself", "protect"]), ("werewolf", ["werewolves"]), ("fake hair", ["hair"]), ("fake teeth", ["teeth"]), ("t-shirt", ["greenpeace"]), ("dentures", []), ("book", []), ("retirement", []), ("pharaoh", []), ("amnesia", [])] 
 
 mummyanswers = [("hello", "Well hello ! Delighted to meet you. My name is Akhoris, first scribe of the Great Pharaoh and... oh, I'm afraid that's ancient history. I'm enjoying my retirement, you see.")
-        , ("akhoris", "That is my name. I have no idea what it means. You see, I've lost all my egyptian. I can't even draw anything properly. My good friend Vlad thinks I have got a severe case of amnesia.")
-        , ("vlad", "Vlad is the Count of this castle. A very nice fellow, provided you are undead. You being of the still-living disposition, I'm afraid he could consider you more like a meal than like an opportunity for conversation.") 
-        , ("vampire", "Well, I don't want to sound biased... but let's just say vampires are much less pleasant than mummies. You know, we're often presented as malevolent and scary creatures but the truth is we're really nice guys. Whereas my good friend the Count has needs, like plunging his teeth in your throat. Of course, there are ways to protect yourself against such behaviour.")
-        , ("protection", "Well there are the obvious ones : garlic, crosses and so on. But I wouldn't put too much faith in them. Sure, vampires don't like garlic and avoid crosses, but not to the point they'd refrain from slurping down your blood. No, the absolute anti-vampire protection is to let them think you are a werewolf.") 
+        ,("vlad", "Vlad is the Count of this castle. A very nice fellow, provided you are undead. You being of the still-living disposition, I'm afraid he could consider you more like a meal than like an opportunity for conversation.") 
+        ,("akhoris", "That is my name. I have no idea what it means. You see, I've lost all my egyptian. I can't even draw anything properly. My good friend Vlad thinks I have got a severe case of amnesia.")
+        ,("vampire", "Well, I don't want to sound biased... but let's just say vampires are much less pleasant than mummies. You know, we're often presented as malevolent and scary creatures but the truth is we're really nice guys. Whereas my good friend the Count has needs, like plunging his teeth in your throat. Of course, there are ways to protect yourself against such behaviour.")
+        ,("protection", "Well there are the obvious ones : garlic, crosses and so on. But I wouldn't put too much faith in them. Sure, vampires don't like garlic and avoid crosses, but not to the point they'd refrain from slurping down your blood. No, the absolute anti-vampire protection is to let them think you are a werewolf.") 
         ,("werewolf", "Yes, you see vampires and werewolves are enemies. And werewolves are much deadlier. So a vampire will avoid any one-on-one confrontation. Now, of course, looking like a werewolf can be tricky. In their human form, werewolves tend to be hairy, have enormous teeth and be tree-huggers. So, I'd say you're going to need fake hair, fake teeth and something like a Greenpeace t-shirt or whatever.")
         ,("fake hair", "I have no idea where you'd find this, I'm sorry !")
         ,("fake teeth", "Not only fake teeth, but fake big, scary, wolfish teeth. Well, you are in luck, because it just so happen my dentures are exactly like that. I could give them to you.")
@@ -309,5 +309,5 @@ mummyanswers = [("hello", "Well hello ! Delighted to meet you. My name is Akhori
         ,("amnesia", "I'm sorry, I don't remember speaking about this.")
         ,("pharaoh", "Oh, pompous old farts, the lot of them. I'm much better off here. Vlad has been so nice to invite me !")
         ,("retirement", "Well, you could also call it the afterlife. You see, my internal organs were removed from my body, I was covered in magical fluids and carefully bandaged. Which mean I can live forever without the... special needs of my good friend Vlad. So, now, I travel, I meet people, I read... I'm having the time of my afterlife.")
-        ,(none, "I don't think I have interesting things to say about that... sorry.")]
+        ,(notopic, "I don't think I have interesting things to say about that... sorry.")]
 
