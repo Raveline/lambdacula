@@ -177,6 +177,7 @@ data Reaction =  Display String                             -- Display some text
                 | RemoveItem String                         -- Remove from inventory
                 | ChangeStatus String ObjectStatus          -- Change object status
                 | PickFromContainer String String           -- Pick from container (1) object (2)
+                | GetFromCharacter String String            -- Get from character (1) object (2). Like PickFromContainer, but no control on status.
                 | LookInsideContainer String String         -- Look content of container (1) with intro sentence (2)
                 | PutInsideContainer String String String   -- Put inside container (1) the item (2) with resulting sentence (3)
                 | RebranchTo Action String (Maybe String)   -- Rephrase a command so that it'll be retranslated 
@@ -214,12 +215,16 @@ findObjectInteraction :: String             -- A name
                         -> Maybe String     -- A potential other object
                         -> ProcessedAction  -- A potential action or failure message
 findObjectInteraction s ros action interactor = 
-        packAction mainObject $ handleInteractor interactor
-    where 
+    packAction mainObject $ handleInteractor action interactor
+        where 
         mainObject = wordFilter s ros
 
-        handleInteractor Nothing = Nothing
-        handleInteractor (Just x) = Just (interactorFilter x ros)
+        -- In conversation case WE MUST NOT REDUCE THE COMPLEMENT, or aliases will
+        -- wreak HAVOC.
+        handleInteractor :: Action -> Maybe String -> Maybe IdentifiedInteractor
+        handleInteractor _ Nothing = Nothing
+        handleInteractor Talk (Just x) = Just (Right $ StringInteractor x)
+        handleInteractor _ (Just x) = Just (interactorFilter x ros)
 
         packAction :: IdentifiedObject -> Maybe IdentifiedInteractor -> ProcessedAction
         packAction (Right ro) Nothing = Right (ro, action, Nothing)
