@@ -11,7 +11,8 @@ module Lambdacula.Reactions
     onlyDo,
     onlyDisplay,
     findReactions,
-    notopic
+    notopic,
+    helloTopic 
 )
 where
 
@@ -56,7 +57,7 @@ processAction detail = do
                     processReactions reactions
 
 processReactions :: [Reaction] -> State World [String]
-processReactions = Fd.foldlM process []  
+processReactions = Fd.foldlM process [] . reverse
 
 process :: [String] -> Reaction -> State World [String]
 process strs reac = do
@@ -84,7 +85,8 @@ handleExit n (Just (DoorInfo (Just k))) Closed _ Use (Just (ObjectInteractor k')
     | otherwise = return ["This is the wrong key."]
 handleExit n (Just (DoorInfo Nothing)) Closed _ Use (Just (ObjectInteractor k')) = return ["This door isn't locked, Sherlock."]
 handleExit n (Just (DoorInfo (Just _))) Closed _ Open _ = return ["It is locked, you need a key to open it."]
-handleExit n (Just (DoorInfo Nothing)) Closed _ Open _ = processReactions [ChangeStatus n Opened]
+handleExit n (Just (DoorInfo Nothing)) Closed _ Open _ = processReactions [ChangeStatus n Opened, Display "You open the door."]
+handleExit _ _ Opened s Open _ = return ["It is already opened !"]
 -- MOVES : impossible
 handleExit _ (Just (DoorInfo (Just di))) Closed _ Move _ = return ["The door is locked !"]
 handleExit _ (Just (DoorInfo Nothing)) Closed _ Move _ = return ["The door is closed !"]
@@ -137,6 +139,9 @@ processReaction (ChangeStatus objName status) = do
 processReaction (PickFromContainer container contained) = do
                         objContainer <- fetchByName container
                         pickItemFromContainer objContainer contained
+processReaction (GetFromCharacter container contained) = do
+                        objContainer <- fetchByName container 
+                        getItemFromContainer objContainer contained
 processReaction (LookInsideContainer contName intro) = do
                         obj <- fetchByName contName
                         lookInsideContainer obj intro
@@ -157,6 +162,7 @@ processReaction (RemoveItem s) = do
 
 testCondition :: World -> RoomObject -> Condition -> Bool
 testCondition w r (ContainsAmountOfItem x) = x . length . view containedObjects $ r
+testCondition w r (PlayerHasObject x) = hasInInventory x w
 testCondition w r (PlayerHasStatus stat) = error "NIY"
 testCondition w r (HasStatus stat) = (==) stat . view objectStatus $ r
 testCondition w ro (Contains name) = ro `containsSomethingNamed` name  
@@ -224,6 +230,18 @@ contains :: RoomObject  -- Container
             -> Bool
 contains container contained = contained `elem` (_content . _rodetails $ container)
 
+getItemFromContainer :: RoomObject          -- The container
+                        -> String           -- The object to pick
+                        -> WorldFeedback
+getItemFromContainer container x = do
+                                    w <- get
+                                    case identifyWithContained x w of
+                                        []          -> singleAnswer "What on earth are you talking about ?"
+                                        [object]    -> do
+                                                        removeItemFromContainer container object
+                                                        return Nothing
+                                        (xs)        -> error "Ambiguous case, error in game data."
+
 -- Pick an object contained inside a container.
 pickItemFromContainer :: RoomObject         -- The container 
                         -> String           -- The object to pick
@@ -233,13 +251,11 @@ pickItemFromContainer container x = do
                                         case identifyWithContained x w of  -- Is the object really in the container ?
                                             []          -> singleAnswer "What on earth are you talking about ?"
                                             [object]    -> pickItemFromContainer' container object
-                                            (xs)        -> error "Ambiguous case. Not implemented yet."
+                                            (xs)        -> error "Ambiguous case, error in game data."
     where
         pickItemFromContainer' :: RoomObject -> RoomObject -> WorldFeedback
         pickItemFromContainer' container contained  -- Is the container opened ?
-            -- TODO - Should be refactored : container CONTAINS contained, since we checked in the calling method.
-            -- TODO - Should be refactored : the method says "pick", yet the item is not added to the inventory.
-            | container `contains` contained && isOpened container = do
+            | isOpened container = do
                             removeItemFromContainer container contained
                             singleAnswer $ "You picked up " ++ mainName contained
             | not (isOpened container) = singleAnswer $ mainName container ++ " is not opened !"
@@ -275,9 +291,7 @@ putItemInContainer container contained = do
                         worldObjects .= rebuildList objects container newContainer
                         return Nothing
 
--- To remove an item from a container, we must :
--- 1°) Redefine the container as "not containing the contained"
--- 2°) Add the contained object to the list of world's owned RoomObject 
+-- Remove an item from a container and put it in the player's inventory
 removeItemFromContainer ::  RoomObject          -- Container
                             -> RoomObject       -- Contained
                             -> WorldFeedback
