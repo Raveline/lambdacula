@@ -128,7 +128,15 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("dentures", Examine, Nothing, [], [Display "They are squeaky clean. Most likely, the mummy did not use them very often. Thank god."])
     ,("dentures", Use, Nothing, [], [Display "You put the denture in your mouth. It fits. If you had a mirror, you could see that you now have some wolfish quality."])
     ,("coin", Examine, Nothing, [], [Display "Some romanian coin. Let's face it : you didn't take time to study the local currencies. Me neither. So neither you nor me have the slightest idea how much it's worth. Most likely not a lot."])
-    ,("coin", Zilch, Nothing, [], [Display "No, no, no, you don't want to anything that would make you risk this coin."])]
+    ,("coin", Zilch, Nothing, [], [Display "No, no, no, you don't want to anything that would make you risk this coin."])
+    ,("plant", Examine, Nothing, [ContainsAmountOfItem (==1)], [Display "OK, this thing is disgusting. It has an enormous, bulky, green, sort of \"belly\", most likely used for digestion. Looking at its mouth. Around it, a bunch of dead insects. Refuse, or snack for later. You don't want to know."])
+    ,("plant", Examine, Nothing, [ContainsAmountOfItem (==0)], [Display "It looks still a bit sick and dizzy, but you have no regrets."])
+    ,("plant", Talk, Nothing, [], [Display "It is a PLANT. OK, it can eat stuff, but it doesn't mean it's able to talk."])
+    ,("plant", Attack, Nothing, [], [Display "You don't stand a chance. This thing is HUGE. Trust me, I'm doing you a favour."])
+    ,("plant", Give, Just "stew", [], [Display "You consider for a moment how sad your life is. You're now a cook for a carnivorous plant. Frankly, is it what you want to do ? No. But there might be an idea, there... You're just missing the main ingredient."])
+    ,("plant", Give, Just "emetic stew", [], [Display "Good idea ! You give the revolting, insect stew to the vegetal monster. It slurps everything - even the pan ! After a few second, though, it begins belching. As you start to feel quite nauseous yourself, you see the plant... errr... give back a lot of things it ate. I'll spare you the details. In the middle, though !, you find a couple of electrical wires, that you take with you as a trophie."])
+    ,("plant", Give, Just "saucepan", [], [Display "It is most likely hungry, but it won't eat just a pan with nothing inside."])
+    ,("plant", Eat, Nothing, [], [Display "Yeah... you see, IT does the eating, generally, so you'd better thing something else to bite."])]
 
 -- Antichamber
 -- OBJECTS
@@ -192,8 +200,12 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         , Room "The amusement arcade" "OK, this is not exactly what you expected to find here. The Count of Lambdacula must have had this place installed in the 1980s. There are great video game oldies and pinballs here, and the lovely, obseding noise of a fifteen electronic chips making their own music at the same time. There is even the smell of cigarettes in the air, just like in the old times. " Nada
         , Room "The central corridor" "As you walk through this part of the second floor corridor, you have chilly feeling going down your spine (please ignore this comment if you are a mollusk). This can only mean two things : you are close to the Count's Lair... or there is a draught (or, as they would say in the colonies, \"a draft\"). Actually, you're close to the master bedroom, judging by the opulent golden candelstick stuck on the wall. Well, vampires can be so very nouveau riche, you know." Nada
         , Room "The master bedroom" "This used to be the bedroom of the count. Well, maybe it still is, but vampires are known to prefer the cosy comfort of a coffin to the silky pleasure of a decadent bed." Nada
-        , Room "The countess bathroom" "It shall not be said that the transylvanian countryside is devoid of the comfort and sophistication of the modern life. This is a fully equipped bathroom, with an elegant porcelain bathtub." Nada
-        , Room "The private living room" "This little cosy room was used by the family of the former Counts of the castle when they didn't entertain guests. There are only two armchairs and a two-sitter." Nada 
+        , Room "The countess bathroom" "It shall not be said that the transylvanian countryside is devoid of the comfort and sophistication of the modern life. This is a fully equipped bathroom, with an elegant porcelain bathtub. You can still smell a feminine fragrance in the air, but maybe it's just your imagination." Nada
+        , Room "The private living room" "This little cosy room was used by the family of the former Counts of the castle when they didn't entertain guests. There are only two armchairs and a two-sitter. Someone with bad decorative taste decided that a yellow wallpaper would brighten the room. It doesn't." Nada 
+        , Room "The southern corridor" "You are walking in a cold corridor. Openings in the wall, without glasspane, help freshen the temperature in this place. A massive staircase goes down to the main hall of the castle. On your left and on your right, two opened doors. Apart from that and an insane amount of cobwebs, the place is empty." Nada
+        , Room "The laboratory" "This is your classical Dr. Frankenstein styled laboratory. Iron tables covered with sciency stuff that you would be able to recognize had you paid attention in chemistry classes. Retorts, still, tubes, the whole thing, even the operating table with straps and blood stain." Nada
+        , Room "The observatory" "What did you know ? Count Lambdacula must be interested in astronomy. He set up a nice observatory here, with a big telescope and stars-chart along the walls. Even vampires look at the sky at night, and make wishes while watching shooting stars. Well, their wishes are mostly things like fountains of blood." Nada
+        , Room "The Count's sauna" "Count Lambdacula was not having a bathroom, no, that's for normal people, not vampire psychopaths. The guy had himself a whole sauna set-up. And looking at the quality of the place, he must have asked some crazy scandinavian specialists. You're standing in a state-of-the-art sweating lodge, made out of the purest wood. The only thing is that you're a bit hot right now." Nada
         -- UNDERGROUND WORLD
         , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark]
 
@@ -254,6 +266,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["West"] "The hall" "To the living room" "The living room"
             , makeDoor ["North", "double doors", "doors", "door"] "The hall" "An impressive double doors" "The castle entrance" Nothing Closed
             , makeExit ["East"] "The hall" "To the smoking room" "The smoking room"
+            , makeExit ["Up", "upstairs"] "The hall" "To the first floor, or, if you're american, the second floor" "The southern corridor"
             -- The smoking room
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "Antichamber"
@@ -262,11 +275,43 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             -- Inner garden
             , makeExit ["West"] "The inner garden" "To the smoking room" "The smoking room"
             , makeExit ["South"] "The inner garden" "To the conservatory" "The conversatory"
+            , objectContaining ["plant", "carnivorous plant"] "The inner garden" "In the middle of the garden, an enormous vegetal specimen with impressive thorn, that certainly looks like a carnivorous plant." Opened [simpleObject ["electric wires", "wires"] "" "A couple of electric wires with little pliers, the kind of stuff you'd see in a school."]
             -- The northwest corridor
             , makeExit ["Down", "downstairs"] "The north-west corridor" "Stairs to the first floor" "The guard room"
             , makeDoor ["West", "wooden door", "door"] "The north-west corridor" "A wooden door" "The countess bedroom" Nothing Closed
+            , makeExit ["East"] "The north-west corridor" "To the north-east corridor" "The north-east corridor"
             -- The countess bedroom
-            , makeDoor ["East", "wooden door"] "The countess bedroom" "A wooden door" "The north-west corridor" Nothing Closed
+            , makeDoor ["East", "wooden door"] "The countess bedroom" "A wooden door" "The north-west corridor" (Just "silver key") Closed
+            , makeExit ["South"] "The countess bedroom" "To the bathroom" "The countess bathroom"
+            -- The northeast corridor
+            , makeExit ["West"] "The north-east corridor" "To the north-west corridor" "The north-west corridor"
+            , makeDoor ["East", "iron door", "door"] "The north-east corridor" "An iron door, with mysterious, beeping sounds behind" "The amusement arcade" (Just "skull key") Closed
+            , makeExit ["South"] "The north-east corridor" "To the central corridor" "The central corridor"
+            -- The amusement arcade
+            , makeExit ["West"] "The amusement arcade" "To the corridor" "The north-east corridor"
+            , simpleObject ["Roger", "engineer", "dude", "man"] "The amusement arcade" "Behind a counter, there is a slightly overweight beardy guy in blue overalls, rumaging through a toolbox."
+            , simpleObject ["Video game", "Galambdaga", "video arcade"] "The amusement arcade" "The only game working is a 1992 antique version of Galambdaga, the very classic space shooter !"
+            -- The central corridor
+            , makeExit ["North"] "The central corridor" "The corridor continues to the north" "The north-east corridor"
+            , makeExit ["South"] "The central corridor" "The corridor continues to the south" "The southern corridor"
+            , makeDoor ["West", "leathered door", "door"] "The central corridor" "A door covered with leather" "The count bedroom" (Just "black key") Closed
+            , makeExit ["East"] "The central corridor" "A passage towards what looks like a living room" "The private living room"
+            -- The count's bedroom
+            , makeExit ["East"] "The count bedroom" "Back to the central corridor" "The central corridor"
+            -- The private living room
+            , makeExit ["West"] "The private living room" "Back to the central corridor" "The central corridor"
+            -- The southern corridor
+            , makeExit ["North"] "The southern corridor" "To the central corridor" "The central corridor"
+            , makeExit ["Down", "downstairs"] "The southern corridor" "A stairway to the main hall" "The hall"
+            , makeDoor ["East", "door", "wooden door"] "The southern corridor" "A small wooden door" "The Count's sauna" Nothing Closed
+            , makeExit ["West"] "The southern corridor" "An archway to a laboratory" "The laboratory"
+            -- The laboratory
+            , makeExit ["East"] "The laboratory" "Back to the southern corridor" "The southern corridor"
+            , makeExit ["West"] "The laboratory" "A little arch leading to a round room" "The observatory"
+            -- The observatory
+            , makeExit ["East"] "The observatory" "A little arch leading back to the laboratory" "The laboratory"
+            -- The sauna
+            , makeExit ["West"] "The Count's sauna" "Back to the southern corridor" "The southern corridor"
             -- Muddy path
             ,makeExit ["West"] "A muddy path" "an upward path to the castle" "In front of the castle" 
             ,makeDoor ["A door", "door"] "A muddy path" "the gamekeeper shack" "The gamekeeper shack" Nothing Closed 
