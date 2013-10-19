@@ -41,6 +41,7 @@ data Action = Examine       -- Look at something
             | Search        -- Look for something.
             | QuitGame      -- Leave this wonderful game.
             | Eat           -- Experiment with your mouth.
+            | Drink         -- Quench your thirst
             | Show          -- Special, more like an event. Display stuff on screen
             | Use           -- Basic interaction (press something, combine objects, etc.)
             | Attack        -- Attack someone or even something
