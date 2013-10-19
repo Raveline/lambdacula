@@ -92,7 +92,7 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("torchlight", Use, Nothing, [], [Display "There are no batteries in the torchlight !"])
     ,("torchlight", Examine, Nothing, [HasStatus Powered], [Display "A torchlight in almost perfect condition."])
     ,("torchlight", Examine, Nothing, [HasStatus Luminescent], [Display "The torchlight is on. Looking at it would blind you. You're not very bright, are you ? HAHAHAHAHA, GOT YOU AGAIN !"])
-    ,("torchlight", Examine, Nothing, [], [Display "Well, it doesn't look like it's broken... but there are no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."])
+    ,("torchlight", Examine, Nothing, [], [Display "Well, it doesn't look like it's broken... but there is no battery inside. So, you know. It's not going to work. But it could. Well, maybe. Most likely, the rats ate the wire inside of this thing. I'm just saying, you know, don't be too hopeful."])
     ,("stanislas", Examine, Nothing, [], [Display "A portrait of Stanilas Lambdacula, count of the castle between 1357 and 1402. A fine looking fellow, actually."])
     ,("dolores", Examine, Nothing, [], [Display "A portrait of Dolores Lambdacula, countess of the castle. Born in 1369, She married Stanislas of Lambdacula in 1385 and ruled till her son was old enough, in 1408. She died in 1423. Wait a second... Dolores doesn't sound like a very Romanian name ! She must have come from Spain or something."])
     ,("Igor", Examine, Nothing, [], [Display "A portrait of Count Igor Lambdacula, son of Stanislas and Dolores, born in 1392. He ruled from 1408 to his death in 1459. Igor didn't look like a very fun guy, considering how dak and brooding he looks on this painting."])
@@ -136,7 +136,13 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("plant", Give, Just "stew", [], [Display "You consider for a moment how sad your life is. You're now a cook for a carnivorous plant. Frankly, is it what you want to do ? No. But there might be an idea, there... You're just missing the main ingredient."])
     ,("plant", Give, Just "emetic stew", [], [Display "Good idea ! You give the revolting, insect stew to the vegetal monster. It slurps everything - even the pan ! After a few second, though, it begins belching. As you start to feel quite nauseous yourself, you see the plant... errr... give back a lot of things it ate. I'll spare you the details. In the middle, though !, you find a couple of electrical wires, that you take with you as a trophie."])
     ,("plant", Give, Just "saucepan", [], [Display "It is most likely hungry, but it won't eat just a pan with nothing inside."])
-    ,("plant", Eat, Nothing, [], [Display "Yeah... you see, IT does the eating, generally, so you'd better thing something else to bite."])]
+    ,("plant", Eat, Nothing, [], [Display "Yeah... you see, IT does the eating, generally, so you'd better thing something else to bite."])
+    ,("liquor cabinet", Open, Nothing, [HasStatus Closed], [ChangeStatus "liquor cabinet" Opened, LookInsideContainer "liquor cabinet" "The cabinet only contains : "])
+    ,("liquor cabinet", Take, Just "chalice", [], [PickFromContainer "liquor cabinet" "chalice"])
+    ,("liquor cabinet", Examine, Nothing, [], [Display "A simple liquor cabinet made out of oakwood. Elegantly crafted, but it has seen better days."])
+    ,("chalice", Drink, Nothing, [], [Display "You're not a vampire, you don't drink blood. And you don't know where this blood has been, anyway."])
+    ,("chalice", Examine, Nothing, [], [Display "Well, it's a gold chalice with blood inside. What more do you need that screams \"Vampires are around !\" ?"])
+    ]
 
 -- Antichamber
 -- OBJECTS
@@ -260,6 +266,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["North"] "The living room" "To the gallery" "A gallery"
             , makeExit ["West"] "The living room" "To the library" "The library"
             , makeExit ["East"] "The living room" "To the hall" "The hall"
+            , objectContaining ["liquor cabinet", "cabinet"] "The living room" "There is a little liquor cabinet in the corner of the room, where you'd normally store your best whisky, crystal glasses and the like." Closed [simpleObject ["chalice", "blood"] "" "The only thing here is a golden chalice full of fresh blood. Yikes."]
             -- The library
             , makeExit ["East"] "The library" "To the living room" "The living room"
             -- The hall
@@ -356,3 +363,13 @@ mummyanswers = [("hello", "Well hello ! Delighted to meet you. My name is Akhori
         ,("retirement", "Well, you could also call it the afterlife. You see, my internal organs were removed from my body, I was covered in magical fluids and carefully bandaged. Which mean I can live forever without the... special needs of my good friend Vlad. So, now, I travel, I meet people, I read... I'm having the time of my afterlife.")
         ,(notopic, "I don't think I have interesting things to say about that... sorry.")]
 
+techtopics = [(helloTopic, ["hi"]), ("Roger", ["roger the engineer"]), ("engineer", ["engineering", "job","work"]),("count", ["Vlad", "Count Lambdacula", "Lambdacula", "boss"]), ("vampire", ["pale", "pale guy", "healthy dentition"]), ("arcade", ["gaming", "games"]), ("Galambdaga", []), ("battery", ["dead battery"]), ("electricity", ["electrical"])]
+techanswers = [("hello", "Listen kid, don't you see I'm busy ? Go play wi... oh wait, you're not a kid. Hi. My name is Roger. I'm the engineer.")
+        ,("Roger", "Yes, that is my name. Roger the engineer. Gotta love the Yardbirds.")
+        ,("engineer", "Well, engineer is quite a big word for what I do, I must admit. The thing is, a few years ago, I had this great job offer from the dude that owns the place... you know, Count Lambdacula ? Pale guy, quite the healthy dentition, never around during the day ? He wanted someone to set up and manage an arcade gaming room. So... here I am. Doing a terrible job.")
+        ,("arcade", "I know, it is in a sorry state... but that's not really my fault. The electricity here is a disaster, let me tell you. And most of the thing my boss bought was in a terrible state already. I hardly have any tools... the Count keeps saying he'll buy me the stuff, but he never does. I could go to the town and buy stuff, but I prefer staying here, trying to fix the wiring system first.")
+        ,("count", "The Count is my boss. He's almost never here. He comes in the evening sometimes. He plays mostly Galambdaga. I must say he's quite good. Well, he's a good chap. Pays me quite generously. Where is he right now ? No idea. Look man, I only an employee, here...")
+        ,("vampire", "Vampire ? Don't be ridiculous, man, those things don't exist. You've read to much Twilight.")
+        ,("Galambdaga", "Ah, that's a beauty, isn't it ? Must be quite expensive I think. Which is why whatever happens, I make sure this one works ! You can play, if you got a coin. I think any kind of coin works, really, the thingamajig that checks for the proper change is almost broken.")
+        ,("battery", "Dead batteries ? Can't help you, friend. The only thing you could do is try to recharge them. But I have nothing to do this. Well, theoretically, if you connect electric wires to the battery to zinc and copper in salt water, it COULD work, but most likely, you'll destroy the batteries and get electrocuted. I would advise against it. I'm sure you could find copper or zinc somewhere in the castle, though.")
+        ,("electricity", "Yeah, that's my biggest concern right now. If you need help with anything on this matter, I can perhaps give you a hand, but I'm quite busy !")]
