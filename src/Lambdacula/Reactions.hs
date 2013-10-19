@@ -265,7 +265,7 @@ lookInsideContainer ro s
     | isOpened ro = singleAnswer $ (headName . _ronames $ ro) ++ " is closed, you can't look inside."
     | otherwise = return . Just $ (s:displayContainerContent ro)
     where
-        displayContainerContent ro = [mainName x| x <- ro^.containedObjects]
+        displayContainerContent ro = ["- " ++ view objectDescription x| x <- ro^.containedObjects]
 
 putInsideContainer :: RoomObject    -- The container
                         -> String   -- The object to put
