@@ -34,6 +34,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Attack "attack" [] [] False
         ,Transitive Attack "kick" [] [] False
         ,Transitive Attack "hit" [] [] False
+        ,Transitive Push "push" [] [] False
         ,Transitive Give "give" [] ["to"] True
         ,Transitive Inventorize "inventory" [] [] False]
 
@@ -142,6 +143,9 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("liquor cabinet", Examine, Nothing, [], [Display "A simple liquor cabinet made out of oakwood. Elegantly crafted, but it has seen better days."])
     ,("chalice", Drink, Nothing, [], [Display "You're not a vampire, you don't drink blood. And you don't know where this blood has been, anyway."])
     ,("chalice", Examine, Nothing, [], [Display "Well, it's a gold chalice with blood inside. What more do you need that screams \"Vampires are around !\" ?"])
+    -- Crypt
+    ,("statue", Examine, Nothing, [], [Display "You know nothing about sculpture, but this one is really ugly. But there is something interesting : there are marks on the floor underneath, as if the statue had be moved recently."])
+    , ("statue", Push, Nothing, [], [Display "OK, this thing is heavy. Like in, way too heavy for you to move it. The best thing there would be to ask Arnold Schwarzenegger for help. But California is far away, and you don't really know him personnaly, so that would be a bit weird."])
     ]
 
 -- Antichamber
@@ -168,7 +172,18 @@ makeExit :: [String]     -- Aliases
             -> String       -- Description of the object
             -> String       -- Destination
             -> RoomObject   -- An Exit
-makeExit aliases inRoom description = Exit (ObjectNames aliases) inRoom (RoomObjectDetails Opened description []) Nothing 
+makeExit aliases inRoom description destination = exitBuilder aliases inRoom description destination Opened
+
+makeHiddenExit :: [String]  -- Aliases
+            -> String       -- Room where this exit should be
+            -> String       -- Description of the exit
+            -> String       -- Exit destination
+            -> RoomObject   -- An exit
+makeHiddenExit aliases inRoom description destination = exitBuilder aliases inRoom description destination Hidden
+
+exitBuilder :: [String] -> String -> String -> String -> ObjectStatus -> RoomObject
+exitBuilder aliases inRoom description destination status = Exit (ObjectNames aliases) inRoom (RoomObjectDetails status description []) Nothing destination
+
 
 makeDoor :: [String]     -- Aliases
             -> String       -- Room where this exit should be
@@ -213,7 +228,9 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         , Room "The observatory" "What did you know ? Count Lambdacula must be interested in astronomy. He set up a nice observatory here, with a big telescope and stars-chart along the walls. Even vampires look at the sky at night, and make wishes while watching shooting stars. Well, their wishes are mostly things like fountains of blood." Nada
         , Room "The Count's sauna" "Count Lambdacula was not having a bathroom, no, that's for normal people, not vampire psychopaths. The guy had himself a whole sauna set-up. And looking at the quality of the place, he must have asked some crazy scandinavian specialists. You're standing in a state-of-the-art sweating lodge, made out of the purest wood. The only thing is that you're a bit hot right now." Nada
         -- UNDERGROUND WORLD
-        , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark]
+        , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark
+        -- End rooms
+        , Room "The crypt" "You've entered a dark, dark crypt where the Lambdacula family members are supposed to be buried. But the place has been completly emptied. There is dust and ash on the ground. But you notice a little door on the northern wall." Dark]
 
 ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle" "The southern gate" 
             ,makeExit ["East"] "In front of the castle" "a path on the mountain" "A muddy path" 
@@ -273,7 +290,12 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["West"] "The hall" "To the living room" "The living room"
             , makeDoor ["North", "double doors", "doors", "door"] "The hall" "An impressive double doors" "The castle entrance" Nothing Closed
             , makeExit ["East"] "The hall" "To the smoking room" "The smoking room"
+            , makeExit ["South"] "The hall" "To a chapel" "The chapel"
             , makeExit ["Up", "upstairs"] "The hall" "To the first floor, or, if you're american, the second floor" "The southern corridor"
+            -- The chapel
+            , makeExit ["North"] "The chapel" "To the main hall" "The hall"
+            , makeHiddenExit ["Down", "downstairs", "downward"] "The chapel" "A dark staircase leading to a mysterious crypt, ooh, scary !" "The crypt" 
+            , simpleObject ["statue", "ugly statue", "angel"] "The chapel" "On the side, there is a particularly ugly statue of an angel."
             -- The smoking room
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "Antichamber"

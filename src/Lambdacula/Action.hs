@@ -31,6 +31,7 @@ data PlayerAction =   SimpleAction Action
 data Action = Examine       -- Look at something
             | Inventorize   -- Special action : check inventory
             | Talk          -- Communicate with something, ideally someone.
+            | Push          -- Move things by pushing them
             | Move          -- Move something.
             | Open          -- Open something.
             | Close         -- Close something.
