@@ -183,6 +183,7 @@ data Reaction =  Display String                             -- Display some text
                 | RebranchTo Action String (Maybe String)   -- Rephrase a command so that it'll be retranslated 
                 | Conversation [(String, [String])] [(String, String)] String
                 | MoveTo String                             -- Move somewhere
+                | RemoveFromWorld String                    -- Remove from the world something
                 | Flight                                    -- Flee
                 | LookAround                                -- Display current room
                 | Error                                     -- Not Implemented Yet 
@@ -197,11 +198,12 @@ instance Eq RoomObject where
 
 
 -- Conditions
-data Condition = ContainsAmountOfItem (Int -> Bool)
-                | PlayerHasStatus ObjectStatus
-                | PlayerHasObject String
-                | HasStatus ObjectStatus
-                | Contains String
+data Condition = ContainsAmountOfItem (Int -> Bool) -- Does the object contains x items ?
+                | PlayerHasStatus ObjectStatus      -- Does the player have a status ?
+                | PlayerHasObject String            -- Does the player have an object ?
+                | HasStatus ObjectStatus            -- Does the object has a status ?
+                | IsThereA String                   -- Is something in scope ?
+                | Contains String                   -- Does the object contains X ?
 
 data Interactor = ObjectInteractor RoomObject
                 | StringInteractor String

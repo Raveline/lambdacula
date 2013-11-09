@@ -148,6 +148,15 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     , ("statue", Push, Nothing, [], [Display "OK, this thing is heavy. Like in, way too heavy for you to move it. The best thing there would be to ask Arnold Schwarzenegger for help. But California is far away, and you don't really know him personnaly, so that would be a bit weird."])
     ,("altar", Examine, Nothing, [], [Display "Well, it is in a sorry state : covered with stain. The stone is partly crumbling. Oddly enough, there is no dust on it. Proof that there is a God, after all ?"]) 
     ,("altar", Push, Nothing, [], [Display "What a stup... oh wait, it CAN be moved a bit. Actually, it seems to have triggered some sort of mechanism... Yes ! The ugly statue of an angel moved, revealing a hidden staircase ! You've got an eye for secret passage, my friend !", ChangeStatus "Hidden stairs" Opened])
+    -- Piano bar
+    ,("piano", Open, Nothing, [IsThereA "bouncer"], [Display "As you try to open the piano, the bouncer stops you. \"Hey, no touching !\". Considering his physical force, you decide to do as told."])
+    ,("piano", Examine, Nothing, [HasStatus Closed], [Display "A very nice Pleyel grand piano. The lid is closed. Too bad, you're quite sure it's out of key."])
+    ,("piano", Open, Nothing, [], [ChangeStatus "piano" Opened, LookInsideContainer "piano" "You open the piano... Wait, there is something inside :"])
+    ,("piano", Examine, Nothing, [], [Display "A Pleyel in all his glory."])
+    ,("piano", Use, Nothing, [], [Display "Look. This is not the kind of game where you'd hear a theme music, right now if you did that. I mean come on, it was already hard to get this stupid text to display, you think I'm going to put some sounds, now ? So, please. Let this piano be. Don't you have a vampire to hunt ? Any progress on this front ?"])
+    ,("piano", Attack, Nothing, [], [Display "WHY ? WHY MUST YOU ALWAYS RESORT TO VIOLENCE ? Can't you show some respect for this extraordinary instrument ?"])
+    ,("bouncer", Talk, Nothing, [], [Conversation bouncertopics bounceranswers undefined])
+    ,("bouncer", Give, Just "Ghoul and the Kank tickets", [PlayerHasObject "Ghoul and the Kank tickets"], [RemoveItem "Ghoul and the Kank tickets", Display "\"OH THANK YOU ! THANK YOU SIR !\", says the bouncer, before running away, almost dancing. You made a man-made monster very, very happy, you little angel, you.", RemoveFromWorld "bouncer"])
     ]
 
 -- Antichamber
@@ -214,7 +223,7 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         , Room "The smoking room" "This is a cosy little room, with nice furniture. It was the place where the men would go after a heavy diner, and somke the cigar and discuss matter of current politics. Or football. Or the latest xbox game. Or whatever. You notice a beautiful japanese inspired wallpaper. The windows on the east let you admire a little inner yard, with a garden." Nada
         , Room "The inner garden" "You are standing in a little inner yard, covered with flowers and dangerously untamed trees. There were once gravel alleys to walk ildly between the plants, but nature has a way to claim back everything, so I would advise against having a little stroll in this garden turned jungle." Nada
         , Room "The chapel" "This used to be the chapel of the castle, but there has been some major change, here. First of all, every crosses have been removed. How weird is that, huh ? Then it is obvious it's been a long time since anybody held a mass here. The benches are broken or knocked down." Nada
-        , Room "Piano bar" "Ok, this is unexpected, but the castle has its own piano bar. Lovely place, covered with rugs. You see a nice Pleyel grand piano on the stage. Unfortunately, there are no bottle in the bar anymore. But there is a blackjack table ! With no players nor dealers, though, so, no, you're not going to get rich today." Nada
+        , Room "The piano bar" "Ok, this is unexpected, but the castle has its own piano bar. Lovely place, covered with rugs. Unfortunately, there are no bottle in the bar anymore. But there is a blackjack table ! With no players nor dealers, though, so, no, you're not going to get rich today." Nada
         , Room "The conservatory" "You're standing in a little greenhouse, dedicated to growing exotic plants and drinking tea. In both instance, the place fails miserably though. The plants are all dead - and dead as in long gone, not as living-dead. There are barely somme roots that survived the attacks of time, god knows how. As far as tea is concerned, there once was an ebony table, but it's been turned into a luxury restaurant for termites, and there is not much left." Nada
         -- 2ND FLOOR
         , Room "The countess bedroom" "Silk, velvet, tasteful tapestry on the wall, elegant dressing table : no doubt to have, you are in the countess bedroom. And boy, did she like purple. Everything here is purple : the wallpaper, the sheet on the bed, the rugs. You'd swear there is something wrong with your eyes. The room is very well cared for, which is quite strange come to think of it : the countess is supposed to have died five centuries ago, so you don't really see the need to do her room everyday." Nada
@@ -308,14 +317,19 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "Antichamber"
             , makeExit ["West"] "The smoking room" "To the hall" "The hall"
+            , makeExit ["South"] "The smoking room" "To a... piano bar ?!" "The piano bar"
             , objectContaining ["mummy", "akhoris", "man in bandages", "man"] "The smoking room" "Sitting in one the armchair, reading a book, there is a man covered by bandages. Weird !" Nada [simpleObject ["dentures", "a wolfish dentures"] "" "A set of wolfish dentures"]
             -- Inner garden
             , makeExit ["West"] "The inner garden" "To the smoking room" "The smoking room"
             , makeExit ["South"] "The inner garden" "To the conservatory" "The conversatory"
             , objectContaining ["plant", "carnivorous plant"] "The inner garden" "In the middle of the garden, an enormous vegetal specimen with impressive thorn, that certainly looks like a carnivorous plant." Opened [simpleObject ["electric wires", "wires"] "" "A couple of electric wires with little pliers, the kind of stuff you'd see in a school."]
+            -- Piano Bar
+            , makeExit ["North"] "The piano bar" "To the smoking room" "The smoking room" 
+            , objectContaining ["piano"] "The piano bar" "On a little stage, there is of course a piano. That's the reason why they call it a piano bar, you see." Nada [simpleObject ["golden key", "key"] "" "A little golden key"]
+            , simpleObject ["bouncer", "Franky", "Frankenstein"] "The piano bar" "Just next to you, there is an impressive, muscular guy in a suit. A bouncer, most likely. He's got a... bolt in the neck. That's original." 
             -- The northwest corridor
             , makeExit ["Down", "downstairs"] "The north-west corridor" "Stairs to the first floor" "The guard room"
-            , makeDoor ["West", "wooden door", "door"] "The north-west corridor" "A wooden door" "The countess bedroom" Nothing Closed
+            , makeDoor ["West", "wooden door", "door"] "The north-west corridor" "A wooden door" "The countess bedroom" (Just "golden key") Closed
             , makeExit ["East"] "The north-west corridor" "To the north-east corridor" "The north-east corridor"
             -- The countess bedroom
             , makeDoor ["East", "wooden door"] "The countess bedroom" "A wooden door" "The north-west corridor" (Just "silver key") Closed
@@ -403,3 +417,11 @@ techanswers = [("hello", "Listen kid, don't you see I'm busy ? Go play wi... oh 
         ,("Galambdaga", "Ah, that's a beauty, isn't it ? Must be quite expensive I think. Which is why whatever happens, I make sure this one works ! You can play, if you got a coin. I think any kind of coin works, really, the thingamajig that checks for the proper change is almost broken.")
         ,("battery", "Dead batteries ? Can't help you, friend. The only thing you could do is try to recharge them. But I have nothing to do this. Well, theoretically, if you connect electric wires to the battery to zinc and copper in salt water, it COULD work, but most likely, you'll destroy the batteries and get electrocuted. I would advise against it. I'm sure you could find copper or zinc somewhere in the castle, though.")
         ,("electricity", "Yeah, that's my biggest concern right now. If you need help with anything on this matter, I can perhaps give you a hand, but I'm quite busy !")]
+
+bouncertopics = [(helloTopic, ["hi"]), ("name", []), ("Frankie", ["Frankenstein", "Frank"]), ("bolt", ["neck"]), ("music", ["piano"]), ("bar", [])]
+bounceranswers = [("hello", "Hello, dear customer. I'm terribly sorry, the bar is not opened right now.")
+                , ("name", "My name ? Oh I'm just a bouncer, you know, it's very nice to be so kind with me... I'm frank. Or Frankie. As you prefer.")
+                , ("Frankie", "Yes, like Frankenstein. Like Dr. Frankenstein. My maker. Nice guy. A bit crazy. There was a terrible misunderstanding and... oh but I don't want to bore you with this, really.")
+                , ("bolt", "Oh this thing in my neck ? I don't really need it, but the Count thinks it adds a je-ne-sais-quoi. Truth be told, I don't know what a je-ne-sais-quoi is.")
+                , ("music", "Fancy place, right ? Truth be told, I'm really not into this smooth, cool-cat, suave piano-jazz nonsense. I prefer a good old funky thing ! I'd kill to go and listen to that sweet, sweet sound.")
+                , ("bar", "Yeah, the stupid piano bar where there is almost no gig ever. Luckily. Can't bear their music, no siree.")]
