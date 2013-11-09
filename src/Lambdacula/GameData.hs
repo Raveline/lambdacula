@@ -230,7 +230,8 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         -- UNDERGROUND WORLD
         , Room "A dark corridor" "You're walking on a creepy natural corridor. Far-away sounds, echoing through the walls, give you the creeps. You know, there is a ladder right behind you, leading to a hatch, that will allow you to leave this underground madness. I'm just saying. Nobody will be judging you if you act like a coward. I mean not everyone is cut out to be a hero, right ? Let's face it, you should be working in a cubicle, right now. Not dwelve in the heart of a Transylvanian mountain, where some monsters will most likely tear your chest apart and make a supper out of your brain.\nAnyway, the corridor continues to the south. In the darkness. With lots of creepy sounds. Not to scare you or anything." Dark
         -- End rooms
-        , Room "The crypt" "You've entered a dark, dark crypt where the Lambdacula family members are supposed to be buried. But the place has been completly emptied. There is dust and ash on the ground. But you notice a little door on the northern wall." Dark]
+        , Room "The crypt" "You've entered a dark, dark crypt where the Lambdacula family members are supposed to be buried. But the place has been completly emptied. There is dust and ash on the ground. But you notice a little door on the northern wall." Dark
+        , Room "The Count's lair" "You finally did it ! This is the Count's lair, the austere, gothic, heart of darkness where he rests during the day. Well, actually, it is quite cosy. The count enjoys the comfort of a Coffinator 3000, with optimal design, eternal Wi-Fi and bluetooth, dobly stereo in the casket and inner mini-bar. He's also got dimly-lit disco-like lights. He just got rid of the UV system (\"Tan for ever !\"), for obvious, allergy-to-sunlike-light reasons." Nada]
 
 ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle" "The southern gate" 
             ,makeExit ["East"] "In front of the castle" "a path on the mountain" "A muddy path" 
@@ -296,6 +297,10 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["North"] "The chapel" "To the main hall" "The hall"
             , makeHiddenExit ["Down", "downstairs", "downward"] "The chapel" "A dark staircase leading to a mysterious crypt, ooh, scary !" "The crypt" 
             , simpleObject ["statue", "ugly statue", "angel"] "The chapel" "On the side, there is a particularly ugly statue of an angel."
+            -- The crypt
+            , makeExit ["Up", "upstairs", "upward"] "The crypt" "Back to the chapel" "The chapel"
+            , makeDoor ["North", "north"] "The crypt" "A massive door, protected by a gigantic padlock" "The Count's lair" (Just "Not a real key") Closed
+            , simpleObject ["padlock"] "The crypt" ""
             -- The smoking room
             , makeExit ["East"] "The smoking room" "To an inner garden" "The inner garden"
             , makeExit ["North"] "The smoking room" "To an antichamber" "Antichamber"
