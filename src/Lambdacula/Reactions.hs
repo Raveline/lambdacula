@@ -166,6 +166,7 @@ testCondition w r (PlayerHasObject x) = hasInInventory x w
 testCondition w r (PlayerHasStatus stat) = error "NIY"
 testCondition w r (HasStatus stat) = (==) stat . view objectStatus $ r
 testCondition w ro (Contains name) = ro `containsSomethingNamed` name  
+testCondition w _ (IsThereA name) = name `elem` allNames (view fullCurrentObjects w)
 
 ------------------------------------------------
 -- All utilies methods should be stored there --
@@ -218,11 +219,11 @@ containsSomethingNamed :: RoomObject        -- Container
                         -> String           -- Object name
                         -> Bool
 containsSomethingNamed container containedName = containedName `elem` allNames (view containedObjects container)
-    where
-        allNames :: [RoomObject] -> [String]
-        allNames = concat . extractNames
-        extractNames :: [RoomObject] -> [[String]]
-        extractNames = map (view objectAliases)
+
+allNames :: [RoomObject] -> [String]
+allNames = concat . extractNames
+extractNames :: [RoomObject] -> [[String]]
+extractNames = map (view objectAliases)
 
 -- Check that a container contains something.
 contains :: RoomObject  -- Container

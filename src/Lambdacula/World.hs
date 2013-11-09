@@ -41,6 +41,7 @@ module Lambdacula.World
     identify,
     identifyWithContained,
     canBeNamed,
+    fullCurrentObjects,
     localScope
 )
 where
