@@ -158,7 +158,7 @@ processReaction (PickItem s) = do
 processReaction (RemoveItem s) = do
                         obj <- fetchByName s
                         removeFromInventory obj
-
+processReaction (Flight) = flee                      
 
 testCondition :: World -> RoomObject -> Condition -> Bool
 testCondition w r (ContainsAmountOfItem x) = x . length . view containedObjects $ r
