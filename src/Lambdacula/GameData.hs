@@ -143,9 +143,11 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("liquor cabinet", Examine, Nothing, [], [Display "A simple liquor cabinet made out of oakwood. Elegantly crafted, but it has seen better days."])
     ,("chalice", Drink, Nothing, [], [Display "You're not a vampire, you don't drink blood. And you don't know where this blood has been, anyway."])
     ,("chalice", Examine, Nothing, [], [Display "Well, it's a gold chalice with blood inside. What more do you need that screams \"Vampires are around !\" ?"])
-    -- Crypt
+    -- Chapel 
     ,("statue", Examine, Nothing, [], [Display "You know nothing about sculpture, but this one is really ugly. But there is something interesting : there are marks on the floor underneath, as if the statue had be moved recently."])
     , ("statue", Push, Nothing, [], [Display "OK, this thing is heavy. Like in, way too heavy for you to move it. The best thing there would be to ask Arnold Schwarzenegger for help. But California is far away, and you don't really know him personnaly, so that would be a bit weird."])
+    ,("altar", Examine, Nothing, [], [Display "Well, it is in a sorry state : covered with stain. The stone is partly crumbling. Oddly enough, there is no dust on it. Proof that there is a God, after all ?"]) 
+    ,("altar", Push, Nothing, [], [Display "What a stup... oh wait, it CAN be moved a bit. Actually, it seems to have triggered some sort of mechanism... Yes ! The ugly statue of an angel moved, revealing a hidden staircase ! You've got an eye for secret passage, my friend !", ChangeStatus "Hidden stairs" Opened])
     ]
 
 -- Antichamber
@@ -295,8 +297,9 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["Up", "upstairs"] "The hall" "To the first floor, or, if you're american, the second floor" "The southern corridor"
             -- The chapel
             , makeExit ["North"] "The chapel" "To the main hall" "The hall"
-            , makeHiddenExit ["Down", "downstairs", "downward"] "The chapel" "A dark staircase leading to a mysterious crypt, ooh, scary !" "The crypt" 
+            , makeHiddenExit ["Hidden stairs", "down", "stairs", "downstairs", "downward"] "The chapel" "A dark, scary staircase leading to a mysterious crypt !" "The crypt" 
             , simpleObject ["statue", "ugly statue", "angel"] "The chapel" "On the side, there is a particularly ugly statue of an angel."
+            , simpleObject ["altar"] "The chapel" "There is also a particularly damaged altar, with stain of blood. Of course."
             -- The crypt
             , makeExit ["Up", "upstairs", "upward"] "The crypt" "Back to the chapel" "The chapel"
             , makeDoor ["North", "north"] "The crypt" "A massive door, protected by a gigantic padlock" "The Count's lair" (Just "Not a real key") Closed

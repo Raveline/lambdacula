@@ -69,7 +69,7 @@ process strs reac = do
         extractStr strs Nothing = strs 
 
 handleExit :: String                -- Name of the Exit
-            -> Maybe DoorInfo          -- If it's a door, information on it
+            -> Maybe DoorInfo       -- If it's a door, information on it
             -> ObjectStatus         -- Current status
             -> String               -- Destination name
             -> Action               -- Action taken
