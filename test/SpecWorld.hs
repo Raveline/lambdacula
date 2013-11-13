@@ -71,15 +71,21 @@ testReaction :: Reaction -> (World -> Bool) -> Bool
 testReaction reaction f = f resultingWorld
     where resultingWorld = snd $ runState (onlyDo reaction) world
 
+saveLoadAndCheck :: [PlayerAction] -> (World -> Bool) -> IO Bool
+saveLoadAndCheck actions test = do
+                                    save "test.ldcl" $ snd $ runState (multiProceed actions) world
+                                    w <- (load trRooms reactions_tests "test.ldcl")
+                                    return $ test w
+
 checkWorld :: [PlayerAction] -> (World -> Bool) -> Bool
 checkWorld x t = t . snd $ runState (multiProceed x) world
-    where 
-        multiProceed :: [PlayerAction] -> WorldAction
-        multiProceed [] = return []
-        multiProceed [action] = proceed action
-        multiProceed (action:actions) = do
-                                            proceed action
-                                            multiProceed actions
+
+multiProceed :: [PlayerAction] -> WorldAction
+multiProceed [] = return []
+multiProceed [action] = proceed action
+multiProceed (action:actions) = do
+            proceed action
+            multiProceed actions
 
 -- Get the string result from an action
 testFeedback act = fst $ runState (proceed act) world
@@ -99,7 +105,7 @@ checkStatus s st w = case find ((==) s . mainName) (_worldObjects w) of
                     Nothing -> error "Test poorly written !" 
 
 checkCurrentRoom :: String -> World -> Bool
-checkCurrentRoom s w = (_roomName . _currentRoom $ w) == s
+checkCurrentRoom s w = (_roomName . _currentRoom . _player $ w) == s
 
 properActions = [(Interaction Open "cube")
                 ,(Complex Take "cube" "key")
@@ -163,3 +169,7 @@ main = hspec $ do
 
             it "Do every action to open the door and cross it" $ do
                 checkWorld (take 4 properActions) (checkCurrentRoom "A second room") `shouldBe` True
+
+    describe "saving" $ do
+            it "Checks that the world can be saved" $ do
+                saveLoadAndCheck (take 4 properActions) (checkCurrentRoom "A second room") >>= (`shouldBe` True)

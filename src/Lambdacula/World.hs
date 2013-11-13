@@ -6,6 +6,7 @@ module Lambdacula.World
     ObjectNames (..),
     RoomObjectDetails(..),
     DoorInfo(..),
+    Player(..),
     World(..),
     ObjectStatus(..),
     Reaction (..),
@@ -81,34 +82,37 @@ data Room =    Room { _roomName :: String
                  ,_description :: String
                  ,_roomstatus :: ObjectStatus
                 }
-  deriving (Eq)
+                deriving (Eq, Show, Read)
+
+data Player = Player { _currentRoom :: Room, 
+                    _previousRoom :: Room,
+                    _name :: String }
+                    deriving (Read, Show)
 
 -- The world. A scary place. It figures the encounters between a hero,
 -- the Player, and one of many room (the rooms) in a CurrentRoom.
-data World = World { _currentRoom :: Room, 
-                    _previousRoom :: Room,
+data World = World { _player :: Player,
                     _worldRooms :: Graph,
                     _worldObjects :: [RoomObject],
                     _reactions :: [ReactionSet],
                     _getARoom :: String -> Maybe Vertex,
                     _getANode :: Vertex -> (Room, String, [String])}
 
-
 -- World lenses
 worldRooms :: Simple Lens World Graph 
 worldRooms = lens _worldRooms (\w rs -> w {_worldRooms = rs})
 currentRoom :: Simple Lens World Room
-currentRoom = lens _currentRoom (\w cr -> w {_currentRoom = cr})
+currentRoom = lens (_currentRoom . _player) (\w cr -> w {_player = (_player w){_currentRoom = cr}})
 previousRoom :: Simple Lens World Room
-previousRoom = lens _previousRoom (\w cr -> w {_previousRoom = cr})
+previousRoom = lens (_previousRoom . _player) (\w cr -> w {_player = (_player w){_previousRoom = cr}})
 worldObjects :: Simple Lens World [RoomObject]
 worldObjects = lens _worldObjects (\w wos -> w {_worldObjects = wos})
 currentRoomName :: Getter World String
-currentRoomName = to (\w -> _roomName . _currentRoom $ w)
+currentRoomName = to (\w -> _roomName . _currentRoom . _player $ w)
 
 -- Give the objects belonging to the current room
 currentObjects :: Getter World [RoomObject]
-currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom $ w)) (_worldObjects w))
+currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom . _player $ w)) (_worldObjects w))
 
 -- Give the objects belonging to the current room... AND their contained objects.
 fullCurrentObjects :: Getter World [RoomObject]
@@ -129,19 +133,21 @@ roomByString w s = case _getARoom w s of
 playerObjects :: Getter World [RoomObject]
 playerObjects = to $ filter (isInRoom playerPockets) . _worldObjects
 
-newtype ObjectNames = ObjectNames{ names :: [String] }
+newtype ObjectNames = ObjectNames{ names :: [String] } deriving (Read, Show)
 
 data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Luminescent | Powered | Salted | Nada
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Read)
 
 -- Details of a room object : its current status and its
 -- eventual content
 data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
                                             ,_objectDescription :: String
                                             , _content :: [RoomObject] }
+                                            deriving (Read, Show)
 
 
 data DoorInfo = DoorInfo { key :: Maybe String }
+    deriving (Eq, Read, Show)
 
 data RoomObject = Exit { _ronames :: ObjectNames            
                         , _inRoom :: String                  
@@ -151,6 +157,7 @@ data RoomObject = Exit { _ronames :: ObjectNames
                 | RoomObject { _ronames :: ObjectNames
                             , _inRoom :: String
                             , _rodetails :: RoomObjectDetails}
+                            deriving (Read, Show)
 mainName :: RoomObject -> String
 mainName = headName . _ronames
 headName :: ObjectNames -> String
@@ -189,10 +196,6 @@ data Reaction =  Display String                             -- Display some text
                 | LookAround                                -- Display current room
                 | Error                                     -- Not Implemented Yet 
     deriving (Eq, Show)
-
--- Room object instances
-instance Show RoomObject where
-   show = show . mainName
 
 instance Eq RoomObject where
     (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
