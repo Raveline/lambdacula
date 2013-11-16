@@ -139,7 +139,7 @@ checkStatus s st w = case find ((==) s . mainName) (_worldObjects w) of
 
 -- Make sure the currentRoom is the one we believe it should be
 checkCurrentRoom :: String -> World -> Bool
-checkCurrentRoom s w = (_roomName . _currentRoom . _player $ w) == s
+checkCurrentRoom s w = view currentRoomName w  == s
 
 -- Make sure an item contains something
 checkItemContains :: String     -- Container
