@@ -177,11 +177,11 @@ noReaction = return []
 
 -- Code utils
 -- Given a list of items, replace any version of an item by a new one
-rebuildList :: (Eq a) => [a]    -- A list
-                        -> a    -- The old element
+rebuildList :: (Eq a) => a    -- The old element
                         -> a    -- The new element
+                        -> [a]    -- A list with the old element
                         -> [a]  -- A list with the element replaced
-rebuildList xs old new = case find (==old) xs of
+rebuildList old new xs = case find (==old) xs of
                             Just _  -> rebuildList' xs old new
                             Nothing -> new:xs
     where
@@ -288,8 +288,7 @@ putItemInContainer :: RoomObject
 putItemInContainer container contained = do
                         item <- popFromInventory contained
                         let newContainer = container & containedObjects .~ (item:(container^.containedObjects))
-                        objects <- use worldObjects
-                        worldObjects .= rebuildList objects container newContainer
+                        worldObjects %= rebuildList container newContainer
                         return Nothing
 
 -- Remove an item from a container and put it in the player's inventory
@@ -298,8 +297,7 @@ removeItemFromContainer ::  RoomObject          -- Container
                             -> WorldFeedback
 removeItemFromContainer container contained = do
                             let newContainer = container & containedObjects .~ removeObjectFromList (container^.containedObjects) (mainName contained)
-                            objects <- use worldObjects
-                            worldObjects .= rebuildList objects container newContainer
+                            worldObjects %= rebuildList container newContainer
                             addToInventory contained
                             objects <- use worldObjects
                             worldObjects .= contained:objects
@@ -326,8 +324,7 @@ popFromInventory :: RoomObject
                         -> State World RoomObject 
 popFromInventory item = do
                         let newItem = item { _inRoom = "" } 
-                        objects <- use worldObjects
-                        worldObjects .= rebuildList objects item newItem
+                        worldObjects %= rebuildList item newItem
                         return newItem
 
 removeFromInventory :: RoomObject -> WorldFeedback
@@ -349,8 +346,7 @@ changeStatus :: RoomObject          -- The room object to change
                 -> ObjectStatus     -- The new status
                 -> WorldFeedback
 changeStatus ro st = do
-                        wos <- use worldObjects
-                        worldObjects .= rebuildList wos ro (ro & objectStatus.~ st)
+                        worldObjects %= rebuildList ro (ro & objectStatus.~ st)
                         return Nothing
 
 -- Change the room an object is stored in.
@@ -358,8 +354,7 @@ changeRoom :: String
             -> RoomObject        -- The room object to change
             -> WorldFeedback
 changeRoom name ro = do
-                        wos <- use worldObjects
-                        worldObjects .= rebuildList wos ro (ro { _inRoom = name })
+                        worldObjects %= rebuildList ro (ro { _inRoom = name })
                         return Nothing
 
 -- CONVERSATIONS
