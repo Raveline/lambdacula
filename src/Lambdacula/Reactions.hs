@@ -279,7 +279,7 @@ putInsideContainer container objectName workingText
                     case getFromInventory objectName w of
                         Nothing -> singleAnswer "You don't have this object !"
                         Just contained -> do
-                            putItemInContainer contained container 
+                            putItemInContainer container contained
                             return (Just [workingText])
 
 putItemInContainer :: RoomObject
