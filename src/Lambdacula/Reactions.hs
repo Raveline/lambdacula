@@ -299,8 +299,7 @@ removeItemFromContainer container contained = do
                             let newContainer = container & containedObjects .~ removeObjectFromList (container^.containedObjects) (mainName contained)
                             worldObjects %= rebuildList container newContainer
                             addToInventory contained
-                            objects <- use worldObjects
-                            worldObjects .= contained:objects
+                            worldObjects %= (:) contained
                             return Nothing
 
 -- INVENTORY MANAGEMENT
