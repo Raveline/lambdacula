@@ -27,10 +27,12 @@ import Lambdacula.Flow
 import Lambdacula.Display
 import Lambdacula.Reactions
 import qualified Data.Map as Map
+import qualified Data.Foldable as Fd
 import Data.List
 
 import System.Console.Haskeline
 
+-- Constants --
 examineString = "A simple test cube. Look, how pretty !" 
 sayhello = "hello world !"
 zilchReaction = [Display "Err... no."]
@@ -45,24 +47,39 @@ reactions_tests = [("cube", Take, Just "key", [], [PickFromContainer "cube" "key
     ,("cube", Zilch, Nothing, [], zilchReaction)
     ,("dude", Talk, Nothing, [], [Conversation charatopics charaanswers undefined])]
 
+-- Rooms
 trRooms = [Room "The test room" "You are standing in a non-existant place in a virtual world. This is a very good place to hold existential thoughts. Or test the system. But this is more or less the same thing, innit ?" Nada
     ,Room "A second room" "You are in a second room. It doesn't exist, like the first one; so really, you moved but you didn't move. I know, I know, this sounds absurd. And to a point, it is." Nada] 
 
+-- Characters
 charatopics = [("hello", ["hi", "yo"]), ("endgame", [])]
 charaanswers = [("hello", sayhello),("endgame", "Just say end to me")]
 
-
+-- Objects
 trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (RoomObjectDetails Closed "A hermetically locked door" []) (Just (DoorInfo (Just "key")))  "A second room" 
             , makeExit ["south"] "A second room" "A door" "The test room"
             , RoomObject (ObjectNames ["cube", "the test cube","test cube"]) "The test room" (RoomObjectDetails Closed "There is a nice test cube here." [keyObject])
-            , RoomObject (ObjectNames ["dude"]) "The test room" (RoomObjectDetails Nada "A dude" [])]
+            , RoomObject (ObjectNames ["dude"]) "The test room" (RoomObjectDetails Nada "A dude" [simpleObject ["thing"] "" "A thing to be tested"])
+            , simpleObject ["thingamabob"] "The test room" "An object used in a test"]
 
 keyObject = simpleObject ["key", "a key"] "NOWHERE" "Nothing worth looking at"
 
+-- World
 world = buildWorld trRooms trObjects reactions_tests
+
+-- The series of action the player is expected to perform,
+-- in the proper order, in our test world.
+properActions = [(Interaction Open "cube")
+                ,(Complex Take "cube" "key")
+                ,(Complex Use "door" "key")
+                ,(Interaction Move "door")]
+
+----- Utilities -----
+
+-- Apply an action, get the first String result
 testProceed x = head . fst $ runState (proceed x) world
 
--- Get the reaction after processing them
+-- Check re
 probeReactions :: (String, Action, Maybe String) -> [Reaction]
 probeReactions trio = fst $ runState (findReactions trio) world
 
@@ -71,15 +88,26 @@ testReaction :: Reaction -> (World -> Bool) -> Bool
 testReaction reaction f = f resultingWorld
     where resultingWorld = snd $ runState (onlyDo reaction) world
 
+-- Test the result of a series of reactions
+testReactions :: [Reaction] -> (World -> Bool) -> Bool
+testReactions reactions f = f resultingWorld
+    where resultingWorld = snd $ runState (mapM onlyDo reactions) world
+
+-- Do a list of actions. Save the world. Reload the world.
+-- Applies a checking function on the world to make sure the loaded world
+-- kept tracks of state-changes.
 saveLoadAndCheck :: [PlayerAction] -> (World -> Bool) -> IO Bool
 saveLoadAndCheck actions test = do
                                     save "test.ldcl" $ snd $ runState (multiProceed actions) world
                                     w <- (load trRooms reactions_tests "test.ldcl")
                                     return $ test w
 
+-- Apply actions, then apply a boolean function on the world
+-- to make sure state has changed.
 checkWorld :: [PlayerAction] -> (World -> Bool) -> Bool
 checkWorld x t = t . snd $ runState (multiProceed x) world
 
+-- Do a series of actions
 multiProceed :: [PlayerAction] -> WorldAction
 multiProceed [] = return []
 multiProceed [action] = proceed action
@@ -90,12 +118,17 @@ multiProceed (action:actions) = do
 -- Get the string result from an action
 testFeedback act = fst $ runState (proceed act) world
 
+---- Various boolean functions ----
+
+-- Make sure the player has no objects.
 playerInventoryIsEmpty :: World -> Bool
 playerInventoryIsEmpty w = length(w^.playerObjects) == 0
 
+-- Make sure the player has a given object.
 playerInventoryContains :: RoomObject -> World -> Bool
 playerInventoryContains ro w = ro { _inRoom = playerPockets } `elem` (w^.playerObjects)
 
+-- Check the status of an object, make sure it is what we except.
 checkStatus :: String               -- Name of the object
                 -> ObjectStatus     -- Status this object should have
                 -> World            -- The world
@@ -104,18 +137,20 @@ checkStatus s st w = case find ((==) s . mainName) (_worldObjects w) of
                     Just x -> x^.objectStatus == st 
                     Nothing -> error "Test poorly written !" 
 
+-- Make sure the currentRoom is the one we believe it should be
 checkCurrentRoom :: String -> World -> Bool
 checkCurrentRoom s w = (_roomName . _currentRoom . _player $ w) == s
 
-properActions = [(Interaction Open "cube")
-                ,(Complex Take "cube" "key")
-                ,(Complex Use "door" "key")
-                ,(Interaction Move "door")]
-
--- Just a lambdacula-repl loader to test things with GHCI
-repl = do
-    printStrs $ displayRoom (view currentRoom world) (view currentObjects world)
-    runInputT defaultSettings (promptLoop world)
+-- Make sure an item contains something
+checkItemContains :: String     -- Container
+                    -> String   -- Contained
+                    -> World    -- Our test world
+                    -> Bool
+checkItemContains container contained w = contained `elem` map (mainName) (view containedObjects getObject)
+    where 
+        getObject = case identify container w of
+                        [] -> error $ "No object named " ++ container ++ " !"
+                        xs -> head xs
 
 main :: IO()
 main = hspec $ do
@@ -128,9 +163,27 @@ main = hspec $ do
                 probeReactions ("cube", Eat, Nothing) `shouldBe` zilchReaction
 
     describe "reaction processing" $ do
-            it "Process the open cube reaction and make sure it works !" $ do
+            it "Check ChangeStatus" $ do
                 testReaction (head openCubeReaction) (checkStatus "cube" Opened) `shouldBe` True
-    
+
+            it "Check PickFromContainer - when not opened, can't pick" $ do
+                testReaction (PickFromContainer "cube" "key") (playerInventoryIsEmpty) `shouldBe` True
+
+            it "Check PickFromContainer - when opened, pick" $ do
+                testReactions ([ChangeStatus "cube" Opened, PickFromContainer "cube" "key"]) (playerInventoryIsEmpty) `shouldBe` False
+
+            it "Check GetFromCharacter" $ do
+                testReaction (GetFromCharacter "dude" "thing") (playerInventoryIsEmpty) `shouldBe` False
+
+            it "Check PutInsideContainer - doesn't have object, container opened - should fail" $ do
+                testReactions ([ChangeStatus "cube" Opened, PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` False
+
+            it "Check PutInsideContainer - has object, container closed - should fail" $ do
+                testReactions ([PickItem "thingamabob", PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` False
+
+            it "Check PutInsideContainer - has object, container opened - should work" $ do
+                testReactions ([PickItem "thingamabob", ChangeStatus "cube" Opened, PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` True
+
     describe "String feedback" $ do
             it "Make sure the proper string is displayed when examining the cube" $ do
                 testFeedback (Interaction Examine "cube") `shouldBe` [examineString]
