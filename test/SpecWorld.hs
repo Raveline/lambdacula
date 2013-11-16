@@ -100,10 +100,10 @@ testReactions reactions f = f resultingWorld
 -- Do a list of actions. Save the world. Reload the world.
 -- Applies a checking function on the world to make sure the loaded world
 -- kept tracks of state-changes.
-saveLoadAndCheck :: [PlayerAction] -> (World -> Bool) -> IO Bool
-saveLoadAndCheck actions test = do
-                                    save "test.ldcl" $ snd $ runState (multiProceed actions) world
-                                    w <- (load trRooms reactions_tests "test.ldcl")
+saveLoadAndCheck :: String -> [PlayerAction] -> (World -> Bool) -> IO Bool
+saveLoadAndCheck filename actions test = do
+                                    save filename $ snd $ runState (multiProceed actions) world
+                                    w <- (load trRooms reactions_tests filename)
                                     return $ test w
 
 -- Apply actions, then apply a boolean function on the world
@@ -155,6 +155,9 @@ checkItemContains container contained w = contained `elem` map (mainName) (view 
         getObject = case identify container w of
                         [] -> error $ "No object named " ++ container ++ " !"
                         xs -> head xs
+
+checkPlayerName :: String -> World -> Bool
+checkPlayerName s w = s == _player w
 
 main :: IO()
 main = hspec $ do
@@ -229,4 +232,7 @@ main = hspec $ do
 
     describe "saving" $ do
             it "Checks that the world can be saved" $ do
-                saveLoadAndCheck (take 4 properActions) (checkCurrentRoom "A second room") >>= (`shouldBe` True)
+                saveLoadAndCheck "test.lcdl" (take 4 properActions) (checkCurrentRoom "A second room") >>= (`shouldBe` True)
+
+            it "Checks that the player name is well read in the savegame" $ do
+                saveLoadAndCheck "test2.lcdl" ([]) (checkPlayerName "player") >>= (`shouldBe` True)

@@ -53,7 +53,7 @@ readWorld rooms reacs s = World playerInfo current previous (view _1 rms) object
     where 
         splitValues :: [String]
         splitValues = splitOn ldclseparator s
-        playerInfo = read . head $ splitValues
+        playerInfo = head $ splitValues
         current = read . head . drop 1 $ splitValues
         previous = read . head . drop 2 $ splitValues
         objects = read . last $ splitValues
