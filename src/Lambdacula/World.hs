@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Lambdacula.World
 (
     -- Data
@@ -6,7 +7,6 @@ module Lambdacula.World
     ObjectNames (..),
     RoomObjectDetails(..),
     DoorInfo(..),
-    Player(..),
     World(..),
     ObjectStatus(..),
     Reaction (..),
@@ -57,17 +57,6 @@ import Control.Monad.State
 import Control.Applicative
 import Control.Lens hiding (Action)
 
-type WorldAction = State World [String]
-type WorldSituation = State World ()
-type VertexToNodeInfo = Vertex -> (Room, String, [String])
-type KeyToVertex = String -> Maybe Vertex
-type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
-type ActionDetail = (RoomObject, Action, Maybe Interactor)
-type ProcessedAction = Either [String] ActionDetail
-type IdentifiedObject = Either [String] RoomObject
-type IdentifiedInteractor = Either [String] Interactor
-type Reactions = [Reaction]
-type ReactionSet = (String, Action, Maybe String, [Condition], Reactions)
 
 -- Constant virtual room for inventory
 playerPockets = "POCKETS"
@@ -76,108 +65,8 @@ playerPockets = "POCKETS"
 -- HERE BE TYPES
 -- *************
 
--- A room. A piece of the universe if the universe was only carved
--- out of rooms. Which would be handy for creators of zork-like games.
-data Room =    Room { _roomName :: String
-                 ,_description :: String
-                 ,_roomstatus :: ObjectStatus
-                }
-                deriving (Eq, Show, Read)
-
-data Player = Player { _currentRoom :: Room, 
-                    _previousRoom :: Room,
-                    _name :: String }
-                    deriving (Read, Show)
-
--- The world. A scary place. It figures the encounters between a hero,
--- the Player, and one of many room (the rooms) in a CurrentRoom.
-data World = World { _player :: Player,
-                    _worldRooms :: Graph,
-                    _worldObjects :: [RoomObject],
-                    _reactions :: [ReactionSet],
-                    _getARoom :: String -> Maybe Vertex,
-                    _getANode :: Vertex -> (Room, String, [String])}
-
--- World lenses
-worldRooms :: Simple Lens World Graph 
-worldRooms = lens _worldRooms (\w rs -> w {_worldRooms = rs})
-currentRoom :: Simple Lens World Room
-currentRoom = lens (_currentRoom . _player) (\w cr -> w {_player = (_player w){_currentRoom = cr}})
-previousRoom :: Simple Lens World Room
-previousRoom = lens (_previousRoom . _player) (\w cr -> w {_player = (_player w){_previousRoom = cr}})
-worldObjects :: Simple Lens World [RoomObject]
-worldObjects = lens _worldObjects (\w wos -> w {_worldObjects = wos})
-currentRoomName :: Getter World String
-currentRoomName = to (\w -> _roomName . _currentRoom . _player $ w)
-
--- Give the objects belonging to the current room
-currentObjects :: Getter World [RoomObject]
-currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom . _player $ w)) (_worldObjects w))
-
--- Give the objects belonging to the current room... AND their contained objects.
-fullCurrentObjects :: Getter World [RoomObject]
-fullCurrentObjects = to (\w -> [ro|ro <- (view currentObjects w)] ++ [ro| ro <- (view currentObjects w), ro <- ro^.containedObjects])
-
-isInRoom :: String   -- The name of the current room
-            -> RoomObject  -- An object to consider
-            -> Bool     -- Is the object in this room ?
-isInRoom name ro = _inRoom ro == name
-            
-
-roomByString :: World -> String -> Room
-roomByString w s = case _getARoom w s of
-                    Just a -> _getANode w a ^. _1
-                    Nothing -> error $ "Room" ++ s ++ " does not exist ! Fatal error and all that jazz."
-
--- Player lenses
-playerObjects :: Getter World [RoomObject]
-playerObjects = to $ filter (isInRoom playerPockets) . _worldObjects
-
-newtype ObjectNames = ObjectNames{ names :: [String] } deriving (Read, Show)
-
 data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Luminescent | Powered | Salted | Nada
     deriving (Eq, Ord, Show, Read)
-
--- Details of a room object : its current status and its
--- eventual content
-data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
-                                            ,_objectDescription :: String
-                                            , _content :: [RoomObject] }
-                                            deriving (Read, Show)
-
-
-data DoorInfo = DoorInfo { key :: Maybe String }
-    deriving (Eq, Read, Show)
-
-data RoomObject = Exit { _ronames :: ObjectNames            
-                        , _inRoom :: String                  
-                        , _rodetails :: RoomObjectDetails 
-                        , doorInfo :: Maybe DoorInfo
-                        , _rodestination :: String }
-                | RoomObject { _ronames :: ObjectNames
-                            , _inRoom :: String
-                            , _rodetails :: RoomObjectDetails}
-                            deriving (Read, Show)
-mainName :: RoomObject -> String
-mainName = headName . _ronames
-headName :: ObjectNames -> String
-headName = head . names
-
--- RoomObject lenses
-objectDetails :: Simple Lens RoomObject RoomObjectDetails
-objectDetails = lens _rodetails (\ro d -> ro {_rodetails = d })
-
-objectStatus :: Simple Lens RoomObject ObjectStatus
-objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = (_rodetails ro) {_status = s}})
-
-objectAliases :: Simple Lens RoomObject [String]
-objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = ObjectNames als})
-
-objectDescription :: Simple Lens RoomObject String
-objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = (_rodetails ro) {_objectDescription = od}})
-
-containedObjects :: Simple Lens RoomObject [RoomObject]
-containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = (_rodetails ro) {_content = ct}})
 
 -- Reactions
 data Reaction =  Display String                             -- Display some text
@@ -197,10 +86,6 @@ data Reaction =  Display String                             -- Display some text
                 | Error                                     -- Not Implemented Yet 
     deriving (Eq, Show)
 
-instance Eq RoomObject where
-    (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
-
-
 -- Conditions
 data Condition = ContainsAmountOfItem (Int -> Bool) -- Does the object contains x items ?
                 | PlayerHasStatus ObjectStatus      -- Does the player have a status ?
@@ -209,8 +94,119 @@ data Condition = ContainsAmountOfItem (Int -> Bool) -- Does the object contains 
                 | IsThereA String                   -- Is something in scope ?
                 | Contains String                   -- Does the object contains X ?
 
+type Reactions = [Reaction]
+type ReactionSet = (String, Action, Maybe String, [Condition], Reactions)
+
+-- A room. A piece of the universe if the universe was only carved
+-- out of rooms. Which would be handy for creators of zork-like games.
+data Room =    Room { _roomName :: String
+                 ,_description :: String
+                 ,_roomstatus :: ObjectStatus
+                }
+                deriving (Eq, Show, Read)
+$(makeLenses ''Room)
+
+newtype ObjectNames = ObjectNames{ names :: [String] } deriving (Read, Show)
+
+-- Details of a room object : its current status and its
+-- eventual content
+data RoomObjectDetails = RoomObjectDetails { _status :: ObjectStatus
+                                            ,_objectDescription :: String
+                                            , _content :: [RoomObject] }
+                                            deriving (Read, Show)
+
+data DoorInfo = DoorInfo { key :: Maybe String }
+    deriving (Eq, Read, Show)
+
+data RoomObject = Exit { _ronames :: ObjectNames            
+                        , _inRoom :: String                  
+                        , _rodetails :: RoomObjectDetails 
+                        , doorInfo :: Maybe DoorInfo
+                        , _rodestination :: String }
+                | RoomObject { _ronames :: ObjectNames
+                            , _inRoom :: String
+                            , _rodetails :: RoomObjectDetails}
+                            deriving (Read, Show)
+
+$(makeLenses ''RoomObject)
+
+mainName :: RoomObject -> String
+mainName = headName . _ronames
+headName :: ObjectNames -> String
+headName = head . names
+-- The world. A scary place. It figures the encounters between a hero,
+-- the Player, and one of many room (the rooms) in a CurrentRoom.
+data World = World { _player :: String,
+                    _currentRoom :: Room,
+                    _previousRoom :: Room,
+                    _worldRooms :: Graph,
+                    _worldObjects :: [RoomObject],
+                    _reactions :: [ReactionSet],
+                    _getARoom :: String -> Maybe Vertex,
+                    _getANode :: Vertex -> (Room, String, [String])}
+
+$(makeLenses ''World)
+
+currentRoomName :: Lens' World String
+currentRoomName = currentRoom . roomName
+
+-- Give the objects belonging to the current room
+currentObjects :: Getter World [RoomObject]
+currentObjects = to (\w -> filter (isInRoom  (_roomName . _currentRoom $ w)) (_worldObjects w))
+
+-- worldObjects `over` (filter (isInRoom currentRoomName))
+-- currentObjects = filter (isInRoom (view currentRoomName)) . view worldObjects 
+
+-- Gives every object belonging to the current room... AND their contained objects.
+fullCurrentObjects :: Getter World [RoomObject]
+fullCurrentObjects = to (\w -> [ro|ro <- (view currentObjects w)] ++ [ro| ro <- (view currentObjects w), ro <- ro^.containedObjects])
+
+isInRoom :: String   -- The name of the current room
+            -> RoomObject  -- An object to consider
+            -> Bool     -- Is the object in this room ?
+isInRoom name ro = _inRoom ro == name
+            
+
+roomByString :: World -> String -> Room
+roomByString w s = case _getARoom w s of
+                    Just a -> _getANode w a ^. _1
+                    Nothing -> error $ "Room" ++ s ++ " does not exist ! Fatal error and all that jazz."
+
+-- Player lenses
+playerObjects :: Getter World [RoomObject]
+playerObjects = to $ filter (isInRoom playerPockets) . _worldObjects
+
+-- RoomObject lenses
+objectDetails :: Simple Lens RoomObject RoomObjectDetails
+objectDetails = lens _rodetails (\ro d -> ro {_rodetails = d })
+
+objectStatus :: Simple Lens RoomObject ObjectStatus
+objectStatus = lens (_status . _rodetails) (\ro s -> ro {_rodetails = (_rodetails ro) {_status = s}})
+
+objectAliases :: Simple Lens RoomObject [String]
+objectAliases = lens (names . _ronames ) (\ro als -> ro {_ronames = ObjectNames als})
+
+objectDescription :: Simple Lens RoomObject String
+objectDescription = lens (_objectDescription . _rodetails) (\ro od -> ro {_rodetails = (_rodetails ro) {_objectDescription = od}})
+
+containedObjects :: Simple Lens RoomObject [RoomObject]
+containedObjects = lens (_content . _rodetails) (\ro ct -> ro {_rodetails = (_rodetails ro) {_content = ct}})
+
+instance Eq RoomObject where
+    (==) r1 r2 = mainName r1 == mainName r2 && _inRoom r1 == _inRoom r2
+
 data Interactor = ObjectInteractor RoomObject
                 | StringInteractor String
+
+type WorldAction = State World [String]
+type WorldSituation = State World ()
+type VertexToNodeInfo = Vertex -> (Room, String, [String])
+type KeyToVertex = String -> Maybe Vertex
+type FullGraphInfo = (Graph, VertexToNodeInfo, KeyToVertex)
+type ActionDetail = (RoomObject, Action, Maybe Interactor)
+type ProcessedAction = Either [String] ActionDetail
+type IdentifiedObject = Either [String] RoomObject
+type IdentifiedInteractor = Either [String] Interactor
 
 -- Given a string and a room, try to find a RoomObject,
 -- an Exit or a Character matching the string. Send back

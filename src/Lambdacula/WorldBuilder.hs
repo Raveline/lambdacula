@@ -36,7 +36,7 @@ buildWorld :: [Room]            -- A list of rooms
             -> [RoomObject]     -- A list of objects
             -> [ReactionSet]    -- A list of reactions
             -> World            -- Returns a whole world !
-buildWorld rooms objects reactions = World (Player firstRoom firstRoom "player") (view _1 rms) objects reactions (view _3 rms) (view _2 rms)
+buildWorld rooms objects reactions = World "player" firstRoom firstRoom (view _1 rms) objects reactions (view _3 rms) (view _2 rms)
     where 
         firstRoom = head rooms
         rms = roomsToGraph rooms objects
@@ -46,14 +46,16 @@ ldclseparator = "<<<>>>"
 showWorld :: World -> String
 showWorld w = intercalate ldclseparator worldValues
     where 
-        worldValues = show (_player w):[show (_worldObjects w)]
+        worldValues = (_player w):(show $ _currentRoom w):(show $ _previousRoom w):[show (_worldObjects w)]
 
 readWorld :: [Room] -> [ReactionSet] -> String -> World
-readWorld rooms reacs s = World playerInfo (view _1 rms) objects reacs (view _3 rms) (view _2 rms)
+readWorld rooms reacs s = World playerInfo current previous (view _1 rms) objects reacs (view _3 rms) (view _2 rms)
     where 
         splitValues :: [String]
         splitValues = splitOn ldclseparator s
         playerInfo = read . head $ splitValues
+        current = read . head . drop 1 $ splitValues
+        previous = read . head . drop 2 $ splitValues
         objects = read . last $ splitValues
         rms = roomsToGraph rooms objects
 
