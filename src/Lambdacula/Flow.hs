@@ -12,19 +12,31 @@ import Lambdacula.GameData
 import Lambdacula.Action
 import Lambdacula.Parser
 import Lambdacula.World
+import Lambdacula.WorldBuilder
 import Lambdacula.Display
 import Lambdacula.Reactions
 
 import Control.Lens hiding (Action)
 import System.Console.Haskeline
 
+data GameAction = Load | Save | Quit
+
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
 promptLoop :: World -> InputT IO ()
 promptLoop world = do
     input <- getAction
-    let action = processInput input verbs
-    either outputStrLn (runAction world) $ quitOrContinue action
+    let action = proceed $ processInput input verbs
+    either (processGameAction world) (runAction world) action
+
+processGameAction ::  World -> GameAction -> InputT IO ()
+processGameAction w Load = do
+                            loadedWorld <- liftIO $ load ldRooms ldreactions (_player w)
+                            runAction loadedWorld (onlyDisplay "Loaded !") 
+processGameAction w Save = do
+                            liftIO $ save (_player w) w
+                            runAction w (onlyDisplay "Saved !") 
+processGameAction w Quit = outputStrLn "Bye !"
 
 -- Ask for an action.
 getAction :: InputT IO String
@@ -43,14 +55,17 @@ runAction world s = do
     where reaction = runState s world 
 
 -- Given the world and an action, do some stuff... and analyze the world.
-proceed :: PlayerAction -> WorldAction 
-proceed (SimpleAction Zilch) = onlyDisplay "Huh ?"
-proceed (SimpleAction Examine) = onlyDo LookAround
-proceed (SimpleAction Inventorize) = state $ (,) <$> displayInventory . map mainName . view playerObjects <*> id
-proceed (SimpleAction Flee) = onlyDo Flight
-proceed (Interaction act obj) = getPotentialAction obj act Nothing
-proceed (Complex act obj comp) = getPotentialAction obj act (Just comp)
-proceed _ = onlyDisplay "Whaaaat ?"
+proceed :: PlayerAction -> Either GameAction WorldAction 
+proceed (SimpleAction QuitGame) = Left Quit
+proceed (SimpleAction LoadGame) = Left Load
+proceed (SimpleAction SaveGame) = Left Save
+proceed (SimpleAction Zilch) = Right $ onlyDisplay "Huh ?"
+proceed (SimpleAction Examine) = Right $ onlyDo LookAround
+proceed (SimpleAction Inventorize) = Right $ state $ (,) <$> displayInventory . map mainName . view playerObjects <*> id
+proceed (SimpleAction Flee) = Right $ onlyDo Flight
+proceed (Interaction act obj) = Right $ getPotentialAction obj act Nothing
+proceed (Complex act obj comp) = Right $ getPotentialAction obj act (Just comp)
+proceed _ = Right $ onlyDisplay "Whaaaat ?"
 
 getPotentialAction :: String            -- The main object
                     -> Action           -- The action
@@ -62,7 +77,3 @@ getPotentialAction obj act comp = do
                                         Left xs -> return xs
                                         Right trio -> processAction trio
 
--- Check if the proposed action is to quit or to do something.
-quitOrContinue :: PlayerAction -> Either String WorldAction
-quitOrContinue (SimpleAction QuitGame) = Left "K thx Bye"
-quitOrContinue a = Right $ proceed a

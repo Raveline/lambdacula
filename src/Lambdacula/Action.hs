@@ -41,6 +41,8 @@ data Action = Examine       -- Look at something
             | Take          -- Pick up stuff.
             | Search        -- Look for something.
             | QuitGame      -- Leave this wonderful game.
+            | LoadGame      -- Load the last save
+            | SaveGame      -- Save a game
             | Eat           -- Experiment with your mouth.
             | Drink         -- Quench your thirst
             | Show          -- Special, more like an event. Display stuff on screen

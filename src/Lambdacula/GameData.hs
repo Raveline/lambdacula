@@ -23,6 +23,8 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Move "go" [] [] False
         ,Transitive Eat "eat" [] [] False
         ,Transitive QuitGame "quit" [] [] False
+        ,Transitive SaveGame "save" [] [] False
+        ,Transitive LoadGame "load" [] [] False
         ,Transitive Use "use" [] ["on"] False
         ,Transitive Use "open" [] ["with"] False
         ,Transitive Use "unlock" [] ["with", "using"] False

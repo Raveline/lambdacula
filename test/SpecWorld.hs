@@ -76,8 +76,12 @@ properActions = [(Interaction Open "cube")
 
 ----- Utilities -----
 
+handleProceed x = case proceed x of
+                    Right a -> a
+                    Left _ -> error "Proceed did not call a WorldAction !"
+
 -- Apply an action, get the first String result
-testProceed x = head . fst $ runState (proceed x) world
+testProceed x = head . fst $ runState (handleProceed x) world
 
 -- Check re
 probeReactions :: (String, Action, Maybe String) -> [Reaction]
@@ -107,16 +111,16 @@ saveLoadAndCheck actions test = do
 checkWorld :: [PlayerAction] -> (World -> Bool) -> Bool
 checkWorld x t = t . snd $ runState (multiProceed x) world
 
--- Do a series of actions
+-- Do a series of actions - BLAAAH, UGLY ! Need to refactor this, but it's late. TODO.
 multiProceed :: [PlayerAction] -> WorldAction
 multiProceed [] = return []
-multiProceed [action] = proceed action
+multiProceed [action] = handleProceed action
 multiProceed (action:actions) = do
-            proceed action
+            handleProceed action
             multiProceed actions
 
 -- Get the string result from an action
-testFeedback act = fst $ runState (proceed act) world
+testFeedback act = fst $ runState (handleProceed act) world
 
 ---- Various boolean functions ----
 
