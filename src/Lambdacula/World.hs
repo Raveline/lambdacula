@@ -9,6 +9,7 @@ module Lambdacula.World
     DoorInfo(..),
     World(..),
     ObjectStatus(..),
+    PlayerStatus(..),
     Reaction (..),
     Condition (..),
     Interactor (..),
@@ -68,6 +69,8 @@ playerPockets = "POCKETS"
 data ObjectStatus = Opened | Closed | Broken | Fixed | Hidden | Dark | Luminescent | Powered | Salted | Nada
     deriving (Eq, Ord, Show, Read)
 
+data PlayerStatus = Speedster | Wolfish | Wolfer | Werewolwed
+
 -- Reactions
 data Reaction =  Display String                             -- Display some text
                 | PickItem String                           -- Add to inventory
@@ -88,7 +91,7 @@ data Reaction =  Display String                             -- Display some text
 
 -- Conditions
 data Condition = ContainsAmountOfItem (Int -> Bool) -- Does the object contains x items ?
-                | PlayerHasStatus ObjectStatus      -- Does the player have a status ?
+                | PlayerHasStatus PlayerStatus      -- Does the player have a status ?
                 | PlayerHasObject String            -- Does the player have an object ?
                 | HasStatus ObjectStatus            -- Does the object has a status ?
                 | IsThereA String                   -- Is something in scope ?

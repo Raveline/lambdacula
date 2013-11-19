@@ -32,11 +32,12 @@ roomsToGraph rms ros = graphFromEdges (map getRoomKeyAndEdges rms)
         exitKeys' (_:ros) = exitKeys' ros
 
 
-buildWorld :: [Room]            -- A list of rooms
+buildWorld :: String            -- Player name
+            -> [Room]           -- A list of rooms
             -> [RoomObject]     -- A list of objects
             -> [ReactionSet]    -- A list of reactions
             -> World            -- Returns a whole world !
-buildWorld rooms objects reactions = World "player" firstRoom firstRoom (view _1 rms) objects reactions (view _3 rms) (view _2 rms)
+buildWorld name rooms objects reactions = World name firstRoom firstRoom (view _1 rms) objects reactions (view _3 rms) (view _2 rms)
     where 
         firstRoom = head rooms
         rms = roomsToGraph rooms objects

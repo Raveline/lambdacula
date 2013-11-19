@@ -16,9 +16,5 @@ import Lambdacula.Action
 import System.Console.Haskeline
 
 main = do
-        printStrs $ displayRoom (view currentRoom aWorld) (view currentObjects aWorld)
-        runInputT defaultSettings (promptLoop aWorld)
-
--- Load it from WorldBuilder
-aWorld = buildWorld ldRooms ldObjects ldreactions
+        runInputT defaultSettings startUp -- (promptLoop aWorld)
 

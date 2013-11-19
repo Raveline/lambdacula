@@ -1,5 +1,6 @@
 module Lambdacula.Flow
 (
+    startUp,
     promptLoop,
     proceed
 )
@@ -19,7 +20,38 @@ import Lambdacula.Reactions
 import Control.Lens hiding (Action)
 import System.Console.Haskeline
 
+import System.Directory
 data GameAction = Load | Save | Quit
+
+startUp :: InputT IO ()
+startUp = do
+        liftIO $ putStrLn "Hello ! Welcome to Lambdacula, a Functional Transylvanian Adventure game !"
+        x <- getStableInputLine "Would you please tell us your name : "
+        knownPlayer <- liftIO $ doesFileExist x
+        case knownPlayer of
+            True -> do
+                w <- loadGame x
+                runAction w (onlyDo LookAround)
+            False -> newGame x
+    where
+        getStableInputLine :: String -> InputT IO String
+        getStableInputLine s = do
+                x <- getInputLine s
+                case x of
+                    Nothing -> getStableInputLine s
+                    Just line -> return line
+
+newGame :: String -> InputT IO ()
+newGame playerName = do
+            -- printStrs $ displayRoom (view currentRoom w) (view currentObjects w)
+            let hello = ["Splendid, " ++ playerName ++ " ! Let's start a game.", "Next time you tell me this name, I'll load your game directly !"]
+            let aWorld = buildWorld playerName ldRooms ldObjects ldreactions
+
+            liftIO $ printStrs $ hello
+            runAction aWorld (onlyDo LookAround) 
+
+loadGame :: String -> InputT IO World
+loadGame name = liftIO $ load ldRooms ldreactions name
 
 -- Display a prompt, get some input, call some proceeding function
 -- to do stuff with it.
@@ -31,7 +63,8 @@ promptLoop world = do
 
 processGameAction ::  World -> GameAction -> InputT IO ()
 processGameAction w Load = do
-                            loadedWorld <- liftIO $ load ldRooms ldreactions (_player w)
+                            let name = (_player w)
+                            loadedWorld <- loadGame name 
                             runAction loadedWorld (onlyDisplay "Loaded !") 
 processGameAction w Save = do
                             liftIO $ save (_player w) w

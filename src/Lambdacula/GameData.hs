@@ -33,7 +33,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Lift "lift" [] [] False
         ,Transitive Search "search" [] [] False
         ,Transitive Flee "flee" [] [] False
-        ,Transitive Attack "attack" [] [] False
+        ,Transitive Attack "attack" [] ["with", "using"] False
         ,Transitive Attack "kick" [] [] False
         ,Transitive Attack "hit" [] [] False
         ,Transitive Push "push" [] [] False
@@ -144,7 +144,7 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("liquor cabinet", Take, Just "chalice", [], [PickFromContainer "liquor cabinet" "chalice"])
     ,("liquor cabinet", Examine, Nothing, [], [Display "A simple liquor cabinet made out of oakwood. Elegantly crafted, but it has seen better days."])
     ,("chalice", Drink, Nothing, [], [Display "You're not a vampire, you don't drink blood. And you don't know where this blood has been, anyway."])
-    ,("chalice", Examine, Nothing, [], [Display "Well, it's a gold chalice with blood inside. What more do you need that screams \"Vampires are around !\" ?"])
+    ,("chalice", Examine, Nothing, [], [Display "Well, it's a gold chalice with blood inside. What more do you need that screams \"There are Vampires around !\" ?"])
     -- Chapel 
     ,("statue", Examine, Nothing, [], [Display "You know nothing about sculpture, but this one is really ugly. But there is something interesting : there are marks on the floor underneath, as if the statue had be moved recently."])
     , ("statue", Push, Nothing, [], [Display "OK, this thing is heavy. Like in, way too heavy for you to move it. The best thing there would be to ask Arnold Schwarzenegger for help. But California is far away, and you don't really know him personnaly, so that would be a bit weird."])
@@ -159,6 +159,19 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("piano", Attack, Nothing, [], [Display "WHY ? WHY MUST YOU ALWAYS RESORT TO VIOLENCE ? Can't you show some respect for this extraordinary instrument ?"])
     ,("bouncer", Talk, Nothing, [], [Conversation bouncertopics bounceranswers undefined])
     ,("bouncer", Give, Just "Ghoul and the Kank tickets", [PlayerHasObject "Ghoul and the Kank tickets"], [RemoveItem "Ghoul and the Kank tickets", Display "\"OH THANK YOU ! THANK YOU SIR !\", says the bouncer, before running away, almost dancing. You made a man-made monster very, very happy, you little angel, you.", RemoveFromWorld "bouncer"])
+    ,("bouncer", Attack, Nothing, [], [Display "Let's face it : you don't stand a chance. Besides, the guy is just doing his job. Attacking him would be petty, not to say immoral. You wouldn't want to act immorally, WOULD YOU ?"])
+    ,("bouncer", Attack, (Just "crowbar"), [], [Display "I'm sure you can use this for a greater cause than just snuffing a bouncer."])
+    -- North-east corridor
+    ,("armour", Examine, Nothing, [], [Display "There is one armour that seems particularly massive. After examining it carefully, you notice there is a little mechanism in the breastplate to open it. Weird."])
+    ,("armour", Open, Nothing, [], [ChangeStatus "armour" Opened, LookInsideContainer "armour" "You use the strange locket on the breastplate to open the armor !" ])
+    ,("armour", Take, (Just "crowbar"), [], [PickFromContainer "armour" "crowbar"])
+    -- Game arcade
+    ,("Video game", Examine, Nothing, [], [Display "It's a videogame. THIS IS SO COOL ! I don't know about you, but I just LOVE video games. As much as I hate stupid inception-like \"playing a video game in a video game\" cheap narrative ideas. Anyway... In Galambdaga, you're in command of a spaceship, and you have to save the planet Lambda from an invading alien fleet... which you can't really do actually, because the game is endless. Every time you beat a level, there is a new one, more difficult than the previous. See, in the old days, games would teach you valuable lessons in life. Anyway. Looking at the high score, it looks like the best play is a mysterious \"Count Lambdac\" who managed to get to the 232th level. Good lord, what a geek !"])
+    ,("Video game", Use, (Just "coin"), [HasStatus Broken], [Display "You put the coin in the game... wow ! Looks, there is something on the screen : \"You are our 1,000,000th customer ! No kidding, it's true ! This videogame arcade will be playable by anyone, without needing any coin FOR THE NEXT TWO WEEKS !\". God, what are the odds ? Anyway, you can now play this delicious oldy."])
+    ,("Video game", Use, Nothing, [HasStatus Broken], [Display "Darn, it looks like you'll need to put a coin to make it work. Gee. A coin per game. This is such a racket."])
+    ,("Video game", Use, Nothing, [HasStatus Fixed, PlayerHasStatus Speedster], [Display "Wow ! Thanks to your chemical experience, you're playing like a god. But even a chem-improved human cannot beat a clever algorithm designed to make you eventually cry and lose. At the 236th level, your ship finally gets blasted by the invading pixels that threaten the homeland of Lambda Planet and... ahem. So. You lose. But wait ! YOU'VE GOT THE HIGHSCORE ! Can you imagine that ? The engineer rushes towards you to congratulate you. \"Look, dude, what you did there was AMAZING. We need to call the Guiness Book, or something. Anyhow, Count Lambdacula said that if anyone managed to beat his highscore, he had to be awarded with this lousy Alcatraz prisoners suit. So... here it is...\". And Roger gives you the suit.", GetFromCharacter "Roger" "Alcatraz Suit", Display "Congratulations ! You've highscored Galambdaga and all you got was a lousy Alcatraz suit !"])
+    ,("Video game", Use, Nothing, [HasStatus Fixed], [Display "You start the game ! Boy ! Can you imagine at this time they had 8-bit lousy graphism ? It's much better today, isn't it ? Anyway. You try it, and you die miserably at level 5. You're score is pathetic. You're a disgrace. I don't think you stand a chance to beat the Count's high score, frankly."])
+    ,("Roger", Talk, Nothing, [], [Conversation techtopics techanswers undefined])
     ]
 
 -- Antichamber
@@ -340,6 +353,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             , makeExit ["West"] "The north-east corridor" "To the north-west corridor" "The north-west corridor"
             , makeDoor ["East", "iron door", "door"] "The north-east corridor" "An iron door, with mysterious, beeping sounds behind" "The amusement arcade" (Just "skull key") Closed
             , makeExit ["South"] "The north-east corridor" "To the central corridor" "The central corridor"
+            , objectContaining ["armour", "armor", "armours", "armors"] "The north-east corridor" "" Nada [simpleObject ["crowbar"] "" "A crowbar. And you thought those items only existed in FPS !"]
             -- The amusement arcade
             , makeExit ["West"] "The amusement arcade" "To the corridor" "The north-east corridor"
             , simpleObject ["Roger", "engineer", "dude", "man"] "The amusement arcade" "Behind a counter, there is a slightly overweight beardy guy in blue overalls, rumaging through a toolbox."
