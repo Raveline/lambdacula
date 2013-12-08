@@ -65,7 +65,7 @@ trObjects = [Exit (ObjectNames ["A test door", "door"]) "The test room" (RoomObj
 keyObject = simpleObject ["key", "a key"] "NOWHERE" "Nothing worth looking at"
 
 -- World
-world = buildWorld trRooms trObjects reactions_tests
+world = buildWorld "test" trRooms trObjects reactions_tests
 
 -- The series of action the player is expected to perform,
 -- in the proper order, in our test world.
@@ -235,4 +235,4 @@ main = hspec $ do
                 saveLoadAndCheck "test.lcdl" (take 4 properActions) (checkCurrentRoom "A second room") >>= (`shouldBe` True)
 
             it "Checks that the player name is well read in the savegame" $ do
-                saveLoadAndCheck "test2.lcdl" ([]) (checkPlayerName "player") >>= (`shouldBe` True)
+                saveLoadAndCheck "test2.lcdl" ([]) (checkPlayerName "test") >>= (`shouldBe` True)
