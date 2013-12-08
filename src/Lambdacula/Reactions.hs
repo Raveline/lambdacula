@@ -152,9 +152,15 @@ processReaction (RebranchTo act n react) = error "NIY"
 processReaction (Conversation aliases topics s) = handleConversation s aliases topics
 processReaction (LookAround) = displayCurrentRoom
 processReaction (MoveTo location) = basicMove location
-processReaction (PickItem s) = do
-                        obj <- fetchByName s
-                        addToInventory obj
+processReaction (PickItem s suc) = do
+                        w <- get
+                        -- Beware, player could already have this item...
+                        if hasInInventory s w
+                            then singleAnswer $ "You already have a " ++ s ++ " !"
+                            else do
+                                obj <- fetchInRoom s
+                                addToInventory obj
+                                singleAnswer suc
 processReaction (RemoveItem s) = do
                         obj <- fetchByName s
                         removeFromInventory obj
@@ -165,11 +171,12 @@ testCondition w r (ContainsAmountOfItem x) = x . length . view containedObjects 
 testCondition w r (PlayerHasObject x) = hasInInventory x w
 testCondition w r (PlayerHasStatus stat) = error "NIY"
 testCondition w r (HasStatus stat) = (==) stat . view objectStatus $ r
+testCondition w _ (ObjectHasStatus name stat) = (==) stat . view objectStatus $ fetchByNameInScope name (view worldObjects w)
 testCondition w ro (Contains name) = ro `containsSomethingNamed` name  
 testCondition w _ (IsThereA name) = name `elem` allNames (view fullCurrentObjects w)
 
 ------------------------------------------------
--- All utilies methods should be stored there --
+-- All utilities methods should be stored there --
 ------------------------------------------------
 
 noReaction :: State World [String]
@@ -203,10 +210,16 @@ removeObjectFromList ros s = case findObjectToRemove s ros of
 isOpened :: RoomObject -> Bool
 isOpened ro = view objectStatus ro == Opened
 
+fetchInRoom :: String -> State World RoomObject
+fetchInRoom s = do
+                scope <- localShortScope
+                return $ fetchByNameInScope s scope 
+
 fetchByName :: String -> State World RoomObject 
 fetchByName s = do
                 scope <- localScope
                 return $ fetchByNameInScope s scope 
+
 fetchByNameInScope :: String -> [RoomObject] -> RoomObject
 fetchByNameInScope s ros = fromMaybe (error $ "Object " ++ s ++ " not found in scope : " ++ show ros ++ ". This should not happen.") (finder ros)
     where

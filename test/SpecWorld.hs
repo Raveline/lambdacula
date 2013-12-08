@@ -45,6 +45,7 @@ reactions_tests = [("cube", Take, Just "key", [], [PickFromContainer "cube" "key
     ,("cube", Examine, Nothing, [], [Display examineString])
     ,("cube", Open, Nothing, [], openCubeReaction)
     ,("cube", Zilch, Nothing, [], zilchReaction)
+    ,("thingamabob", Take, Nothing, [], [PickItem "thingamabob" "You pick a thingamabob !"])
     ,("dude", Talk, Nothing, [], [Conversation charatopics charaanswers undefined])]
 
 -- Rooms
@@ -122,6 +123,9 @@ multiProceed (action:actions) = do
 -- Get the string result from an action
 testFeedback act = fst $ runState (handleProceed act) world
 
+-- Get the last string result from a list of actions
+testFeedbacks acts = last . fst $ runState (multiProceed acts) world
+
 ---- Various boolean functions ----
 
 -- Make sure the player has no objects.
@@ -144,6 +148,9 @@ checkStatus s st w = case find ((==) s . mainName) (_worldObjects w) of
 -- Make sure the currentRoom is the one we believe it should be
 checkCurrentRoom :: String -> World -> Bool
 checkCurrentRoom s w = view currentRoomName w  == s
+
+roomContains :: String -> World -> Bool
+roomContains s w = s `elem` map (mainName) (view fullCurrentObjects w)
 
 -- Make sure an item contains something
 checkItemContains :: String     -- Container
@@ -182,14 +189,20 @@ main = hspec $ do
             it "Check GetFromCharacter" $ do
                 testReaction (GetFromCharacter "dude" "thing") (playerInventoryIsEmpty) `shouldBe` False
 
+            it "Check pickItem once - should be able to pick an item" $ do
+                testReaction (PickItem "thingamabob" "You pick a thingamabob") (roomContains "thingamabob") `shouldBe` False
+
+            it "Check pickItem twice - second time should not work" $ do
+                testFeedbacks [Interaction Take "thingamabob", Interaction Take "thingamabob"] `shouldBe` "You already have a thingamabob !"
+
             it "Check PutInsideContainer - doesn't have object, container opened - should fail" $ do
                 testReactions ([ChangeStatus "cube" Opened, PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` False
 
             it "Check PutInsideContainer - has object, container closed - should fail" $ do
-                testReactions ([PickItem "thingamabob", PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` False
+                testReactions ([PickItem "thingamabob" "", PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` False
 
             it "Check PutInsideContainer - has object, container opened - should work" $ do
-                testReactions ([PickItem "thingamabob", ChangeStatus "cube" Opened, PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` True
+                testReactions ([PickItem "thingamabob" "", ChangeStatus "cube" Opened, PutInsideContainer "cube" "thingamabob" ""]) (checkItemContains "cube" "thingamabob") `shouldBe` True
 
     describe "String feedback" $ do
             it "Make sure the proper string is displayed when examining the cube" $ do

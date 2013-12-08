@@ -44,6 +44,7 @@ module Lambdacula.World
     identifyWithContained,
     canBeNamed,
     fullCurrentObjects,
+    localShortScope,
     localScope
 )
 where
@@ -73,7 +74,7 @@ data PlayerStatus = Speedster | Wolfish | Wolfer | Werewolwed
 
 -- Reactions
 data Reaction =  Display String                             -- Display some text
-                | PickItem String                           -- Add to inventory
+                | PickItem String String                    -- Add to inventory (1) and display string (2)
                 | RemoveItem String                         -- Remove from inventory
                 | ChangeStatus String ObjectStatus          -- Change object status
                 | PickFromContainer String String           -- Pick from container (1) object (2)
@@ -90,12 +91,13 @@ data Reaction =  Display String                             -- Display some text
     deriving (Eq, Show)
 
 -- Conditions
-data Condition = ContainsAmountOfItem (Int -> Bool) -- Does the object contains x items ?
-                | PlayerHasStatus PlayerStatus      -- Does the player have a status ?
-                | PlayerHasObject String            -- Does the player have an object ?
-                | HasStatus ObjectStatus            -- Does the object has a status ?
-                | IsThereA String                   -- Is something in scope ?
-                | Contains String                   -- Does the object contains X ?
+data Condition = ContainsAmountOfItem (Int -> Bool)         -- Does the object contains x items ?
+                | PlayerHasStatus PlayerStatus              -- Does the player have a status ?
+                | PlayerHasObject String                    -- Does the player have an object ?
+                | HasStatus ObjectStatus                    -- Does the main targetted object has a status ?
+                | ObjectHasStatus String ObjectStatus       -- Does a given object has a given status ?
+                | IsThereA String                           -- Is something in scope ?
+                | Contains String                           -- Does the object contains X ?
 
 type Reactions = [Reaction]
 type ReactionSet = (String, Action, Maybe String, [Condition], Reactions)
@@ -288,6 +290,10 @@ canBeNamed s ro = lowerStr s `elem` (map lowerStr $ ro^.objectAliases)
         lowerStr = map toLower
 
 match = canBeNamed 
+
+-- Give all objects that are <not> in the inventory
+localShortScope :: State World [RoomObject]
+localShortScope = use fullCurrentObjects
 
 -- Give all potential objects the player can interact with
 -- Namely, its surroundings and inventory

@@ -45,7 +45,7 @@ none = "NONE"
 
 -- Lambdacula reaction set
 ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow, it's a very old print. It looks like it's seen better day though. The previous owner seemed to love this book a lot. Perhaps a bit too much, actually."])
-    ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover", Display "You take this wicked, naughty book. Like I'm surprised."])
+    ,("Lady's Chatterley's Lover", Take, Nothing, [], [PickItem "Lady's Chatterley's Lover" "You take this wicked, naughty book. Like I'm surprised."])
     ,("Lady's Chatterley's Lover", Zilch, Nothing, [], [Display "I don't know what you're trying to do with this book. And frankly, I don't want to know."])
     ,("rug", Examine, Nothing, [], [Display "OK, it's probably not a masterwork as far as tapestry is concerned, but at least they were trying."])
     ,("rug", Lift, Nothing, [], [ChangeStatus "A hatch" Closed, Display "There is a hatch behind the rug !"])
@@ -89,7 +89,8 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("brasero", Examine, Nothing, [], [Display "The brasero is not lit. If you had any kind of fuel and something to start a fire, you could probably use it though."])
     ,("Sad", Examine, Nothing, [], [Display "Are we really going to have to spend time considering this emo character ? OK, obviously he is not a vampire. Most likely, he would love to be one. In any case, he's going to make you waste your time. And be annoying. Don't tell me I haven't warned you."])
     ,("Sad", Talk, Nothing, [], [Conversation necrotopics necroanswers undefined])
-    ,("torchlight", Use, Just "battery", [], [ChangeStatus "torchlight" Powered, Display "Great, you now have a functioning torchlight. This should shed some light on your current issues. Shed some light... got it ? HAHAHAHA. Ahem. Sorry."])
+    ,("torchlight", Use, Just "battery", [ObjectHasStatus "battery" Powered], [ChangeStatus "torchlight" Powered, Display "Great, you now have a functioning torchlight. This should shed some light on your current issues. Shed some light... got it ? HAHAHAHA. Ahem. Sorry."])
+    ,("torchlight", Use, Just "battery", [], [Display "Hum, this doesn't look like it's working... this battery is dead. How unlucky."])
     ,("torchlight", Use, Nothing, [HasStatus Powered], [ChangeStatus "torchlight" Luminescent, Display "You turn the torchlight on. You now have a lightsource and can go in dark places !"])
     ,("torchlight", Use, Nothing, [HasStatus Luminescent], [ChangeStatus "torchlight" Powered, Display "You turn the torchligts off. You have no lightsource now. Avoid dark places !"])
     ,("torchlight", Use, Nothing, [], [Display "There are no batteries in the torchlight !"])
@@ -108,7 +109,7 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("portrait", Take, Nothing, [], [Display "You're not a burglar. Besides, you don't want to carry this thing with you all the time."])
     ,("portrait", Zilch, Nothing, [], [Display "You can't do much with this portrait."])
     ,("soda vending machine", Examine, Nothing, [], [Display "Well, it's a soda vending machine that looked like it was tuned into a cocktail vending machine. But in only serves bloody mary according to the labels on the buttons. Weird. Anyway, the machine is not plugged. And there doesn't even seem to be anything to plug it, so... forget your bloody mary."])
-    ,("soda vending machine", Attack, Just "crowbar", [PlayerHasObject "crowbar"], [PickItem "coin", RemoveItem "crowbar", Display "Ha ! I like a thug with some method. Ok, you apply the crowbar on the machine. After a loud \"clang\", you manage to brreak the crowbar, so you won't be able to use it anymore. But there are good news : ONE coin fell on the ground. You pick it up quickly. You are now the proud owner of a coin !"])
+    ,("soda vending machine", Attack, Just "crowbar", [PlayerHasObject "crowbar"], [PickItem "coin" "Ha ! I like a thug with some method. Ok, you apply the crowbar on the machine. After a loud \"clang\", you manage to break the crowbar, so you won't be able to use it anymore. But there are good news : ONE coin fell on the ground. You pick it up quickly. You are now the proud owner of a coin !", RemoveItem "crowbar"])
     ,("soda vending machine", Attack, Nothing, [], [Display "There is nothing like gratuitous violence. However, as you try to kick the machine with your foot, you hurt yourself. If you want to continue this aggressive behaviour, you are most likely going to need help. Come back with a gang of baddies. Or with some kind of weapon."])
     ,("soda vending machine", Zilch, Nothing, [], [Display "I won't let you do stupid things to a vending machine. Tempting as it might be."])
     ,("dresser", Examine, Nothing, [HasStatus Closed], [Display "It is a massive, walnut-made dresser with glass paned doors. Though the glass is very, very dusty you can see through it that there is almost nothing to see inside. You'd probably could check a bit more if you opened it."])
@@ -152,7 +153,7 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("altar", Push, Nothing, [], [Display "What a stup... oh wait, it CAN be moved a bit. Actually, it seems to have triggered some sort of mechanism... Yes ! The ugly statue of an angel moved, revealing a hidden staircase ! You've got an eye for secret passage, my friend !", ChangeStatus "Hidden stairs" Opened])
     -- Piano bar
     ,("piano", Open, Nothing, [IsThereA "bouncer"], [Display "As you try to open the piano, the bouncer stops you. \"Hey, no touching !\". Considering his physical force, you decide to do as told."])
-    ,("piano", Examine, Nothing, [HasStatus Closed], [Display "A very nice Pleyel grand piano. The lid is closed. Too bad, you're quite sure it's out of key."])
+    ,("piano", Examine, Nothing, [HasStatus Closed], [Display "A very nice Pleyel grand piano. The lid is closed. Too bad, it certainly needs to be tuned."])
     ,("piano", Open, Nothing, [], [ChangeStatus "piano" Opened, LookInsideContainer "piano" "You open the piano... Wait, there is something inside :"])
     ,("piano", Examine, Nothing, [], [Display "A Pleyel in all his glory."])
     ,("piano", Use, Nothing, [], [Display "Look. This is not the kind of game where you'd hear a theme music, right now if you did that. I mean come on, it was already hard to get this stupid text to display, you think I'm going to put some sounds, now ? So, please. Let this piano be. Don't you have a vampire to hunt ? Any progress on this front ?"])
@@ -172,6 +173,8 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("Video game", Use, Nothing, [HasStatus Fixed, PlayerHasStatus Speedster], [Display "Wow ! Thanks to your chemical experience, you're playing like a god. But even a chem-improved human cannot beat a clever algorithm designed to make you eventually cry and lose. At the 236th level, your ship finally gets blasted by the invading pixels that threaten the homeland of Lambda Planet and... ahem. So. You lose. But wait ! YOU'VE GOT THE HIGHSCORE ! Can you imagine that ? The engineer rushes towards you to congratulate you. \"Look, dude, what you did there was AMAZING. We need to call the Guiness Book, or something. Anyhow, Count Lambdacula said that if anyone managed to beat his highscore, he had to be awarded with this lousy Alcatraz prisoners suit. So... here it is...\". And Roger gives you the suit.", GetFromCharacter "Roger" "Alcatraz Suit", Display "Congratulations ! You've highscored Galambdaga and all you got was a lousy Alcatraz suit !"])
     ,("Video game", Use, Nothing, [HasStatus Fixed], [Display "You start the game ! Boy ! Can you imagine at this time they had 8-bit lousy graphism ? It's much better today, isn't it ? Anyway. You try it, and you die miserably at level 5. You're score is pathetic. You're a disgrace. I don't think you stand a chance to beat the Count's high score, frankly."])
     ,("Roger", Talk, Nothing, [], [Conversation techtopics techanswers undefined])
+    -- Laboratory
+    ,("battery", Take, Nothing, [], [PickItem "battery" "You take the battery. You feel full of juice. I should warn you, I'm stacked with bad puns about electricity."])
     ]
 
 -- Antichamber
@@ -375,6 +378,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             -- The laboratory
             , makeExit ["East"] "The laboratory" "Back to the southern corridor" "The southern corridor"
             , makeExit ["West"] "The laboratory" "A little arch leading to a round room" "The observatory"
+            , simpleObject ["battery"] "The laboratory" "A little 4.5 battery, quite old, the kind they used to need for prehistoric stuff."
             -- The observatory
             , makeExit ["East"] "The observatory" "A little arch leading back to the laboratory" "The laboratory"
             -- The sauna
