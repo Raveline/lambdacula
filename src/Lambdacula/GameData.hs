@@ -28,6 +28,7 @@ verbs = [Transitive Talk "speak" ["with", "to"] ["about"] False
         ,Transitive Use "use" [] ["on"] False
         ,Transitive Use "open" [] ["with"] False
         ,Transitive Use "unlock" [] ["with", "using"] False
+        ,Transitive Use "put" [] ["in", "inside"] True
         ,Phrasal Take "pick" "up" [] ["from", "in", "on"] True
         ,Transitive Take "take" [] ["from", "of", "out"] True 
         ,Transitive Lift "lift" [] [] False
@@ -175,6 +176,8 @@ ldreactions = [("Lady's Chatterley's Lover", Examine, Nothing, [], [Display "Wow
     ,("Roger", Talk, Nothing, [], [Conversation techtopics techanswers undefined])
     -- Laboratory
     ,("battery", Take, Nothing, [], [PickItem "battery" "You take the battery. You feel full of juice. I should warn you, I'm stacked with bad puns about electricity."])
+    ,("battery", Examine, Nothing, [HasStatus Powered], [Display "A battery that you fully charged, ready to power anything that takes a 4.5 V battery."])
+    ,("battery", Examine, Nothing, [], [Display "An old battery, most likely discharged."])
     ]
 
 -- Antichamber
@@ -253,7 +256,7 @@ ldRooms = [Room "In front of the castle" "You're standing in front of the castle
         , Room "The countess bathroom" "It shall not be said that the transylvanian countryside is devoid of the comfort and sophistication of the modern life. This is a fully equipped bathroom, with an elegant porcelain bathtub. You can still smell a feminine fragrance in the air, but maybe it's just your imagination." Nada
         , Room "The private living room" "This little cosy room was used by the family of the former Counts of the castle when they didn't entertain guests. There are only two armchairs and a two-sitter. Someone with bad decorative taste decided that a yellow wallpaper would brighten the room. It doesn't." Nada 
         , Room "The southern corridor" "You are walking in a cold corridor. Openings in the wall, without glasspane, help freshen the temperature in this place. A massive staircase goes down to the main hall of the castle. On your left and on your right, two opened doors. Apart from that and an insane amount of cobwebs, the place is empty." Nada
-        , Room "The laboratory" "This is your classical Dr. Frankenstein styled laboratory. Iron tables covered with sciency stuff that you would be able to recognize had you paid attention in chemistry classes. Retorts, still, tubes, the whole thing, even the operating table with straps and blood stain." Nada
+        , Room "The laboratory" "This is your classical Dr. Frankenstein styled laboratory. Iron tables covered with sciency stuff that you would be able to recognize had you paid attention in chemistry classes. Retorts, still, tubes, the whole thing, even the operating table with straps and blood stain. The various workbenches are covered with various, strange stuff : " Nada
         , Room "The observatory" "What did you know ? Count Lambdacula must be interested in astronomy. He set up a nice observatory here, with a big telescope and stars-chart along the walls. Even vampires look at the sky at night, and make wishes while watching shooting stars. Well, their wishes are mostly things like fountains of blood." Nada
         , Room "The Count's sauna" "Count Lambdacula was not having a bathroom, no, that's for normal people, not vampire psychopaths. The guy had himself a whole sauna set-up. And looking at the quality of the place, he must have asked some crazy scandinavian specialists. You're standing in a state-of-the-art sweating lodge, made out of the purest wood. The only thing is that you're a bit hot right now." Nada
         -- UNDERGROUND WORLD
@@ -378,7 +381,7 @@ ldObjects = [makeExit ["South"] "In front of the castle" "the gate of the castle
             -- The laboratory
             , makeExit ["East"] "The laboratory" "Back to the southern corridor" "The southern corridor"
             , makeExit ["West"] "The laboratory" "A little arch leading to a round room" "The observatory"
-            , simpleObject ["battery"] "The laboratory" "A little 4.5 battery, quite old, the kind they used to need for prehistoric stuff."
+            , simpleObject ["battery"] "The laboratory" "a little 4.5 battery, quite old, the kind they used to need for prehistoric stuff."
             -- The observatory
             , makeExit ["East"] "The observatory" "A little arch leading back to the laboratory" "The laboratory"
             -- The sauna
